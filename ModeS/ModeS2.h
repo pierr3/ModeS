@@ -42,6 +42,8 @@ public:
 
 	void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
 
+	void OnTimer(int Counter);
+
 	bool isAcModeS(CFlightPlan FlightPlan);
 	inline bool startsWith(const char *pre, const char *str)
 	{

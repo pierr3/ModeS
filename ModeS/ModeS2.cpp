@@ -2,13 +2,14 @@
 #include "ModeS2.h"
 
 
-const string updateUrl = "";
-const int VERSION_CODE = 10;
+const string updateUrl = "http://hydra.ferran.io/vatsim/modes.php";
+const int VERSION_CODE = 11;
 
 vector<string>	EQUIPEMENT_CODES = { "H", "L", "E", "G", "W", "Q", "S" };
 vector<string>	ICAO_MODES = { "EB", "EL", "LS", "ET", "ED", "LF", "EH", "LK", "LO", "LIM, LIR" };
 
 HttpHelper *httpHelper = NULL;
+bool initData = true;
 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
 	std::stringstream ss(s);
@@ -38,14 +39,19 @@ void doInitialLoad(void * arg)
 		EQUIPEMENT_CODES = split(data.front(), ',');
 		ICAO_MODES = split(data.at(1), ',');
 
-		if (std::stoi(data.back(), nullptr, 0) > VERSION_CODE)
+		int new_v = std::stoi(data.back(), nullptr, 0);
+
+		if (new_v > VERSION_CODE)
 		{
 			AFX_MANAGE_STATE(AfxGetStaticModuleState());
 				AfxMessageBox("A new version of the mode S plugin is available, please update it.");
 		}
+	} else
+	{
+		AFX_MANAGE_STATE(AfxGetStaticModuleState());
+			AfxMessageBox("The mode S plugin couldn't parse the server data, please update the plugin.");
 	}
 }
-
 
 CModeS::CModeS(void):CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	"Mode S PlugIn",
@@ -62,11 +68,6 @@ CModeS::CModeS(void):CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	RegisterTagItemType("Mode S: Reported GS", TAG_ITEM_MODESREPGS);
 
 	RegisterTagItemFunction("Assign mode S squawk", TAG_FUNC_ASSIGNMODES);
-
-	DisplayUserMessage("Message", "Info", "Downloading mode S configuration...", true, false, false, false, false);
-	// Download the configuration
-	_beginthread(doInitialLoad, 0, NULL);
-	DisplayUserMessage("Message", "Info", "Downloading mode S configuration...", true, false, false, false, false);
 }
 
 CModeS::~CModeS(void)
@@ -210,4 +211,15 @@ bool CModeS::isAcModeS(CFlightPlan FlightPlan) {
 		}
 	}
 	return false;
+}
+
+void CModeS::OnTimer(int Counter)
+{
+	if (initData)
+	{
+		DisplayUserMessage("Message", "Mode S", "Downloading configuration...", true, false, false, false, false);
+		// Download the configuration
+		_beginthread(doInitialLoad, 0, NULL);
+		initData = false;
+	}
 }
