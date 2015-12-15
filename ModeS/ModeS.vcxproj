@@ -53,15 +53,15 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\Pierre\Documents\Visual Studio 2015\Projects\ModeS\lib\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_USRDLL;CURL_STATICLIB;CURL_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\Pierre\Documents\Visual Studio 2015\Projects\ModeS\lib\include;C:\Users\Pierre\Documents\Visual Studio 2015\Projects\ModeS\lib\include\curl</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>.\ModeS.def</ModuleDefinitionFile>
-      <AdditionalDependencies>C:\Users\Pierre\Documents\Visual Studio 2015\Projects\ModeS\lib\EuroScopePlugInDll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>C:\Users\Pierre\Documents\Visual Studio 2015\Projects\ModeS\lib\EuroScopePlugInDll.lib;C:\Users\Pierre\Documents\Visual Studio 2015\Projects\ModeS\lib\libcurld.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -80,9 +80,9 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_USRDLL;CURL_STATICLIB;CURL_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
-      <AdditionalIncludeDirectories>C:\Users\Pierre\Documents\Visual Studio 2015\Projects\ModeS\lib\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Pierre\Documents\Visual Studio 2015\Projects\ModeS\lib\include;C:\Users\Pierre\Documents\Visual Studio 2015\Projects\ModeS\lib\include\curl</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -90,7 +90,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>.\ModeS.def</ModuleDefinitionFile>
-      <AdditionalDependencies>C:\Users\Pierre\Documents\Visual Studio 2015\Projects\ModeS\lib\EuroScopePlugInDll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>C:\Users\Pierre\Documents\Visual Studio 2015\Projects\ModeS\lib\EuroScopePlugInDll.lib;C:\Users\Pierre\Documents\Visual Studio 2015\Projects\ModeS\lib\libcurl.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -106,6 +106,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="HttpHelper.cpp" />
     <ClCompile Include="ModeS.cpp" />
     <ClCompile Include="ModeS2.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -114,6 +115,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="HttpHelper.hpp" />
     <ClInclude Include="ModeS.h" />
     <ClInclude Include="ModeS2.h" />
     <ClInclude Include="Resource.h" />

@@ -1,6 +1,12 @@
 #pragma once
 #include <EuroScopePlugIn.h>
 #include <vector>
+#include <sstream>
+#include <iomanip>
+#include <string>
+#include <regex>
+#include <iostream>
+#include "HttpHelper.hpp"
 
 using namespace std;
 using namespace EuroScopePlugIn;
@@ -34,7 +40,7 @@ public:
 		POINT Pt,
 		RECT Area);
 
-	virtual void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
+	void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
 
 	bool isAcModeS(CFlightPlan FlightPlan);
 	inline bool startsWith(const char *pre, const char *str)
@@ -44,6 +50,12 @@ public:
 		return lenstr < lenpre ? false : strncmp(pre, str, lenpre) == 0;
 	}
 
+	inline string padWithZeros(int padding, int s)
+	{
+		stringstream ss;
+		ss << setfill('0') << setw(padding) << s;
+		return ss.str();
+	}
 
 };
 
