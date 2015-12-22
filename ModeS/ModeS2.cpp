@@ -147,7 +147,7 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 
 		for (auto &zone : ICAO_MODES) // access by reference to avoid copying
 		{
-			if (zone == Dest) {
+			if (startsWith(zone.c_str(), Dest.c_str())) {
 				FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
 				break;
 			}
@@ -177,7 +177,7 @@ void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 
 			for (auto &zone : ICAO_MODES)
 			{
-				if (zone == string(FlightPlan.GetFlightPlanData().GetDestination())) {
+				if (startsWith(zone.c_str(), FlightPlan.GetFlightPlanData().GetDestination())) {
 					isDestModeS = true;
 					break;
 				}
@@ -188,7 +188,7 @@ void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 				if (!isDestModeS)
 					break;
 
-				if (zone == string(FlightPlan.GetFlightPlanData().GetOrigin())) {
+				if (startsWith(zone.c_str(), FlightPlan.GetFlightPlanData().GetOrigin())) {
 						FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
 						break;
 				}
