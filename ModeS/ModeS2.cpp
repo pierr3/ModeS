@@ -55,7 +55,7 @@ void doInitialLoad(void * arg)
 
 CModeS::CModeS(void):CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	"Mode S PlugIn",
-	"1.0.0e32",
+	"1.1.0e32",
 	"Pierre Ferran",
 	"GPL v3")
 {
