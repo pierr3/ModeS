@@ -171,11 +171,19 @@ void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 
 	const char * assr = FlightPlan.GetControllerAssignedData().GetSquawk();
 
+	CRadarTarget rt = RadarTargetSelect(FlightPlan.GetCallsign());
+
+	if (!rt.IsValid() || !rt.GetPosition().IsValid())
+		return;
+
+	if (strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
+		return;
+
 	if ((strlen(assr) == 0 ||
 		strcmp(assr, "0000") == 0 ||
 		strcmp(assr, "2000") == 0 ||
 		strcmp(assr, "1200") == 0 ||
-		strcmp(assr, "2200") == 0) && RadarTargetSelect(FlightPlan.GetCallsign()).GetGS() < 20)
+		strcmp(assr, "2200") == 0) && rt.GetPosition().GetReportedGS() < 20)
 	{
 		if (isAcModeS(FlightPlan))
 		{
