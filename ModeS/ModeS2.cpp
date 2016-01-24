@@ -3,7 +3,7 @@
 
 
 const string updateUrl = "http://hydra.ferran.io/vatsim/modes.php";
-const int VERSION_CODE = 11;
+const int VERSION_CODE = 12;
 
 vector<string>	EQUIPEMENT_CODES = { "H", "L", "E", "G", "W", "Q", "S" };
 vector<string>	ICAO_MODES = { "EB", "EL", "LS", "ET", "ED", "LF", "EH", "LK", "LO", "LIM, LIR" };
@@ -55,7 +55,7 @@ void doInitialLoad(void * arg)
 
 CModeS::CModeS(void):CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	"Mode S PlugIn",
-	"1.1.0e32",
+	"1.2.0e32",
 	"Pierre Ferran",
 	"GPL v3")
 {
@@ -142,6 +142,9 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 	if (!FlightPlan.IsValid())
 		return;
 
+	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
+		return;
+
 	if (FunctionId == TAG_FUNC_ASSIGNMODES && isAcModeS(FlightPlan)) {
 		string Dest = FlightPlan.GetFlightPlanData().GetDestination();
 
@@ -159,6 +162,9 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 {
 	if (!FlightPlan.IsValid())
+		return;
+
+	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
 		return;
 
 	// Here we assign squawk 1000 to ground aircrafts
