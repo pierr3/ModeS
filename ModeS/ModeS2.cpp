@@ -3,7 +3,7 @@
 
 
 const string updateUrl = "http://hydra.ferran.io/vatsim/modes.php";
-const int VERSION_CODE = 12;
+const int VERSION_CODE = 13;
 
 vector<string>	EQUIPEMENT_CODES = { "H", "L", "E", "G", "W", "Q", "S" };
 vector<string>	ICAO_MODES = { "EB", "EL", "LS", "ET", "ED", "LF", "EH", "LK", "LO", "LIM, LIR" };
@@ -55,7 +55,7 @@ void doInitialLoad(void * arg)
 
 CModeS::CModeS(void):CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	"Mode S PlugIn",
-	"1.2.0e32",
+	"1.3.0e32",
 	"Pierre Ferran",
 	"GPL v3")
 {
@@ -68,6 +68,7 @@ CModeS::CModeS(void):CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	RegisterTagItemType("Mode S: Reported GS", TAG_ITEM_MODESREPGS);
 
 	RegisterTagItemFunction("Assign mode S squawk", TAG_FUNC_ASSIGNMODES);
+	delayedStart = clock();
 }
 
 CModeS::~CModeS(void)
@@ -164,51 +165,58 @@ void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	if (!FlightPlan.IsValid())
 		return;
 
-	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
-		return;
+	if (ControllerMyself().IsValid() && ControllerMyself().IsController()) {
 
-	// Here we assign squawk 1000 to ground aircrafts
+		if (((clock() - delayedStart) / CLOCKS_PER_SEC) < 15)
+			return;
 
-	const char * assr = FlightPlan.GetControllerAssignedData().GetSquawk();
+		// Here we assign squawk 1000 to ground aircrafts
 
-	CRadarTarget rt = RadarTargetSelect(FlightPlan.GetCallsign());
+		const char * assr = FlightPlan.GetControllerAssignedData().GetSquawk();
 
-	if (!rt.IsValid() || !rt.GetPosition().IsValid())
-		return;
+		CRadarTarget rt = RadarTargetSelect(FlightPlan.GetCallsign());
 
-	if (strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
-		return;
+		if (!rt.IsValid() || !rt.GetPosition().IsValid())
+			return;
 
-	if ((strlen(assr) == 0 ||
-		strcmp(assr, "0000") == 0 ||
-		strcmp(assr, "2000") == 0 ||
-		strcmp(assr, "1200") == 0 ||
-		strcmp(assr, "2200") == 0) && rt.GetPosition().GetReportedGS() < 20)
-	{
-		if (isAcModeS(FlightPlan))
+		if (strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
+			return;
+
+		if ((strlen(assr) == 0 ||
+			strcmp(assr, "0000") == 0 ||
+			strcmp(assr, "2000") == 0 ||
+			strcmp(assr, "1200") == 0 ||
+			strcmp(assr, "2200") == 0) && rt.GetPosition().GetReportedGS() < 20)
 		{
-			bool isDestModeS = false;
-
-			for (auto &zone : ICAO_MODES)
+			if (isAcModeS(FlightPlan))
 			{
-				if (startsWith(zone.c_str(), FlightPlan.GetFlightPlanData().GetDestination())) {
-					isDestModeS = true;
-					break;
+				bool isDestModeS = false;
+
+				for (auto &zone : ICAO_MODES)
+				{
+					if (startsWith(zone.c_str(), FlightPlan.GetFlightPlanData().GetDestination())) {
+						isDestModeS = true;
+						break;
+					}
 				}
-			}
 
-			for (auto &zone : ICAO_MODES)
-			{
-				if (!isDestModeS)
-					break;
+				for (auto &zone : ICAO_MODES)
+				{
+					if (!isDestModeS)
+						break;
 
-				if (startsWith(zone.c_str(), FlightPlan.GetFlightPlanData().GetOrigin())) {
+					if (startsWith(zone.c_str(), FlightPlan.GetFlightPlanData().GetOrigin())) {
 						FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
 						break;
+					}
 				}
 			}
 		}
 	}
+	else {
+		delayedStart = clock();
+	}
+		
 }
 
 bool CModeS::isAcModeS(CFlightPlan FlightPlan) {

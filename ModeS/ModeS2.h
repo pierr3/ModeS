@@ -27,6 +27,8 @@ public:
 
 	const char* mode_s_code = "1000";
 
+	clock_t delayedStart;
+
 	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
 		int ItemCode,
 		int TagData,
