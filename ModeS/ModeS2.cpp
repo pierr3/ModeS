@@ -164,10 +164,10 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 			FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
 
 	}
-	if (FunctionId == TAG_FUNC_ASSIGNMODEAS && isAcModeS(FlightPlan)) {
+	if (FunctionId == TAG_FUNC_ASSIGNMODEAS) {
 		string Dest = FlightPlan.GetFlightPlanData().GetDestination();
 		
-		if (isApModeS(Dest))
+		if (isAcModeS(FlightPlan) && isApModeS(Dest))
 			FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
 		else if (function_relay) {
 			function_relay->StartTagFunction(FlightPlan.GetCallsign(), GetPlugInName(), TAG_ITEM_ISMODES, "", nullptr, TAG_ITEM_FUNCTION_SQUAWK_POPUP, Pt, Area);
