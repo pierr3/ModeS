@@ -68,12 +68,23 @@ CModeS::CModeS(void):CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	RegisterTagItemType("Mode S: Reported GS", TAG_ITEM_MODESREPGS);
 
 	RegisterTagItemFunction("Assign mode S squawk", TAG_FUNC_ASSIGNMODES);
+	
+	// Display to reach StartTagFunction from the normal plugin
+	RegisterDisplayType("ModeS Function Relay (no display)", false, false, false, false);
+	
+	// Function to assign code 1000 or open the assign squawk popup.
+	RegisterTagItemFunction("Assign mode S/A squawk", TAG_FUNC_ASSIGNMODEAS);
+
 	delayedStart = clock();
+	function_relay = nullptr;
 }
 
 CModeS::~CModeS(void)
 {
 	delete httpHelper;
+
+	if (function_relay)
+		delete function_relay;
 }
 
 void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int ItemCode, int TagData, char sItemString[16], int * pColorCode, COLORREF * pRGB, double * pFontSize)
@@ -157,7 +168,21 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 			}
 		}
 	}
-
+	if (FunctionId == TAG_FUNC_ASSIGNMODEAS && isAcModeS(FlightPlan)) {
+		string Dest = FlightPlan.GetFlightPlanData().GetDestination();
+		for (auto &zone : ICAO_MODES) // access by reference to avoid copying
+		{
+			if (startsWith(zone.c_str(), Dest.c_str())) {
+				FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
+				break;
+			}
+		}
+		if (function_relay)
+		{
+			auto FlightPlan = FlightPlanSelectASEL();
+			function_relay->StartTagFunction(FlightPlan.GetCallsign(), GetPlugInName(), TAG_ITEM_ISMODES, "", nullptr, TAG_ITEM_FUNCTION_SQUAWK_POPUP, Pt, Area);
+		}
+	}
 }
 
 void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
@@ -244,4 +269,12 @@ void CModeS::OnTimer(int Counter)
 		_beginthread(doInitialLoad, 0, NULL);
 		initData = false;
 	}
+}
+
+CRadarScreen * CModeS::OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated)
+{
+	// Create only one instance for the plugin
+	if (!function_relay)
+		return function_relay = new CModeSDisplay();
+	return nullptr;
 }

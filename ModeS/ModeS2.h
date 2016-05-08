@@ -7,6 +7,7 @@
 #include <regex>
 #include <iostream>
 #include "HttpHelper.hpp"
+#include "ModeSDisplay.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
@@ -24,10 +25,14 @@ public:
 	const int TAG_ITEM_MODESREPGS = 504;
 
 	const int TAG_FUNC_ASSIGNMODES = 869;
+	const int TAG_FUNC_ASSIGNMODEAS = 870;
 
 	const char* mode_s_code = "1000";
 
 	clock_t delayedStart;
+	
+	CModeSDisplay * function_relay;
+
 
 	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
 		int ItemCode,
@@ -45,6 +50,8 @@ public:
 	void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
 
 	void OnTimer(int Counter);
+
+	CRadarScreen * OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated);
 
 	bool isAcModeS(CFlightPlan FlightPlan);
 	inline bool startsWith(const char *pre, const char *str)
