@@ -64,6 +64,13 @@ public:
 		return lenstr < lenpre ? false : strncmp(pre, str, lenpre) == 0;
 	}
 
+	//inline bool startsWith(string pre, string str)
+	//{
+	//	if (pre.compare(0, str.length(), str, 0, pre.length()))
+	//		return false;
+	//	return true;
+	//}
+
 	inline string padWithZeros(int padding, int s)
 	{
 		stringstream ss;

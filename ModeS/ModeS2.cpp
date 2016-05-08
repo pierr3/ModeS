@@ -236,7 +236,7 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 	if (!flightplan.IsValid() || !flightplan.GetTrackingControllerIsMe())
 		return;
 	
-	if (!isAcModeS(flightplan))
+	if (!strcmp(mode_s_code, flightplan.GetControllerAssignedData().GetSquawk()) || !isAcModeS(flightplan))
 		return;
 
 	string destination { flightplan.GetFlightPlanData().GetDestination() };
