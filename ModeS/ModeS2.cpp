@@ -55,7 +55,7 @@ void doInitialLoad(void * arg)
 
 CModeS::CModeS(void):CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	"Mode S PlugIn",
-	"1.3.0e32",
+	"1.3.1e32-testing",
 	"Pierre Ferran",
 	"GPL v3")
 {
@@ -160,26 +160,16 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 	if (FunctionId == TAG_FUNC_ASSIGNMODES && isAcModeS(FlightPlan)) {
 		string Dest = FlightPlan.GetFlightPlanData().GetDestination();
 
-		for (auto &zone : ICAO_MODES) // access by reference to avoid copying
-		{
-			if (startsWith(zone.c_str(), Dest.c_str())) {
-				FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
-				break;
-			}
-		}
+		if (isApModeS(Dest))
+			FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
+
 	}
 	if (FunctionId == TAG_FUNC_ASSIGNMODEAS && isAcModeS(FlightPlan)) {
 		string Dest = FlightPlan.GetFlightPlanData().GetDestination();
-		for (auto &zone : ICAO_MODES) // access by reference to avoid copying
-		{
-			if (startsWith(zone.c_str(), Dest.c_str())) {
-				FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
-				break;
-			}
-		}
-		if (function_relay)
-		{
-			auto FlightPlan = FlightPlanSelectASEL();
+		
+		if (isApModeS(Dest))
+			FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
+		else if (function_relay) {
 			function_relay->StartTagFunction(FlightPlan.GetCallsign(), GetPlugInName(), TAG_ITEM_ISMODES, "", nullptr, TAG_ITEM_FUNCTION_SQUAWK_POPUP, Pt, Area);
 		}
 	}
@@ -187,83 +177,97 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 
 void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 {
-	if (!FlightPlan.IsValid())
-		return;
+	// don't use for now
+	//if (!FlightPlan.IsValid())
+	//	return;
 
-	if (ControllerMyself().IsValid() && ControllerMyself().IsController()) {
+	//if (ControllerMyself().IsValid() && ControllerMyself().IsController()) {
 
-		if (((clock() - delayedStart) / CLOCKS_PER_SEC) < 15)
-			return;
+	//	if (((clock() - delayedStart) / CLOCKS_PER_SEC) < 15)
+	//		return;
 
-		// Here we assign squawk 1000 to ground aircrafts
+	//	// Here we assign squawk 1000 to ground aircrafts
 
-		const char * assr = FlightPlan.GetControllerAssignedData().GetSquawk();
+	//	if (FlightPlan.GetFlightPlanData().IsAmended())
+	//		return;
 
-		CRadarTarget rt = RadarTargetSelect(FlightPlan.GetCallsign());
+	//	const char * assr = FlightPlan.GetControllerAssignedData().GetSquawk();
 
-		if (!rt.IsValid() || !rt.GetPosition().IsValid())
-			return;
+	//	CRadarTarget rt = RadarTargetSelect(FlightPlan.GetCallsign());
+	//	
+	//	if (!rt.IsValid() || !rt.GetPosition().IsValid())
+	//		return;
 
-		if (strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
-			return;
+	//	if (rt.GetPosition().GetReportedGS() > 20)
+	//		return;
 
-		if ((strlen(assr) == 0 ||
-			strcmp(assr, "0000") == 0 ||
-			strcmp(assr, "2000") == 0 ||
-			strcmp(assr, "1200") == 0 ||
-			strcmp(assr, "2200") == 0) && rt.GetPosition().GetReportedGS() < 20)
-		{
-			if (isAcModeS(FlightPlan))
-			{
-				bool isDestModeS = false;
+	//	if (strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
+	//		return;
 
-				for (auto &zone : ICAO_MODES)
-				{
-					if (startsWith(zone.c_str(), FlightPlan.GetFlightPlanData().GetDestination())) {
-						isDestModeS = true;
-						break;
-					}
-				}
+	//	string origin { FlightPlan.GetFlightPlanData().GetOrigin() };
+	//	string destination { FlightPlan.GetFlightPlanData().GetDestination() };
+	//	string controllerCallsign { ControllerMyself().GetCallsign() };
 
-				for (auto &zone : ICAO_MODES)
-				{
-					if (!isDestModeS)
-						break;
-
-					if (startsWith(zone.c_str(), FlightPlan.GetFlightPlanData().GetOrigin())) {
-						FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
-						break;
-					}
-				}
-			}
-		}
-	}
-	else {
-		delayedStart = clock();
-	}
-		
+	//	if (controllerCallsign.compare(0, 4, origin, 0, 4))
+	//		return;
+	//		
+	//	if (isAcModeS(FlightPlan) && 
+	//		isApModeS(destination) && 
+	//		isApModeS(origin))
+	//		FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
+	//}
+	//else {
+	//	delayedStart = clock();
+	//}	
 }
 
-bool CModeS::isAcModeS(CFlightPlan FlightPlan) {
-	stringstream ss;
-	string transponder_type;
-	char mychar = FlightPlan.GetFlightPlanData().GetCapibilities();
-	ss << mychar;
-	ss >> transponder_type;
+void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
+{
+	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
+		return;
+
+	if (!RadarTarget.IsValid() || RadarTarget.GetPosition().IsFPTrackPosition())
+		return;
+	
+	if (RadarTarget.GetPosition().GetFlightLevel() < 24500)
+		return;
+
+	CFlightPlan flightplan = RadarTarget.GetCorrelatedFlightPlan();
+	if (!flightplan.IsValid() || !flightplan.GetTrackingControllerIsMe())
+		return;
+	
+	if (!isAcModeS(flightplan))
+		return;
+
+	string destination { flightplan.GetFlightPlanData().GetDestination() };
+	if (isApModeS(destination))
+		flightplan.GetControllerAssignedData().SetSquawk(mode_s_code);
+
+}
+
+inline bool CModeS::isAcModeS(CFlightPlan FlightPlan) {
+	string transponder_type { FlightPlan.GetFlightPlanData().GetCapibilities() };
 
 	for (auto &code : EQUIPEMENT_CODES) {
-		if (transponder_type == code)
-		{
+		if (transponder_type == code) {
 			return true;
 		}
 	}
 	return false;
 }
 
+inline bool CModeS::isApModeS(string& icao)
+{
+	for (auto& zone : ICAO_MODES) {
+		if (startsWith(zone.c_str(), icao.c_str()))
+			return true;
+	}
+	return false;
+}
+
 void CModeS::OnTimer(int Counter)
 {
-	if (initData)
-	{
+	if (initData) {
 		DisplayUserMessage("Message", "Mode S", "Downloading configuration...", true, false, false, false, false);
 		// Download the configuration
 		_beginthread(doInitialLoad, 0, NULL);

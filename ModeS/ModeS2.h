@@ -48,12 +48,15 @@ public:
 		RECT Area);
 
 	void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
+	void OnRadarTargetPositionUpdate(CRadarTarget RadarTarget);
 
 	void OnTimer(int Counter);
 
 	CRadarScreen * OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated);
 
 	bool isAcModeS(CFlightPlan FlightPlan);
+	bool isApModeS(string& icao);
+
 	inline bool startsWith(const char *pre, const char *str)
 	{
 		size_t lenpre = strlen(pre),
