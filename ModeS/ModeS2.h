@@ -57,6 +57,8 @@ public:
 	bool isAcModeS(CFlightPlan FlightPlan);
 	bool isApModeS(string& icao);
 
+	void AssignModeSCode(CFlightPlan& flightplan, string mode);
+
 	inline bool startsWith(const char *pre, const char *str)
 	{
 		size_t lenpre = strlen(pre),

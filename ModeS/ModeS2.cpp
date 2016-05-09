@@ -2,8 +2,9 @@
 #include "ModeS2.h"
 
 
-const string updateUrl = "http://hydra.ferran.io/vatsim/modes.php";
-const int VERSION_CODE = 13;
+const string updateUrl = "http://www.cherryx.de/modes/modes.txt";
+const int VERSION_CODE = 901;
+const char PLUGIN_VERSION[] = "1.3.2e32";
 
 vector<string>	EQUIPEMENT_CODES = { "H", "L", "E", "G", "W", "Q", "S" };
 vector<string>	ICAO_MODES = { "EB", "EL", "LS", "ET", "ED", "LF", "EH", "LK", "LO", "LIM, LIR" };
@@ -32,7 +33,7 @@ void doInitialLoad(void * arg)
 	message.assign(httpHelper->downloadStringFromURL(updateUrl));
 
 	// Message format is {equip_codes}|{icao_modes}|{version}
-	if (regex_match(message, std::regex("^([A-z,]+)[|]([A-z,]+)[|]([0-9]{1,2})$")))
+	if (regex_match(message, std::regex("^([A-z,]+)[|]([A-z,]+)[|]([0-9]{1,3})$")))
 	{
 		vector<string> data = split(message, '|');
 
@@ -53,10 +54,10 @@ void doInitialLoad(void * arg)
 	}
 }
 
-CModeS::CModeS(void):CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
+CModeS::CModeS():CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	"Mode S PlugIn",
-	"1.3.1e32-testing",
-	"Pierre Ferran",
+	PLUGIN_VERSION,
+	"Pierre Ferran / Oliver Grützmann",
 	"GPL v3")
 {
 	if (httpHelper == NULL)
@@ -79,7 +80,7 @@ CModeS::CModeS(void):CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	function_relay = nullptr;
 }
 
-CModeS::~CModeS(void)
+CModeS::~CModeS()
 {
 	delete httpHelper;
 
@@ -139,19 +140,15 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 			return;
 
 		if (isAcModeS(FlightPlan) && FlightPlan.GetCorrelatedRadarTarget().IsValid())
-		{
 			strcpy_s(sItemString, 16, std::to_string(RadarTarget.GetPosition().GetReportedGS()).c_str());
-		}
-
 	}
-
 }
 
 void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, RECT Area)
 {
 	CFlightPlan FlightPlan = FlightPlanSelectASEL();
 
-	if (!FlightPlan.IsValid())
+	if (!FlightPlan.IsValid() || !FlightPlan.GetTrackingControllerIsMe())
 		return;
 
 	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
@@ -161,17 +158,15 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 		string Dest = FlightPlan.GetFlightPlanData().GetDestination();
 
 		if (isApModeS(Dest))
-			FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
-
+			AssignModeSCode(FlightPlan, " (manual)");
 	}
 	if (FunctionId == TAG_FUNC_ASSIGNMODEAS) {
 		string Dest = FlightPlan.GetFlightPlanData().GetDestination();
 		
 		if (isAcModeS(FlightPlan) && isApModeS(Dest))
-			FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
-		else if (function_relay) {
+			AssignModeSCode(FlightPlan, " (manual)");
+		else if (function_relay)
 			function_relay->StartTagFunction(FlightPlan.GetCallsign(), GetPlugInName(), TAG_ITEM_ISMODES, "", nullptr, TAG_ITEM_FUNCTION_SQUAWK_POPUP, Pt, Area);
-		}
 	}
 }
 
@@ -241,7 +236,7 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 
 	string destination { flightplan.GetFlightPlanData().GetDestination() };
 	if (isApModeS(destination))
-		flightplan.GetControllerAssignedData().SetSquawk(mode_s_code);
+		AssignModeSCode(flightplan, " (auto/airborne)");
 
 }
 
@@ -263,6 +258,20 @@ inline bool CModeS::isApModeS(string& icao)
 			return true;
 	}
 	return false;
+}
+
+void CModeS::AssignModeSCode(CFlightPlan& flightplan, string mode)
+{
+	bool success{ flightplan.GetControllerAssignedData().SetSquawk(mode_s_code) };
+	
+	string message { "Code 1000 assignment to " };
+	message += flightplan.GetCallsign() + mode;
+	if (success)
+		DisplayUserMessage("ModeS", "Debug", message.c_str(), true, false, false, false, false);
+	else {
+		message += " failed";
+		DisplayUserMessage("ModeS", "Debug", message.c_str(), true, false, false, false, false);
+	}
 }
 
 void CModeS::OnTimer(int Counter)
