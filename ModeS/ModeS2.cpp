@@ -3,11 +3,11 @@
 
 
 const string updateUrl = "http://www.cherryx.de/modes/modes.txt";
-const int VERSION_CODE = 901;
-const char PLUGIN_VERSION[] = "1.3.2e32";
+const int VERSION_CODE = 902;
+const char PLUGIN_VERSION[] = "1.3.3e32";
 
 vector<string>	EQUIPEMENT_CODES = { "H", "L", "E", "G", "W", "Q", "S" };
-vector<string>	ICAO_MODES = { "EB", "EL", "LS", "ET", "ED", "LF", "EH", "LK", "LO", "LIM, LIR" };
+vector<string>	ICAO_MODES = { "EB", "EL", "LS", "ET", "ED", "LF", "EH", "LK", "LO", "LIM", "LIR" };
 
 HttpHelper *httpHelper = NULL;
 bool initData = true;
@@ -77,15 +77,11 @@ CModeS::CModeS():CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	RegisterTagItemFunction("Assign mode S/A squawk", TAG_FUNC_ASSIGNMODEAS);
 
 	delayedStart = clock();
-	function_relay = nullptr;
 }
 
 CModeS::~CModeS()
 {
 	delete httpHelper;
-
-	if (function_relay)
-		delete function_relay;
 }
 
 void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int ItemCode, int TagData, char sItemString[16], int * pColorCode, COLORREF * pRGB, double * pFontSize)
@@ -95,7 +91,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		if (!FlightPlan.IsValid())
 			return;
 
-		if (isAcModeS(FlightPlan)) {
+		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES)) {
 			strcpy_s(sItemString, 16, "S");
 		}
 		else {
@@ -108,7 +104,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
-		if (isAcModeS(FlightPlan))
+		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES))
 		{
 			string rhdg = padWithZeros(3, RadarTarget.GetPosition().GetReportedHeading());
 			strcpy_s(sItemString, 16, rhdg.c_str());
@@ -120,7 +116,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
-		if (isAcModeS(FlightPlan))
+		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES))
 		{
 			int rollb = RadarTarget.GetPosition().GetReportedBank();
 			string roll = "L";
@@ -139,7 +135,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
-		if (isAcModeS(FlightPlan) && FlightPlan.GetCorrelatedRadarTarget().IsValid())
+		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES) && FlightPlan.GetCorrelatedRadarTarget().IsValid())
 			strcpy_s(sItemString, 16, std::to_string(RadarTarget.GetPosition().GetReportedGS()).c_str());
 	}
 }
@@ -154,24 +150,22 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
 		return;
 
-	if (FunctionId == TAG_FUNC_ASSIGNMODES && isAcModeS(FlightPlan)) {
+	if (FunctionId == TAG_FUNC_ASSIGNMODES && isAcModeS(FlightPlan, EQUIPEMENT_CODES)) {
 		string Dest = FlightPlan.GetFlightPlanData().GetDestination();
 
-		if (isApModeS(Dest))
+		if (isApModeS(Dest, ICAO_MODES))
 			AssignModeSCode(FlightPlan, " (manual)");
 	}
 	if (FunctionId == TAG_FUNC_ASSIGNMODEAS) {
 		string Dest = FlightPlan.GetFlightPlanData().GetDestination();
 		
-		if (isAcModeS(FlightPlan) && isApModeS(Dest))
+		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES) && isApModeS(Dest, ICAO_MODES))
 			AssignModeSCode(FlightPlan, " (manual)");
-		else if (function_relay)
-			function_relay->StartTagFunction(FlightPlan.GetCallsign(), GetPlugInName(), TAG_ITEM_ISMODES, "", nullptr, TAG_ITEM_FUNCTION_SQUAWK_POPUP, Pt, Area);
 	}
 }
 
-void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
-{
+//void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
+//{
 	// don't use for now
 	//if (!FlightPlan.IsValid())
 	//	return;
@@ -214,7 +208,7 @@ void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	//else {
 	//	delayedStart = clock();
 	//}	
-}
+//}
 
 void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 {
@@ -231,33 +225,12 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 	if (!flightplan.IsValid() || !flightplan.GetTrackingControllerIsMe())
 		return;
 	
-	if (!strcmp(mode_s_code, flightplan.GetControllerAssignedData().GetSquawk()) || !isAcModeS(flightplan))
+	if (!strcmp(mode_s_code, flightplan.GetControllerAssignedData().GetSquawk()) || !isAcModeS(flightplan, EQUIPEMENT_CODES))
 		return;
 
 	string destination { flightplan.GetFlightPlanData().GetDestination() };
-	if (isApModeS(destination))
+	if (isApModeS(destination, ICAO_MODES))
 		AssignModeSCode(flightplan, " (auto/airborne)");
-
-}
-
-inline bool CModeS::isAcModeS(CFlightPlan FlightPlan) {
-	string transponder_type { FlightPlan.GetFlightPlanData().GetCapibilities() };
-
-	for (auto &code : EQUIPEMENT_CODES) {
-		if (transponder_type == code) {
-			return true;
-		}
-	}
-	return false;
-}
-
-inline bool CModeS::isApModeS(string& icao)
-{
-	for (auto& zone : ICAO_MODES) {
-		if (startsWith(zone.c_str(), icao.c_str()))
-			return true;
-	}
-	return false;
 }
 
 void CModeS::AssignModeSCode(CFlightPlan& flightplan, string mode)
@@ -286,8 +259,5 @@ void CModeS::OnTimer(int Counter)
 
 CRadarScreen * CModeS::OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated)
 {
-	// Create only one instance for the plugin
-	if (!function_relay)
-		return function_relay = new CModeSDisplay();
-	return nullptr;
+	return new CModeSDisplay(&EQUIPEMENT_CODES, &ICAO_MODES);
 }

@@ -111,12 +111,14 @@
     <ClCompile Include="HttpHelper.cpp" />
     <ClCompile Include="ModeS.cpp" />
     <ClCompile Include="ModeS2.cpp" />
+    <ClCompile Include="ModeSDisplay.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Helpers.h" />
     <ClInclude Include="HttpHelper.hpp" />
     <ClInclude Include="ModeS.h" />
     <ClInclude Include="ModeS2.h" />

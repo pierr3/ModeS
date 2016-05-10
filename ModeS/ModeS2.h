@@ -8,6 +8,7 @@
 #include <iostream>
 #include "HttpHelper.hpp"
 #include "ModeSDisplay.h"
+#include "Helpers.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
@@ -30,9 +31,6 @@ public:
 	const char* mode_s_code = "1000";
 
 	clock_t delayedStart;
-	
-	CModeSDisplay * function_relay;
-
 
 	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
 		int ItemCode,
@@ -47,31 +45,14 @@ public:
 		POINT Pt,
 		RECT Area);
 
-	void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
+	//void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
 	void OnRadarTargetPositionUpdate(CRadarTarget RadarTarget);
 
 	void OnTimer(int Counter);
 
 	CRadarScreen * OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated);
 
-	bool isAcModeS(CFlightPlan FlightPlan);
-	bool isApModeS(string& icao);
-
 	void AssignModeSCode(CFlightPlan& flightplan, string mode);
-
-	inline bool startsWith(const char *pre, const char *str)
-	{
-		size_t lenpre = strlen(pre),
-			lenstr = strlen(str);
-		return lenstr < lenpre ? false : strncmp(pre, str, lenpre) == 0;
-	}
-
-	//inline bool startsWith(string pre, string str)
-	//{
-	//	if (pre.compare(0, str.length(), str, 0, pre.length()))
-	//		return false;
-	//	return true;
-	//}
 
 	inline string padWithZeros(int padding, int s)
 	{
@@ -79,6 +60,4 @@ public:
 		ss << setfill('0') << setw(padding) << s;
 		return ss.str();
 	}
-
 };
-
