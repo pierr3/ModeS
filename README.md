@@ -1,6 +1,7 @@
 # Mode S plugin
 
-This plugin was designed to simulate mode S correlation on EuroScope, for use on the VATSIM Network. Just load the plugin in EuroScope, and squawk 1000 will be assigned for all aircrafts on the ground flying within the mode S airspace.
+This plugin was designed to simulate mode S correlation on EuroScope, for use on the VATSIM Network. Just load the plugin in EuroScope, and squawk 1000 will be assigned for capable aircraft above FL245.
+Manual assignment is available for aircraft below FL245 and aircraft on ground.
 
 ## Available tag items
 
@@ -9,10 +10,19 @@ This plugin was designed to simulate mode S correlation on EuroScope, for use on
 * Mode S: Roll Angle: Reported roll angle (L for LEFT and R for RIGHT + value in degrees)
 * Mode S: Reported GS: Reported groundspeed of the aircraft in knots.
 
+## Available tag functions
+
+* Assign mode S squawk - assigns code 1000 to aircraft with mode S transponder
+* Assign mode S/A squawk - same as above, but opens the default assignment popup for aircraft without mode S transponder (meant to be used in the EuroScope lists).
+
 ## EuroScope set up
 * Load up the plugin
 * Set your mode S string to ```HLEGWQS```
 * Add ```1000``` to your VFR squawk list (to prevent squawk duplicates)
+* Set the "Mode S Plugin / Assign mode S/A sqauwk" function to replace the default
+* Allow the plugin to draw on all types of radarscreens
+![Tag Setup](http://cherryx.de/modes/modespluginlist.png)
+![Plugin Setup](http://cherryx.de/modes/modesplugin.png)
 
 ## Add a country to the mode S list
 

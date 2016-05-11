@@ -1,11 +1,11 @@
 #pragma once
-#include <EuroScopePlugIn.h>
+
 #include <vector>
-#include <sstream>
-#include <iomanip>
 #include <string>
 #include <regex>
-#include <iostream>
+#include <future>
+#include <thread>
+#include <EuroScopePlugIn.h>
 #include "HttpHelper.hpp"
 #include "ModeSDisplay.h"
 #include "Helpers.h"
@@ -32,6 +32,8 @@ public:
 
 	clock_t delayedStart;
 
+	future<string> fUpdateString;
+
 	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
 		int ItemCode,
 		int TagData,
@@ -45,7 +47,6 @@ public:
 		POINT Pt,
 		RECT Area);
 
-	//void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
 	void OnRadarTargetPositionUpdate(CRadarTarget RadarTarget);
 
 	void OnTimer(int Counter);
@@ -53,11 +54,4 @@ public:
 	CRadarScreen * OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated);
 
 	void AssignModeSCode(CFlightPlan& flightplan, string mode);
-
-	inline string padWithZeros(int padding, int s)
-	{
-		stringstream ss;
-		ss << setfill('0') << setw(padding) << s;
-		return ss.str();
-	}
 };

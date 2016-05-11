@@ -3,54 +3,38 @@
 
 
 const string updateUrl = "http://www.cherryx.de/modes/modes.txt";
-const int VERSION_CODE = 902;
-const char PLUGIN_VERSION[] = "1.3.3e32";
+const int VERSION_CODE = 903;
+const char PLUGIN_VERSION[] = "1.3.4e32";
 
 vector<string>	EQUIPEMENT_CODES = { "H", "L", "E", "G", "W", "Q", "S" };
 vector<string>	ICAO_MODES = { "EB", "EL", "LS", "ET", "ED", "LF", "EH", "LK", "LO", "LIM", "LIR" };
 
-HttpHelper *httpHelper = NULL;
-bool initData = true;
+bool initialLoad { false };
 
-std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
-	std::stringstream ss(s);
-	std::string item;
-	while (std::getline(ss, item, delim)) {
-		elems.push_back(item);
-	}
-	return elems;
-}
-
-std::vector<std::string> split(const std::string &s, char delim) {
-	std::vector<std::string> elems;
-	split(s, delim, elems);
-	return elems;
-}
-
-void doInitialLoad(void * arg)
+void doInitialLoad(string message)
 {
-	string message;
-	message.assign(httpHelper->downloadStringFromURL(updateUrl));
-
-	// Message format is {equip_codes}|{icao_modes}|{version}
-	if (regex_match(message, std::regex("^([A-z,]+)[|]([A-z,]+)[|]([0-9]{1,3})$")))
+	if (regex_match(message, regex("^([A-z,]+)[|]([A-z,]+)[|]([0-9]{1,3})$")))
 	{
 		vector<string> data = split(message, '|');
+		if (data.size() != 3)
+		{
+			MessageBox(NULL, "The mode S plugin couldn't parse the server data", "Mode S", MB_OK);
+			return;
+		}
 
 		EQUIPEMENT_CODES = split(data.front(), ',');
 		ICAO_MODES = split(data.at(1), ',');
 
-		int new_v = std::stoi(data.back(), nullptr, 0);
+		int new_v = stoi(data.back(), nullptr, 0);
 
-		if (new_v > VERSION_CODE)
+		if (new_v > VERSION_CODE) 
 		{
-			AFX_MANAGE_STATE(AfxGetStaticModuleState());
-				AfxMessageBox("A new version of the mode S plugin is available, please update it.");
+			MessageBox(NULL, "A new version of the mode S plugin is available, please update it", "Mode S", MB_OK);
 		}
-	} else
+	}	
+	else
 	{
-		AFX_MANAGE_STATE(AfxGetStaticModuleState());
-			AfxMessageBox("The mode S plugin couldn't parse the server data, please update the plugin.");
+		MessageBox(NULL, "The mode S plugin couldn't parse the server data", "Mode S", MB_OK);
 	}
 }
 
@@ -60,8 +44,6 @@ CModeS::CModeS():CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	"Pierre Ferran / Oliver Grützmann",
 	"GPL v3")
 {
-	if (httpHelper == NULL)
-		httpHelper = new HttpHelper();
 
 	RegisterTagItemType("Transponder type", TAG_ITEM_ISMODES);
 	RegisterTagItemType("Mode S: Reported Heading", TAG_ITEM_MODESHDG); 
@@ -76,12 +58,11 @@ CModeS::CModeS():CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	// Function to assign code 1000 or open the assign squawk popup.
 	RegisterTagItemFunction("Assign mode S/A squawk", TAG_FUNC_ASSIGNMODEAS);
 
-	delayedStart = clock();
+	fUpdateString = async(LoadUpdateString, updateUrl);
 }
 
 CModeS::~CModeS()
 {
-	delete httpHelper;
 }
 
 void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int ItemCode, int TagData, char sItemString[16], int * pColorCode, COLORREF * pRGB, double * pFontSize)
@@ -104,8 +85,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
-		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES))
-		{
+		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES)) {
 			string rhdg = padWithZeros(3, RadarTarget.GetPosition().GetReportedHeading());
 			strcpy_s(sItemString, 16, rhdg.c_str());
 		}
@@ -116,12 +96,10 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
-		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES))
-		{
+		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES)) {
 			int rollb = RadarTarget.GetPosition().GetReportedBank();
 			string roll = "L";
-			if (rollb < 0)
-			{
+			if (rollb < 0) {
 				roll = "R";
 			}
 			roll += std::to_string(abs(rollb));
@@ -130,8 +108,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		}
 	}
 
-	if (ItemCode == TAG_ITEM_MODESREPGS)
-	{
+	if (ItemCode == TAG_ITEM_MODESREPGS) {
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
@@ -144,7 +121,7 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 {
 	CFlightPlan FlightPlan = FlightPlanSelectASEL();
 
-	if (!FlightPlan.IsValid() || !FlightPlan.GetTrackingControllerIsMe())
+	if (!FlightPlan.IsValid())
 		return;
 
 	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
@@ -163,52 +140,6 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 			AssignModeSCode(FlightPlan, " (manual)");
 	}
 }
-
-//void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
-//{
-	// don't use for now
-	//if (!FlightPlan.IsValid())
-	//	return;
-
-	//if (ControllerMyself().IsValid() && ControllerMyself().IsController()) {
-
-	//	if (((clock() - delayedStart) / CLOCKS_PER_SEC) < 15)
-	//		return;
-
-	//	// Here we assign squawk 1000 to ground aircrafts
-
-	//	if (FlightPlan.GetFlightPlanData().IsAmended())
-	//		return;
-
-	//	const char * assr = FlightPlan.GetControllerAssignedData().GetSquawk();
-
-	//	CRadarTarget rt = RadarTargetSelect(FlightPlan.GetCallsign());
-	//	
-	//	if (!rt.IsValid() || !rt.GetPosition().IsValid())
-	//		return;
-
-	//	if (rt.GetPosition().GetReportedGS() > 20)
-	//		return;
-
-	//	if (strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
-	//		return;
-
-	//	string origin { FlightPlan.GetFlightPlanData().GetOrigin() };
-	//	string destination { FlightPlan.GetFlightPlanData().GetDestination() };
-	//	string controllerCallsign { ControllerMyself().GetCallsign() };
-
-	//	if (controllerCallsign.compare(0, 4, origin, 0, 4))
-	//		return;
-	//		
-	//	if (isAcModeS(FlightPlan) && 
-	//		isApModeS(destination) && 
-	//		isApModeS(origin))
-	//		FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
-	//}
-	//else {
-	//	delayedStart = clock();
-	//}	
-//}
 
 void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 {
@@ -249,11 +180,27 @@ void CModeS::AssignModeSCode(CFlightPlan& flightplan, string mode)
 
 void CModeS::OnTimer(int Counter)
 {
-	if (initData) {
-		DisplayUserMessage("Message", "Mode S", "Downloading configuration...", true, false, false, false, false);
-		// Download the configuration
-		_beginthread(doInitialLoad, 0, NULL);
-		initData = false;
+	if (!initialLoad && fUpdateString.valid())
+	{
+		if (fUpdateString.wait_for(chrono::milliseconds(0)) == future_status::ready)
+		{
+			try
+			{
+				string UpdateString = fUpdateString.get();
+				doInitialLoad(UpdateString);
+				initialLoad = true;
+			}
+			catch (std::exception& e)
+			{
+				DisplayUserMessage("Message", "Mode S", e.what(), true, false, false, false, false);
+				initialLoad = true;
+			}
+			catch (...)
+			{
+				DisplayUserMessage("Message", "Mode S", "Unhandled Exception while loading data from server", true, false, false, false, false);
+				initialLoad = true;
+			}
+		}
 	}
 }
 
