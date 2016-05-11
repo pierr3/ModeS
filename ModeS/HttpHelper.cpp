@@ -18,7 +18,7 @@ std::string LoadUpdateString(std::string url)
 	char DataReceived[4096];
 	DWORD NumberOfBytesRead = 0;
 	std::string answer {};
-	while (InternetReadFile(OpenAddress, DataReceived, 2, &NumberOfBytesRead) && NumberOfBytesRead)
+	while (InternetReadFile(OpenAddress, DataReceived, 100, &NumberOfBytesRead) && NumberOfBytesRead)
 	{
 		answer.append(DataReceived, NumberOfBytesRead);
 	}
