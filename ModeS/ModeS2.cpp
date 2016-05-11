@@ -9,16 +9,23 @@ const char PLUGIN_VERSION[] = "1.3.3e32";
 vector<string>	EQUIPEMENT_CODES = { "H", "L", "E", "G", "W", "Q", "S" };
 vector<string>	ICAO_MODES = { "EB", "EL", "LS", "ET", "ED", "LF", "EH", "LK", "LO", "LIM", "LIR" };
 
+bool initialLoad { false };
+
 void doInitialLoad(string message)
 {
 	if (regex_match(message, std::regex("^([A-z,]+)[|]([A-z,]+)[|]([0-9]{1,3})$")))
 	{
 		vector<string> data = split(message, '|');
+		if (data.size() != 3)
+		{
+			MessageBox(NULL, "The mode S plugin couldn't parse the server data", "Mode S", MB_OK);
+			return;
+		}
 
 		EQUIPEMENT_CODES = split(data.front(), ',');
 		ICAO_MODES = split(data.at(1), ',');
 
-		int new_v = std::stoi(data.back(), nullptr, 0);
+		int new_v = stoi(data.back(), nullptr, 0);
 
 		if (new_v > VERSION_CODE) 
 		{
@@ -27,7 +34,7 @@ void doInitialLoad(string message)
 	}	
 	else
 	{
-		MessageBox(NULL, "The mode S plugin couldn't parse the server data, please update the plugin", "Mode S", MB_OK);
+		MessageBox(NULL, "The mode S plugin couldn't parse the server data", "Mode S", MB_OK);
 	}
 }
 
@@ -51,7 +58,7 @@ CModeS::CModeS():CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	// Function to assign code 1000 or open the assign squawk popup.
 	RegisterTagItemFunction("Assign mode S/A squawk", TAG_FUNC_ASSIGNMODEAS);
 
-	fUpdateString = std::async(LoadUpdateString, updateUrl);
+	fUpdateString = async(LoadUpdateString, updateUrl);
 }
 
 CModeS::~CModeS()
@@ -173,16 +180,26 @@ void CModeS::AssignModeSCode(CFlightPlan& flightplan, string mode)
 
 void CModeS::OnTimer(int Counter)
 {
-	if (fUpdateString.valid() && fUpdateString.wait_for(chrono::milliseconds(0)) == future_status::ready)
+	if (!initialLoad && fUpdateString.valid())
 	{
-		try
+		if (fUpdateString.wait_for(chrono::milliseconds(0)) == future_status::ready)
 		{
-			string UpdateString = fUpdateString.get();
-			doInitialLoad(UpdateString);
-		}
-		catch (exception& e)
-		{
-			DisplayUserMessage("Message", "Mode S", e.what(), true, false, false, false, false);
+			try
+			{
+				string UpdateString = fUpdateString.get();
+				doInitialLoad(UpdateString);
+				initialLoad = true;
+			}
+			catch (std::exception& e)
+			{
+				DisplayUserMessage("Message", "Mode S", e.what(), true, false, false, false, false);
+				initialLoad = true;
+			}
+			catch (...)
+			{
+				DisplayUserMessage("Message", "Mode S", "Unhandled Exception while loading data from server", true, false, false, false, false);
+				initialLoad = true;
+			}
 		}
 	}
 }

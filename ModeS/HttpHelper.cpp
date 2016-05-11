@@ -5,14 +5,13 @@ std::string LoadUpdateString(std::string url)
 {
 	HINTERNET connect = InternetOpen("MyBrowser", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if (!connect)
-		throw("Connection Failed");
+		throw(std::exception { "Connection Failed" });
 
 	HINTERNET OpenAddress = InternetOpenUrl(connect, url.c_str(), NULL, 0, INTERNET_FLAG_PRAGMA_NOCACHE, 0);
 	if (!OpenAddress)
 	{
 		InternetCloseHandle(connect);
-		std::string err = "Failed to open URL. Error: " + GetLastError();
-		throw(err);
+		throw(std::exception { "Failed to open URL. Error: " + GetLastError() });
 	}
 
 	char DataReceived[4096];
