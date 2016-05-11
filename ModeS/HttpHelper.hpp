@@ -1,17 +1,7 @@
 #pragma once
+#include "stdafx.h"
 #include <string>
-#include <curl\curl.h>
-#include <curl\easy.h>
+#include <exception>
+#include <WinInet.h>
 
-class HttpHelper
-{
-private:
-	static std::string downloadedContents;
-	static size_t handle_data(void *ptr, size_t size, size_t nmemb, void *stream);
-
-public:
-	HttpHelper();
-	std::string downloadStringFromURL(std::string url);
-	~HttpHelper();
-
-};
+std::string LoadUpdateString(std::string url);

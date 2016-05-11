@@ -2,13 +2,13 @@
 //
 
 #include "stdafx.h"
-#include "ModeS.h"
+//#include "ModeS.h"
 #include "ModeS2.h"
 #include "EuroScopePlugIn.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
+//#ifdef _DEBUG
+//#define new DEBUG_NEW
+//#endif
 
 //
 //TODO: If this DLL is dynamically linked against the MFC DLLs,
@@ -38,32 +38,32 @@
 
 // CHoldingListPluginApp
 
-BEGIN_MESSAGE_MAP(CModeSApp, CWinApp)
-END_MESSAGE_MAP()
+//BEGIN_MESSAGE_MAP(CModeSApp, CWinApp)
+//END_MESSAGE_MAP()
 
 
 // CHoldingListPluginApp construction
 
-CModeSApp::CModeSApp()
-{
-	// TODO: add construction code here,
-	// Place all significant initialization in InitInstance
-}
+//CModeSApp::CModeSApp()
+//{
+//	// TODO: add construction code here,
+//	// Place all significant initialization in InitInstance
+//}
 
 
 // The one and only CHoldingListPluginApp object
 
-CModeSApp theApp;
+//CModeSApp theApp;
 
 
 // CHoldingListPluginApp initialization
 
-BOOL CModeSApp::InitInstance()
-{
-	CWinApp::InitInstance();
-
-	return TRUE;
-}
+//BOOL CModeSApp::InitInstance()
+//{
+//	CWinApp::InitInstance();
+//
+//	return TRUE;
+//}
 
 
 CModeS  * gpMyPlugin = NULL;
@@ -72,7 +72,7 @@ CModeS  * gpMyPlugin = NULL;
 
 void    __declspec (dllexport)    EuroScopePlugInInit(EuroScopePlugIn::CPlugIn ** ppPlugInInstance)
 {
-	AFX_MANAGE_STATE(AfxGetStaticModuleState())
+	//AFX_MANAGE_STATE(AfxGetStaticModuleState())
 
 		// create the instance
 		* ppPlugInInstance = gpMyPlugin = new CModeS();
@@ -83,7 +83,7 @@ void    __declspec (dllexport)    EuroScopePlugInInit(EuroScopePlugIn::CPlugIn *
 
 void    __declspec (dllexport)    EuroScopePlugInExit(void)
 {
-	AFX_MANAGE_STATE(AfxGetStaticModuleState())
+	//AFX_MANAGE_STATE(AfxGetStaticModuleState())
 
 		// delete the instance
 		delete gpMyPlugin;

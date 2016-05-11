@@ -1,11 +1,13 @@
 #pragma once
-#include <EuroScopePlugIn.h>
+
 #include <vector>
 #include <sstream>
 #include <iomanip>
 #include <string>
 #include <regex>
-#include <iostream>
+#include <future>
+#include <thread>
+#include <EuroScopePlugIn.h>
 #include "HttpHelper.hpp"
 #include "ModeSDisplay.h"
 #include "Helpers.h"
@@ -31,6 +33,8 @@ public:
 	const char* mode_s_code = "1000";
 
 	clock_t delayedStart;
+
+	future<string> fUpdateString;
 
 	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
 		int ItemCode,
