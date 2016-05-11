@@ -3,8 +3,8 @@
 
 
 const string updateUrl = "http://www.cherryx.de/modes/modes.txt";
-const int VERSION_CODE = 902;
-const char PLUGIN_VERSION[] = "1.3.3e32";
+const int VERSION_CODE = 903;
+const char PLUGIN_VERSION[] = "1.3.4e32";
 
 vector<string>	EQUIPEMENT_CODES = { "H", "L", "E", "G", "W", "Q", "S" };
 vector<string>	ICAO_MODES = { "EB", "EL", "LS", "ET", "ED", "LF", "EH", "LK", "LO", "LIM", "LIR" };
@@ -13,7 +13,7 @@ bool initialLoad { false };
 
 void doInitialLoad(string message)
 {
-	if (regex_match(message, std::regex("^([A-z,]+)[|]([A-z,]+)[|]([0-9]{1,3})$")))
+	if (regex_match(message, regex("^([A-z,]+)[|]([A-z,]+)[|]([0-9]{1,3})$")))
 	{
 		vector<string> data = split(message, '|');
 		if (data.size() != 3)
