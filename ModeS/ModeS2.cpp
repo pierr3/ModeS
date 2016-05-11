@@ -121,7 +121,7 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 {
 	CFlightPlan FlightPlan = FlightPlanSelectASEL();
 
-	if (!FlightPlan.IsValid() || !FlightPlan.GetTrackingControllerIsMe())
+	if (!FlightPlan.IsValid())
 		return;
 
 	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())

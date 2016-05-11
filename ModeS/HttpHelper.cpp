@@ -5,7 +5,7 @@ std::string LoadUpdateString(std::string url)
 {
 	HINTERNET connect = InternetOpen("MyBrowser", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if (!connect)
-		throw(std::exception { "Connection Failed" });
+		throw(std::exception { "Connection Failed. Error: " + GetLastError() });
 
 	HINTERNET OpenAddress = InternetOpenUrl(connect, url.c_str(), NULL, 0, INTERNET_FLAG_PRAGMA_NOCACHE, 0);
 	if (!OpenAddress)
