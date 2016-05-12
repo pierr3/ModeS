@@ -1,10 +1,6 @@
 #include "stdafx.h"
 #include "ModeS2.h"
-
-
-const string updateUrl = "http://www.cherryx.de/modes/modes.txt";
-const int VERSION_CODE = 903;
-const char PLUGIN_VERSION[] = "1.3.4e32";
+#include "version.h"
 
 vector<string>	EQUIPEMENT_CODES = { "H", "L", "E", "G", "W", "Q", "S" };
 vector<string>	ICAO_MODES = { "EB", "EL", "LS", "ET", "ED", "LF", "EH", "LK", "LO", "LIM", "LIR" };

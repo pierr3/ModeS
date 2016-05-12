@@ -1,12 +1,11 @@
 #pragma once
-
 #include <vector>
 #include <string>
 #include <regex>
 #include <future>
 #include <thread>
 #include <EuroScopePlugIn.h>
-#include "HttpHelper.hpp"
+#include "HttpHelper.h"
 #include "ModeSDisplay.h"
 #include "Helpers.h"
 

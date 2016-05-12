@@ -1,23 +1,25 @@
 #include "stdafx.h"
-#include "HttpHelper.hpp"
+#include "HttpHelper.h"
+#include "version.h"
 
-std::string LoadUpdateString(std::string url)
+std::string LoadUpdateString(const char * url)
 {
-	HINTERNET connect = InternetOpen("MyBrowser", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+	const std::string AGENT = "EuroScopeModeS/" + std::string { PLUGIN_VERSION };
+	HINTERNET connect = InternetOpen(AGENT.c_str(), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if (!connect)
 		throw(std::exception { "Connection Failed. Error: " + GetLastError() });
 
-	HINTERNET OpenAddress = InternetOpenUrl(connect, url.c_str(), NULL, 0, INTERNET_FLAG_PRAGMA_NOCACHE, 0);
+	HINTERNET OpenAddress = InternetOpenUrl(connect, url, NULL, 0, INTERNET_FLAG_PRAGMA_NOCACHE, 0);
 	if (!OpenAddress)
 	{
 		InternetCloseHandle(connect);
 		throw(std::exception { "Failed to open URL. Error: " + GetLastError() });
 	}
 
-	char DataReceived[4096];
+	char DataReceived[256];
 	DWORD NumberOfBytesRead = 0;
 	std::string answer {};
-	while (InternetReadFile(OpenAddress, DataReceived, 100, &NumberOfBytesRead) && NumberOfBytesRead)
+	while (InternetReadFile(OpenAddress, DataReceived, 256, &NumberOfBytesRead) && NumberOfBytesRead)
 	{
 		answer.append(DataReceived, NumberOfBytesRead);
 	}

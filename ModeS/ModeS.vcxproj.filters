@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="ModeS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -50,13 +47,16 @@
     <ClInclude Include="ModeS2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HttpHelper.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ModeSDisplay.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Helpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HttpHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

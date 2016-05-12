@@ -107,9 +107,6 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="Helpers.cpp" />
     <ClCompile Include="HttpHelper.cpp" />
     <ClCompile Include="ModeS.cpp" />
@@ -122,12 +119,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Helpers.h" />
-    <ClInclude Include="HttpHelper.hpp" />
+    <ClInclude Include="HttpHelper.h" />
     <ClInclude Include="ModeS.h" />
     <ClInclude Include="ModeS2.h" />
     <ClInclude Include="ModeSDisplay.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="version.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
