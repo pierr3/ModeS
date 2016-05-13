@@ -14,7 +14,7 @@ void doInitialLoad(string message)
 		vector<string> data = split(message, '|');
 		if (data.size() != 3)
 		{
-			MessageBox(NULL, "The mode S plugin couldn't parse the server data", "Mode S", MB_OK);
+			MessageBox(NULL, "The mode S plugin couldn't parse the server data", "Mode S", MB_OK | MB_ICONWARNING);
 			return;
 		}
 
@@ -25,12 +25,12 @@ void doInitialLoad(string message)
 
 		if (new_v > VERSION_CODE) 
 		{
-			MessageBox(NULL, "A new version of the mode S plugin is available, please update it", "Mode S", MB_OK);
+			MessageBox(NULL, "A new version of the mode S plugin is available, please update it", "Mode S", MB_OK | MB_ICONWARNING);
 		}
 	}	
 	else
 	{
-		MessageBox(NULL, "The mode S plugin couldn't parse the server data", "Mode S", MB_OK);
+		MessageBox(NULL, "The mode S plugin couldn't parse the server data", "Mode S", MB_OK | MB_ICONWARNING);
 	}
 }
 
@@ -47,12 +47,10 @@ CModeS::CModeS():CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	RegisterTagItemType("Mode S: Reported GS", TAG_ITEM_MODESREPGS);
 
 	RegisterTagItemFunction("Assign mode S squawk", TAG_FUNC_ASSIGNMODES);
+	RegisterTagItemFunction("Assign mode S/A squawk", TAG_FUNC_ASSIGNMODEAS);
 	
 	// Display to reach StartTagFunction from the normal plugin
 	RegisterDisplayType("ModeS Function Relay (no display)", false, false, false, false);
-	
-	// Function to assign code 1000 or open the assign squawk popup.
-	RegisterTagItemFunction("Assign mode S/A squawk", TAG_FUNC_ASSIGNMODEAS);
 
 	fUpdateString = async(LoadUpdateString, updateUrl);
 }
@@ -188,12 +186,14 @@ void CModeS::OnTimer(int Counter)
 			}
 			catch (std::exception& e)
 			{
-				DisplayUserMessage("Message", "Mode S", e.what(), true, false, false, false, false);
+				MessageBox(NULL, e.what(), "Mode S", MB_OK | MB_ICONWARNING);
+				//DisplayUserMessage("Message", "Mode S", e.what(), true, true, false, false, false);
 				initialLoad = true;
 			}
 			catch (...)
 			{
-				DisplayUserMessage("Message", "Mode S", "Unhandled Exception while loading data from server", true, false, false, false, false);
+				MessageBox(NULL, "Unhandled Exception while loading data from server", "Mode S", MB_OK | MB_ICONWARNING);
+				//DisplayUserMessage("Message", "Mode S", "Unhandled Exception while loading data from server", true, true, false, false, false);
 				initialLoad = true;
 			}
 		}
