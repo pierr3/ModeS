@@ -15,6 +15,7 @@ class CModeSDisplay :
 {
 public:
 	const int TAG_FUNC_ASSIGNMODEAS = 870;
+	const char* mode_s_code = "1000";
 	vector<string>* EQUIPEMENT_CODES;
 	vector<string>* ICAO_MODES;
 

@@ -125,50 +125,7 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 		string Dest = FlightPlan.GetFlightPlanData().GetDestination();
 
 		if (isApModeS(Dest, ICAO_MODES))
-			AssignModeSCode(FlightPlan, " (manual)");
-	}
-	if (FunctionId == TAG_FUNC_ASSIGNMODEAS) {
-		string Dest = FlightPlan.GetFlightPlanData().GetDestination();
-		
-		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES) && isApModeS(Dest, ICAO_MODES))
-			AssignModeSCode(FlightPlan, " (manual)");
-	}
-}
-
-void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
-{
-	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
-		return;
-
-	if (!RadarTarget.IsValid() || RadarTarget.GetPosition().IsFPTrackPosition())
-		return;
-	
-	if (RadarTarget.GetPosition().GetFlightLevel() < 24500)
-		return;
-
-	CFlightPlan flightplan = RadarTarget.GetCorrelatedFlightPlan();
-	if (!flightplan.IsValid() || !flightplan.GetTrackingControllerIsMe())
-		return;
-	
-	if (!strcmp(mode_s_code, flightplan.GetControllerAssignedData().GetSquawk()) || !isAcModeS(flightplan, EQUIPEMENT_CODES))
-		return;
-
-	string destination { flightplan.GetFlightPlanData().GetDestination() };
-	if (isApModeS(destination, ICAO_MODES))
-		AssignModeSCode(flightplan, " (auto/airborne)");
-}
-
-void CModeS::AssignModeSCode(CFlightPlan& flightplan, string mode)
-{
-	bool success{ flightplan.GetControllerAssignedData().SetSquawk(mode_s_code) };
-	
-	string message { "Code 1000 assignment to " };
-	message += flightplan.GetCallsign() + mode;
-	if (success)
-		DisplayUserMessage("ModeS", "Debug", message.c_str(), true, false, false, false, false);
-	else {
-		message += " failed";
-		DisplayUserMessage("ModeS", "Debug", message.c_str(), true, false, false, false, false);
+			FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
 	}
 }
 
@@ -178,23 +135,19 @@ void CModeS::OnTimer(int Counter)
 	{
 		if (fUpdateString.wait_for(chrono::milliseconds(0)) == future_status::ready)
 		{
+			initialLoad = true;
 			try
 			{
 				string UpdateString = fUpdateString.get();
 				doInitialLoad(UpdateString);
-				initialLoad = true;
 			}
 			catch (std::exception& e)
 			{
 				MessageBox(NULL, e.what(), "Mode S", MB_OK | MB_ICONWARNING);
-				//DisplayUserMessage("Message", "Mode S", e.what(), true, true, false, false, false);
-				initialLoad = true;
 			}
 			catch (...)
 			{
 				MessageBox(NULL, "Unhandled Exception while loading data from server", "Mode S", MB_OK | MB_ICONWARNING);
-				//DisplayUserMessage("Message", "Mode S", "Unhandled Exception while loading data from server", true, true, false, false, false);
-				initialLoad = true;
 			}
 		}
 	}
