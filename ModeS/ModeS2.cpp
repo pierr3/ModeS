@@ -113,40 +113,34 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 
 void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, RECT Area)
 {
-	CFlightPlan FlightPlan = FlightPlanSelectASEL();
+	if (FunctionId == TAG_FUNC_ASSIGNMODES) {
+		CFlightPlan FlightPlan = FlightPlanSelectASEL();
 
-	if (!FlightPlan.IsValid())
-		return;
+		if (!FlightPlan.IsValid())
+			return;
 
-	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
-		return;
+		if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
+			return;
 
-	if (FunctionId == TAG_FUNC_ASSIGNMODES && isAcModeS(FlightPlan, EQUIPEMENT_CODES)) {
-		string Dest = FlightPlan.GetFlightPlanData().GetDestination();
-
-		if (isApModeS(Dest, ICAO_MODES))
-			FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
+		string Dest { FlightPlan.GetFlightPlanData().GetDestination() };
+		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES) && isApModeS(Dest, ICAO_MODES))
+				FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
 	}
 }
 
 void CModeS::OnTimer(int Counter)
 {
-	if (!initialLoad && fUpdateString.valid())
-	{
-		if (fUpdateString.wait_for(chrono::milliseconds(0)) == future_status::ready)
-		{
+	if (!initialLoad && fUpdateString.valid()) {
+		if (fUpdateString.wait_for(chrono::milliseconds(0)) == future_status::ready) {
 			initialLoad = true;
-			try
-			{
+			try {
 				string UpdateString = fUpdateString.get();
 				doInitialLoad(UpdateString);
 			}
-			catch (std::exception& e)
-			{
+			catch (std::exception& e) {
 				MessageBox(NULL, e.what(), "Mode S", MB_OK | MB_ICONWARNING);
 			}
-			catch (...)
-			{
+			catch (...) {
 				MessageBox(NULL, "Unhandled Exception while loading data from server", "Mode S", MB_OK | MB_ICONWARNING);
 			}
 		}

@@ -9,16 +9,17 @@ void CModeSDisplay::OnFunctionCall(int FunctionId, const char * sItemString, POI
 {
 	if (FunctionId == TAG_FUNC_ASSIGNMODEAS) {
 		CFlightPlan FlightPlan = GetPlugIn()->FlightPlanSelectASEL();
+
+		if (!FlightPlan.IsValid())
+			return;
+
+		if (!GetPlugIn()->ControllerMyself().IsValid() || !GetPlugIn()->ControllerMyself().IsController())
+			return;
+
 		string Dest { FlightPlan.GetFlightPlanData().GetDestination() };
-		
-
-		if (FunctionId == TAG_FUNC_ASSIGNMODEAS) {
-			string Dest = FlightPlan.GetFlightPlanData().GetDestination();
-
-			if (isAcModeS(FlightPlan, *EQUIPEMENT_CODES) && isApModeS(Dest, *ICAO_MODES))
-				FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
-			else
-				StartTagFunction(FlightPlan.GetCallsign(), nullptr, 0, "", nullptr, TAG_ITEM_FUNCTION_SQUAWK_POPUP, Pt, Area);
-		}
+		if (isAcModeS(FlightPlan, *EQUIPEMENT_CODES) && isApModeS(Dest, *ICAO_MODES))
+			FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
+		else
+			StartTagFunction(FlightPlan.GetCallsign(), nullptr, 0, "", nullptr, TAG_ITEM_FUNCTION_SQUAWK_POPUP, Pt, Area);
 	}
 }
