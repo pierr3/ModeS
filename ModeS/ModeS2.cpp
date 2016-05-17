@@ -122,6 +122,9 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 		if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
 			return;
 
+		if (!strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V"))
+			return;
+
 		string Dest { FlightPlan.GetFlightPlanData().GetDestination() };
 		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES) && isApModeS(Dest, ICAO_MODES))
 				FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
@@ -141,6 +144,9 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 
 	CFlightPlan FlightPlan = RadarTarget.GetCorrelatedFlightPlan();
 	if (!FlightPlan.IsValid() || !FlightPlan.GetTrackingControllerIsMe())
+		return;
+
+	if (!strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V"))
 		return;
 
 	if (!isAcModeS(FlightPlan, EQUIPEMENT_CODES))

@@ -16,6 +16,9 @@ void CModeSDisplay::OnFunctionCall(int FunctionId, const char * sItemString, POI
 		if (!GetPlugIn()->ControllerMyself().IsValid() || !GetPlugIn()->ControllerMyself().IsController())
 			return;
 
+		if (!strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V"))
+			return;
+
 		string Dest { FlightPlan.GetFlightPlanData().GetDestination() };
 		if (isAcModeS(FlightPlan, *EQUIPEMENT_CODES) && isApModeS(Dest, *ICAO_MODES))
 			FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
