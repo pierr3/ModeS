@@ -128,6 +128,42 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 	}
 }
 
+void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
+{
+	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
+		return;
+
+	if (!RadarTarget.IsValid() || RadarTarget.GetPosition().IsFPTrackPosition())
+		return;
+
+	if (RadarTarget.GetPosition().GetFlightLevel() < 24500)
+		return;
+
+	CFlightPlan FlightPlan = RadarTarget.GetCorrelatedFlightPlan();
+	if (!FlightPlan.IsValid() || !FlightPlan.GetTrackingControllerIsMe())
+		return;
+
+	if (!isAcModeS(FlightPlan, EQUIPEMENT_CODES))
+		return;
+
+	auto assr = FlightPlan.GetControllerAssignedData().GetSquawk();
+	
+	if (!strcmp(mode_s_code, assr))
+		return;
+
+	if ((strlen(assr) == 0 ||
+		 strcmp(assr, "0000") == 0 ||
+		 strcmp(assr, "2000") == 0 ||
+		 strcmp(assr, "1200") == 0 ||
+		 strcmp(assr, "2200") == 0))
+	{
+		string destination { FlightPlan.GetFlightPlanData().GetDestination() };
+		
+		if (isApModeS(destination, ICAO_MODES))
+			FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
+	}
+}
+
 void CModeS::OnTimer(int Counter)
 {
 	if (!initialLoad && fUpdateString.valid()) {

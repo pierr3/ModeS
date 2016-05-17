@@ -46,6 +46,8 @@ public:
 		POINT Pt,
 		RECT Area);
 
+	void OnRadarTargetPositionUpdate(CRadarTarget RadarTarget);
+
 	void OnTimer(int Counter);
 
 	CRadarScreen * OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated);
