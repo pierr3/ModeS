@@ -3,7 +3,7 @@
 #include "version.h"
 
 vector<string>	EQUIPEMENT_CODES = { "H", "L", "E", "G", "W", "Q", "S" };
-vector<string>	ICAO_MODES = { "EB", "EL", "LS", "ET", "ED", "LF", "EH", "LK", "LO", "LIM", "LIR" };
+vector<string>	ICAO_MODES = { "EB", "EL", "ET", "ED", "LF", "EH", "LK", "LO", "LIM", "LIR" };
 
 bool initialLoad { false };
 
