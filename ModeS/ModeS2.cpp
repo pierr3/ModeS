@@ -40,7 +40,6 @@ CModeS::CModeS():CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	"Pierre Ferran / Oliver Grützmann",
 	"GPL v3")
 {
-
 	RegisterTagItemType("Transponder type", TAG_ITEM_ISMODES);
 	RegisterTagItemType("Mode S: Reported Heading", TAG_ITEM_MODESHDG); 
 	RegisterTagItemType("Mode S: Roll Angle", TAG_ITEM_MODESROLLAGL);
@@ -136,7 +135,7 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
 		return;
 
-	if (!RadarTarget.IsValid() || RadarTarget.GetPosition().IsFPTrackPosition())
+	if (RadarTarget.GetPosition().IsFPTrackPosition())
 		return;
 
 	if (RadarTarget.GetPosition().GetFlightLevel() < 24500)
@@ -165,8 +164,12 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 	{
 		string destination { FlightPlan.GetFlightPlanData().GetDestination() };
 		
-		if (isApModeS(destination, ICAO_MODES))
+		if (isApModeS(destination, ICAO_MODES)) {
+			string message { "Code 1000 assigned to " };
+			message.append(FlightPlan.GetCallsign());
+			DisplayUserMessage("Mode S", "Debug", message.c_str(), true, false, false, false, false);
 			FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
+		}
 	}
 }
 
