@@ -9,7 +9,7 @@ std::string LoadUpdateString(const char * url)
 	if (!connect)
 		throw(std::exception { "Connection Failed. Error: " + GetLastError() });
 
-	HINTERNET OpenAddress = InternetOpenUrl(connect, url, NULL, 0, INTERNET_FLAG_PRAGMA_NOCACHE, 0);
+	HINTERNET OpenAddress = InternetOpenUrl(connect, url, NULL, 0, INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD, 0);
 	if (!OpenAddress) {
 		InternetCloseHandle(connect);
 		throw(std::exception { "Failed to open URL. Error: " + GetLastError() });
