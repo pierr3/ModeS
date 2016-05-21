@@ -1,7 +1,7 @@
 # Mode S plugin
 
-This plugin was designed to simulate mode S correlation on EuroScope, for use on the VATSIM Network. Just load the plugin in EuroScope, and squawk 1000 will be assigned for capable aircraft above FL245.
-Manual assignment is available for aircraft below FL245 and aircraft on ground.
+This plugin was designed to simulate mode S correlation on EuroScope, for use on the VATSIM Network. Just load the plugin in EuroScope, and squawk 1000 will be assigned for capable aircraft above FL245 without assigned sqauwk or with generic codes like 0000, 1200, 2000, 2200.
+Manual assignment is available for all applicable aircraft and aircraft on ground.
 
 ## Available tag items
 
