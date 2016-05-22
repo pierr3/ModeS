@@ -3,6 +3,8 @@
 This plugin was designed to simulate mode S correlation on EuroScope, for use on the VATSIM Network. Just load the plugin in EuroScope, and squawk 1000 will be assigned for capable aircraft above FL245 without assigned sqauwk or with generic codes like 0000, 1200, 2000, 2200.
 Manual assignment is available for all applicable aircraft and aircraft on ground.
 
+The plugin needs the Visual C++ Redistributable for Visual Studio 2015. If you have trouble to load the plugin, install it from here: https://www.microsoft.com/en-us/download/details.aspx?id=48145
+
 ## Available tag items
 
 * Transponder type: Show wether the aircraft is mode S or not
