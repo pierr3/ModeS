@@ -29,8 +29,6 @@ public:
 
 	const char* mode_s_code = "1000";
 
-	clock_t delayedStart;
-
 	future<string> fUpdateString;
 
 	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
@@ -47,8 +45,10 @@ public:
 		RECT Area);
 
 	void OnRadarTargetPositionUpdate(CRadarTarget RadarTarget);
-
 	void OnTimer(int Counter);
-
-	CRadarScreen * OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated);
+	CRadarScreen * OnRadarScreenCreated(const char * sDisplayName, 
+										bool NeedRadarContent, 
+										bool GeoReferenced, 
+										bool CanBeSaved, 
+										bool CanBeCreated);
 };

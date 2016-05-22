@@ -5,8 +5,6 @@
 vector<string>	EQUIPEMENT_CODES = { "H", "L", "E", "G", "W", "Q", "S" };
 vector<string>	ICAO_MODES = { "EB", "EL", "ET", "ED", "LF", "EH", "LK", "LO", "LIM", "LIR" };
 
-bool initialLoad { false };
-
 void doInitialLoad(string message)
 {
 	if (regex_match(message, regex("^([A-z,]+)[|]([A-z,]+)[|]([0-9]{1,3})$")))
@@ -175,9 +173,8 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 
 void CModeS::OnTimer(int Counter)
 {
-	if (!initialLoad && fUpdateString.valid()) {
+	if (fUpdateString.valid()) {
 		if (fUpdateString.wait_for(chrono::milliseconds(0)) == future_status::ready) {
-			initialLoad = true;
 			try {
 				string UpdateString = fUpdateString.get();
 				doInitialLoad(UpdateString);
@@ -188,6 +185,7 @@ void CModeS::OnTimer(int Counter)
 			catch (...) {
 				MessageBox(NULL, "Unhandled Exception while loading data from server", "Mode S", MB_OK | MB_ICONWARNING);
 			}
+			fUpdateString = future<string>();
 		}
 	}
 }
