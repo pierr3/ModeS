@@ -1,9 +1,10 @@
 #include "stdafx.h"
 #include "ModeS2.h"
-#include "version.h"
 
-vector<string>	EQUIPEMENT_CODES = { "H", "L", "E", "G", "W", "Q", "S" };
-vector<string>	ICAO_MODES = { "EB", "EL", "ET", "ED", "LF", "EH", "LK", "LO", "LIM", "LIR" };
+//vector<string> EQUIPEMENT_CODES = { "H", "L", "E", "G", "W", "Q", "S" };
+//vector<string> ICAO_MODES = { "EB", "EL", "ET", "ED", "LF", "EH", "LK", "LO", "LIM", "LIR" };
+
+CModeSCodes msc;
 
 void doInitialLoad(string message)
 {
@@ -16,8 +17,8 @@ void doInitialLoad(string message)
 			return;
 		}
 
-		EQUIPEMENT_CODES = split(data.front(), ',');
-		ICAO_MODES = split(data.at(1), ',');
+		msc.SetEquipementCodes(split(data.front(), ','));
+		msc.SetICAOModeS(split(data.at(1), ','));
 
 		int new_v = stoi(data.back(), nullptr, 0);
 
@@ -63,7 +64,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		if (!FlightPlan.IsValid())
 			return;
 
-		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES)) {
+		if (msc.isAcModeS(FlightPlan)) {
 			strcpy_s(sItemString, 16, "S");
 		}
 		else {
@@ -76,7 +77,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
-		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES)) {
+		if (msc.isAcModeS(FlightPlan)) {
 			string rhdg = padWithZeros(3, RadarTarget.GetPosition().GetReportedHeading());
 			strcpy_s(sItemString, 16, rhdg.c_str());
 		}
@@ -87,7 +88,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
-		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES)) {
+		if (msc.isAcModeS(FlightPlan)) {
 			int rollb = RadarTarget.GetPosition().GetReportedBank();
 			string roll = "L";
 			if (rollb < 0) {
@@ -103,7 +104,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
-		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES) && FlightPlan.GetCorrelatedRadarTarget().IsValid())
+		if (msc.isAcModeS(FlightPlan) && FlightPlan.GetCorrelatedRadarTarget().IsValid())
 			strcpy_s(sItemString, 16, std::to_string(RadarTarget.GetPosition().GetReportedGS()).c_str());
 	}
 }
@@ -123,8 +124,8 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 			return;
 
 		string Dest { FlightPlan.GetFlightPlanData().GetDestination() };
-		if (isAcModeS(FlightPlan, EQUIPEMENT_CODES) && isApModeS(Dest, ICAO_MODES))
-				FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
+		if (msc.isAcModeS(FlightPlan) && msc.isApModeS(Dest))
+				FlightPlan.GetControllerAssignedData().SetSquawk(msc.ModeSCode());
 	}
 }
 
@@ -143,15 +144,15 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 	if (!FlightPlan.IsValid() || !FlightPlan.GetTrackingControllerIsMe())
 		return;
 
-	if (!strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V"))
+	if (strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
 		return;
 
-	if (!isAcModeS(FlightPlan, EQUIPEMENT_CODES))
+	if (!msc.isAcModeS(FlightPlan))
 		return;
 
 	auto assr = FlightPlan.GetControllerAssignedData().GetSquawk();
 	
-	if (!strcmp(mode_s_code, assr))
+	if (strcmp(msc.ModeSCode(), assr) == 0)
 		return;
 
 	if ((strlen(assr) == 0 ||
@@ -162,11 +163,11 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 	{
 		string destination { FlightPlan.GetFlightPlanData().GetDestination() };
 		
-		if (isApModeS(destination, ICAO_MODES)) {
+		if (msc.isApModeS(destination)) {
 			string message { "Code 1000 assigned to " };
 			message.append(FlightPlan.GetCallsign());
 			DisplayUserMessage("Mode S", "Debug", message.c_str(), true, false, false, false, false);
-			FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
+			FlightPlan.GetControllerAssignedData().SetSquawk(msc.ModeSCode());
 		}
 	}
 }
@@ -192,5 +193,5 @@ void CModeS::OnTimer(int Counter)
 
 CRadarScreen * CModeS::OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated)
 {
-	return new CModeSDisplay(&EQUIPEMENT_CODES, &ICAO_MODES);
+	return new CModeSDisplay(msc);
 }

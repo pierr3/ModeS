@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "ModeSDisplay.h"
 
-CModeSDisplay::CModeSDisplay(vector<string>* EQUIPEMENT_CODES, vector<string>*	ICAO_MODES)
-	: EQUIPEMENT_CODES(EQUIPEMENT_CODES), ICAO_MODES(ICAO_MODES)
+CModeSDisplay::CModeSDisplay(const CModeSCodes& msc)
+	: msc(msc)
 {}
 
 void CModeSDisplay::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, RECT Area)
@@ -20,8 +20,8 @@ void CModeSDisplay::OnFunctionCall(int FunctionId, const char * sItemString, POI
 			return;
 
 		string Dest { FlightPlan.GetFlightPlanData().GetDestination() };
-		if (isAcModeS(FlightPlan, *EQUIPEMENT_CODES) && isApModeS(Dest, *ICAO_MODES))
-			FlightPlan.GetControllerAssignedData().SetSquawk(mode_s_code);
+		if (msc.isAcModeS(FlightPlan) && msc.isApModeS(Dest))
+			FlightPlan.GetControllerAssignedData().SetSquawk(msc.ModeSCode());
 		else
 			StartTagFunction(FlightPlan.GetCallsign(), nullptr, 0, "", nullptr, TAG_ITEM_FUNCTION_SQUAWK_POPUP, Pt, Area);
 	}

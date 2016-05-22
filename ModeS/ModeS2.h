@@ -1,13 +1,16 @@
 #pragma once
+#include "stdafx.h"
 #include <vector>
 #include <string>
 #include <regex>
 #include <future>
 #include <thread>
 #include <EuroScopePlugIn.h>
+#include "version.h"
 #include "HttpHelper.h"
 #include "ModeSDisplay.h"
 #include "Helpers.h"
+#include "ModeSCodes.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
@@ -26,8 +29,6 @@ public:
 
 	const int TAG_FUNC_ASSIGNMODES = 869;
 	const int TAG_FUNC_ASSIGNMODEAS = 870;
-
-	const char* mode_s_code = "1000";
 
 	future<string> fUpdateString;
 
