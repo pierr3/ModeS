@@ -3,5 +3,6 @@
 #include <string>
 #include <exception>
 #include <WinInet.h>
+#include "version.h"
 
-std::string LoadUpdateString(const char * url);
+std::string LoadUpdateString();

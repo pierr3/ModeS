@@ -1,43 +1,11 @@
 #include "stdafx.h"
 #include "ModeS2.h"
 
-//vector<string> EQUIPEMENT_CODES = { "H", "L", "E", "G", "W", "Q", "S" };
-//vector<string> ICAO_MODES = { "EB", "EL", "ET", "ED", "LF", "EH", "LK", "LO", "LIM", "LIR" };
-
-CModeSCodes msc;
-
-void doInitialLoad(string message)
-{
-	if (regex_match(message, regex("^([A-z,]+)[|]([A-z,]+)[|]([0-9]{1,3})$")))
-	{
-		vector<string> data = split(message, '|');
-		if (data.size() != 3)
-		{
-			MessageBox(NULL, "The mode S plugin couldn't parse the server data", "Mode S", MB_OK | MB_ICONWARNING);
-			return;
-		}
-
-		msc.SetEquipementCodes(split(data.front(), ','));
-		msc.SetICAOModeS(split(data.at(1), ','));
-
-		int new_v = stoi(data.back(), nullptr, 0);
-
-		if (new_v > VERSION_CODE) 
-		{
-			MessageBox(NULL, "A new version of the mode S plugin is available, please update it", "Mode S", MB_OK | MB_ICONWARNING);
-		}
-	}	
-	else
-	{
-		MessageBox(NULL, "The mode S plugin couldn't parse the server data", "Mode S", MB_OK | MB_ICONWARNING);
-	}
-}
-
 CModeS::CModeS():CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
-	"Mode S PlugIn",
-	PLUGIN_VERSION,
-	"Pierre Ferran / Oliver Grützmann",
-	"GPL v3")
+						 ::PLUGIN_NAME,
+						 ::PLUGIN_VERSION,
+						 ::PLUGIN_AUTHOR,
+						 ::PLUGIN_LICENSE)
 {
 	RegisterTagItemType("Transponder type", TAG_ITEM_ISMODES);
 	RegisterTagItemType("Mode S: Reported Heading", TAG_ITEM_MODESHDG); 
@@ -50,7 +18,7 @@ CModeS::CModeS():CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	// Display to reach StartTagFunction from the normal plugin
 	RegisterDisplayType("ModeS Function Relay (no display)", false, false, false, false);
 
-	fUpdateString = async(LoadUpdateString, updateUrl);
+	fUpdateString = async(LoadUpdateString);
 }
 
 CModeS::~CModeS()
@@ -125,7 +93,7 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 
 		string Dest { FlightPlan.GetFlightPlanData().GetDestination() };
 		if (msc.isAcModeS(FlightPlan) && msc.isApModeS(Dest))
-				FlightPlan.GetControllerAssignedData().SetSquawk(msc.ModeSCode());
+				FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 	}
 }
 
@@ -152,7 +120,7 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 
 	auto assr = FlightPlan.GetControllerAssignedData().GetSquawk();
 	
-	if (strcmp(msc.ModeSCode(), assr) == 0)
+	if (strcmp(::mode_s_code, assr) == 0)
 		return;
 
 	if ((strlen(assr) == 0 ||
@@ -162,12 +130,11 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 		 strcmp(assr, "2200") == 0))
 	{
 		string destination { FlightPlan.GetFlightPlanData().GetDestination() };
-		
 		if (msc.isApModeS(destination)) {
 			string message { "Code 1000 assigned to " };
 			message.append(FlightPlan.GetCallsign());
 			DisplayUserMessage("Mode S", "Debug", message.c_str(), true, false, false, false, false);
-			FlightPlan.GetControllerAssignedData().SetSquawk(msc.ModeSCode());
+			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 		}
 	}
 }
@@ -178,13 +145,13 @@ void CModeS::OnTimer(int Counter)
 		if (fUpdateString.wait_for(chrono::milliseconds(0)) == future_status::ready) {
 			try {
 				string UpdateString = fUpdateString.get();
-				doInitialLoad(UpdateString);
+				DoInitialLoad(UpdateString);
 			}
 			catch (std::exception& e) {
-				MessageBox(NULL, e.what(), "Mode S", MB_OK | MB_ICONWARNING);
+				MessageBox(NULL, e.what(), "Mode S", MB_OK | MB_ICONERROR);
 			}
-			catch (...) {
-				MessageBox(NULL, "Unhandled Exception while loading data from server", "Mode S", MB_OK | MB_ICONWARNING);
+			catch (std::string &s) {
+				MessageBox(NULL, s.c_str(), "Mode S", MB_OK | MB_ICONWARNING);
 			}
 			fUpdateString = future<string>();
 		}
@@ -194,4 +161,23 @@ void CModeS::OnTimer(int Counter)
 CRadarScreen * CModeS::OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated)
 {
 	return new CModeSDisplay(msc);
+}
+
+void CModeS::DoInitialLoad(string & message)
+{
+	if (regex_match(message, regex("^([A-z,]+)[|]([A-z,]+)[|]([0-9]{1,3})$")))
+	{
+		vector<string> data = split(message, '|');
+		if (data.size() != 3)
+			throw std::exception { "The mode S plugin couldn't parse the server data" };
+
+		msc.SetEquipementCodes(split(data.front(), ','));
+		msc.SetICAOModeS(split(data.at(1), ','));
+
+		int new_v = stoi(data.back(), nullptr, 0);
+		if (new_v > VERSION_CODE)
+			throw std::string { "A new version of the mode S plugin is available, please update it" };
+	}
+	else
+		throw std::exception { "The mode S plugin couldn't parse the server data" };
 }

@@ -2,6 +2,7 @@
 #include <EuroScopePlugIn.h>
 #include <vector>
 #include <string>
+#include "version.h"
 
 using namespace std;
 
@@ -15,15 +16,13 @@ public:
 
 	bool isAcModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
 	bool isApModeS(const std::string& icao) const;
-	const char * ModeSCode() const;
 
 	void SetEquipementCodes(vector<string>&& EQUIPEMENT_CODES);
 	void SetICAOModeS(vector<string>&& ICAO_MODES);
 
 private:
-	const char * mode_s_code = "1000";
-	vector<string> EQUIPEMENT_CODES { "H", "L", "E", "G", "W", "Q", "S" };
-	vector<string> ICAO_MODES { "EB", "EL", "ET", "ED", "LF", "EH", "LK", "LO", "LIM", "LIR" };
+	vector<string> EQUIPEMENT_CODES;
+	vector<string> ICAO_MODES;
 
 	static bool startsWith(const char *pre, const char *str);
 	static bool startsWith(const string& zone, const string& icao);

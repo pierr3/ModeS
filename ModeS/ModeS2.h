@@ -1,5 +1,4 @@
 #pragma once
-#include "stdafx.h"
 #include <vector>
 #include <string>
 #include <regex>
@@ -9,8 +8,8 @@
 #include "version.h"
 #include "HttpHelper.h"
 #include "ModeSDisplay.h"
-#include "Helpers.h"
 #include "ModeSCodes.h"
+#include "Helpers.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
@@ -31,6 +30,7 @@ public:
 	const int TAG_FUNC_ASSIGNMODEAS = 870;
 
 	future<string> fUpdateString;
+	CModeSCodes msc;
 
 	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
 		int ItemCode,
@@ -52,4 +52,6 @@ public:
 										bool GeoReferenced, 
 										bool CanBeSaved, 
 										bool CanBeCreated);
+
+	void DoInitialLoad(string& message);
 };

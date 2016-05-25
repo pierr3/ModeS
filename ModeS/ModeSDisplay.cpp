@@ -21,7 +21,7 @@ void CModeSDisplay::OnFunctionCall(int FunctionId, const char * sItemString, POI
 
 		string Dest { FlightPlan.GetFlightPlanData().GetDestination() };
 		if (msc.isAcModeS(FlightPlan) && msc.isApModeS(Dest))
-			FlightPlan.GetControllerAssignedData().SetSquawk(msc.ModeSCode());
+			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 		else
 			StartTagFunction(FlightPlan.GetCallsign(), nullptr, 0, "", nullptr, TAG_ITEM_FUNCTION_SQUAWK_POPUP, Pt, Area);
 	}
