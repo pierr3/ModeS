@@ -4,9 +4,9 @@
 #include <regex>
 #include <future>
 #include <thread>
+#include <exception>
 #include <EuroScopePlugIn.h>
 #include "version.h"
-#include "HttpHelper.h"
 #include "ModeSDisplay.h"
 #include "ModeSCodes.h"
 #include "Helpers.h"

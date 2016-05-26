@@ -3,11 +3,15 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
-#include <EuroScopePlugIn.h>
+#include <exception>
+#include <WinInet.h>
+#include "version.h"
+
+std::string LoadUpdateString();
 
 inline std::string padWithZeros(int padding, int s)
 {
-	std::stringstream ss;
+	std::ostringstream ss;
 	ss << std::setfill('0') << std::setw(padding) << s;
 	return ss.str();
 }
