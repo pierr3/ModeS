@@ -7,7 +7,7 @@
 #include <WinInet.h>
 #include "version.h"
 
-std::string LoadUpdateString();
+std::string LoadUpdateString(const PluginData& p);
 
 inline std::string padWithZeros(int padding, int s)
 {
@@ -26,3 +26,33 @@ inline std::vector<std::string> split(const std::string &s, char delim)
 		elems.push_back(item);
 	return elems;
 }
+
+class modesexception
+	: public std::exception
+{
+public:
+	modesexception(const char * what) : std::exception { what }{}
+	inline virtual const long icon() const = 0;
+};
+
+class error 
+	: public modesexception
+{
+public:
+	error(const char * what) : modesexception { what }{}
+	inline const long icon() const
+	{
+		return MB_ICONERROR;
+	}
+};
+
+class warning 
+	: public modesexception
+{
+public:
+	warning(const char * what) : modesexception { what }{}
+	inline const long icon() const
+	{
+		return MB_ICONWARNING;
+	}
+};

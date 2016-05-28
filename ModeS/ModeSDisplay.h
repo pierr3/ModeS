@@ -4,7 +4,6 @@
 #include "EuroScopePlugIn.h"
 #include "ModeSCodes.h"
 #include "Helpers.h"
-#include "version.h"
 
 // Class for calling Tag Item Functions, to be able to open the standard
 // squawk assignment menu
@@ -25,6 +24,5 @@ public:
 	void OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, RECT Area);
 
 private:
-	const int TAG_FUNC_ASSIGNMODEAS = 870;
 	const CModeSCodes& msc;
 };

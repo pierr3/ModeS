@@ -1,24 +1,26 @@
 #include "stdafx.h"
 #include "ModeS2.h"
 
-CModeS::CModeS():CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
-						 ::PLUGIN_NAME,
-						 ::PLUGIN_VERSION,
-						 ::PLUGIN_AUTHOR,
-						 ::PLUGIN_LICENSE)
+CModeS::CModeS(PluginData&& p)
+	: CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
+			  p.PLUGIN_NAME,
+			  p.PLUGIN_VERSION,
+			  p.PLUGIN_AUTHOR,
+			  p.PLUGIN_LICENSE),
+	pluginData(std::move(p))
 {
-	RegisterTagItemType("Transponder type", TAG_ITEM_ISMODES);
-	RegisterTagItemType("Mode S: Reported Heading", TAG_ITEM_MODESHDG); 
-	RegisterTagItemType("Mode S: Roll Angle", TAG_ITEM_MODESROLLAGL);
-	RegisterTagItemType("Mode S: Reported GS", TAG_ITEM_MODESREPGS);
+	RegisterTagItemType("Transponder type", ItemCodes::TAG_ITEM_ISMODES);
+	RegisterTagItemType("Mode S: Reported Heading", ItemCodes::TAG_ITEM_MODESHDG);
+	RegisterTagItemType("Mode S: Roll Angle", ItemCodes::TAG_ITEM_MODESROLLAGL);
+	RegisterTagItemType("Mode S: Reported GS", ItemCodes::TAG_ITEM_MODESREPGS);
 
-	RegisterTagItemFunction("Assign mode S squawk", TAG_FUNC_ASSIGNMODES);
-	RegisterTagItemFunction("Assign mode S/A squawk", TAG_FUNC_ASSIGNMODEAS);
-	
+	RegisterTagItemFunction("Assign mode S squawk", ItemCodes::TAG_FUNC_ASSIGNMODEAS);
+	RegisterTagItemFunction("Assign mode S/A squawk", ItemCodes::TAG_FUNC_ASSIGNMODEAS);
+
 	// Display to reach StartTagFunction from the normal plugin
 	RegisterDisplayType("ModeS Function Relay (no display)", false, false, false, false);
 
-	fUpdateString = async(LoadUpdateString);
+	fUpdateString = async(LoadUpdateString, pluginData);
 }
 
 CModeS::~CModeS()
@@ -28,7 +30,7 @@ CModeS::~CModeS()
 void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int ItemCode, int TagData, char sItemString[16], int * pColorCode, COLORREF * pRGB, double * pFontSize)
 {
 
-	if (ItemCode == TAG_ITEM_ISMODES) {
+	if (ItemCode == ItemCodes::TAG_ITEM_ISMODES) {
 		if (!FlightPlan.IsValid())
 			return;
 
@@ -40,7 +42,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		}
 	}
 
-	if (ItemCode == TAG_ITEM_MODESHDG)
+	if (ItemCode == ItemCodes::TAG_ITEM_MODESHDG)
 	{
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
@@ -51,7 +53,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		}
 	}
 
-	if (ItemCode == TAG_ITEM_MODESROLLAGL)
+	if (ItemCode == ItemCodes::TAG_ITEM_MODESROLLAGL)
 	{
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
@@ -68,7 +70,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		}
 	}
 
-	if (ItemCode == TAG_ITEM_MODESREPGS) {
+	if (ItemCode == ItemCodes::TAG_ITEM_MODESREPGS) {
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
@@ -77,9 +79,22 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 	}
 }
 
+void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
+{
+	if (!FlightPlan.GetTrackingControllerIsMe())
+		ProcessedFlightPlans.erase(std::remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()), 
+								   ProcessedFlightPlans.end());
+}
+
+void CModeS::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
+{
+	ProcessedFlightPlans.erase(std::remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()), 
+							   ProcessedFlightPlans.end());
+}
+
 void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, RECT Area)
 {
-	if (FunctionId == TAG_FUNC_ASSIGNMODES) {
+	if (FunctionId == ItemCodes::TAG_FUNC_ASSIGNMODES) {
 		CFlightPlan FlightPlan = FlightPlanSelectASEL();
 
 		if (!FlightPlan.IsValid())
@@ -102,10 +117,8 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
 		return;
 
-	if (RadarTarget.GetPosition().IsFPTrackPosition())
-		return;
-
-	if (RadarTarget.GetPosition().GetFlightLevel() < 24500)
+	if (RadarTarget.GetPosition().IsFPTrackPosition() || 
+		RadarTarget.GetPosition().GetFlightLevel() < 24500)
 		return;
 
 	CFlightPlan FlightPlan = RadarTarget.GetCorrelatedFlightPlan();
@@ -119,11 +132,19 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 		return;
 
 	auto assr = FlightPlan.GetControllerAssignedData().GetSquawk();
-	
+
 	if (strcmp(::mode_s_code, assr) == 0)
 		return;
 
+	//Check if we already processed this FlightPlan
+	for (auto& pfp : ProcessedFlightPlans)
+		if (pfp.compare(FlightPlan.GetCallsign()) == 0)
+			return;
+	ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
+
+	auto squawk = RadarTarget.GetPosition().GetSquawk();
 	if ((strlen(assr) == 0 ||
+		 strcmp(assr, squawk) != 0 ||
 		 strcmp(assr, "0000") == 0 ||
 		 strcmp(assr, "2000") == 0 ||
 		 strcmp(assr, "1200") == 0 ||
@@ -131,9 +152,10 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 	{
 		string destination { FlightPlan.GetFlightPlanData().GetDestination() };
 		if (msc.isApModeS(destination)) {
-			string message { "Code 1000 assigned to " };
-			message.append(FlightPlan.GetCallsign());
+#ifndef NDEBUG
+			string message { "Code 1000 assigned to " + std::string { FlightPlan.GetCallsign() } };
 			DisplayUserMessage("Mode S", "Debug", message.c_str(), true, false, false, false, false);
+#endif
 			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 		}
 	}
@@ -142,20 +164,21 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 void CModeS::OnTimer(int Counter)
 {
 	if (fUpdateString.valid()) {
-		if (fUpdateString.wait_for(chrono::milliseconds(0)) == future_status::ready) {
+		if (fUpdateString.wait_for(0ms) == future_status::ready) {
 			try {
 				string UpdateString = fUpdateString.get();
 				DoInitialLoad(UpdateString);
 			}
+			catch (modesexception& e) {
+				MessageBox(NULL, e.what(), "Mode S", MB_OK | e.icon());
+			}
 			catch (std::exception& e) {
 				MessageBox(NULL, e.what(), "Mode S", MB_OK | MB_ICONERROR);
-			}
-			catch (std::string &s) {
-				MessageBox(NULL, s.c_str(), "Mode S", MB_OK | MB_ICONWARNING);
 			}
 			fUpdateString = future<string>();
 		}
 	}
+
 }
 
 CRadarScreen * CModeS::OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated)
@@ -169,15 +192,15 @@ void CModeS::DoInitialLoad(string & message)
 	{
 		vector<string> data = split(message, '|');
 		if (data.size() != 3)
-			throw std::exception { "The mode S plugin couldn't parse the server data" };
+			throw error { "The mode S plugin couldn't parse the server data" };
 
 		msc.SetEquipementCodes(split(data.front(), ','));
 		msc.SetICAOModeS(split(data.at(1), ','));
 
 		int new_v = stoi(data.back(), nullptr, 0);
-		if (new_v > VERSION_CODE)
-			throw std::string { "A new version of the mode S plugin is available, please update it" };
+		if (new_v > pluginData.VERSION_CODE)
+			throw warning { "A new version of the mode S plugin is available, please update it" };
 	}
 	else
-		throw std::exception { "The mode S plugin couldn't parse the server data" };
+		throw error { "The mode S plugin couldn't parse the server data" };
 }

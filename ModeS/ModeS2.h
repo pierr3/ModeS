@@ -6,7 +6,6 @@
 #include <thread>
 #include <exception>
 #include <EuroScopePlugIn.h>
-#include "version.h"
 #include "ModeSDisplay.h"
 #include "ModeSCodes.h"
 #include "Helpers.h"
@@ -18,20 +17,15 @@ class CModeS :
 	public EuroScopePlugIn::CPlugIn
 {
 public:
-	CModeS();
+	CModeS(PluginData&& p);
 	~CModeS();
 
-	const int TAG_ITEM_ISMODES = 501;
-	const int TAG_ITEM_MODESHDG = 502;
-	const int TAG_ITEM_MODESROLLAGL = 503;
-	const int TAG_ITEM_MODESREPGS = 504;
+	std::future<string> fUpdateString;
+	std::vector<std::string> ProcessedFlightPlans;
 
-	const int TAG_FUNC_ASSIGNMODES = 869;
-	const int TAG_FUNC_ASSIGNMODEAS = 870;
-
-	future<string> fUpdateString;
 	CModeSCodes msc;
-
+	const PluginData pluginData;
+	
 	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
 		int ItemCode,
 		int TagData,
@@ -39,6 +33,9 @@ public:
 		int * pColorCode,
 		COLORREF * pRGB,
 		double * pFontSize);
+
+	void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
+	void OnFlightPlanDisconnect(CFlightPlan FlightPlan);
 
 	void OnFunctionCall(int FunctionId,
 		const char * sItemString,

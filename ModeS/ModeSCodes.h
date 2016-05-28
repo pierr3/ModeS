@@ -2,7 +2,6 @@
 #include <EuroScopePlugIn.h>
 #include <vector>
 #include <string>
-#include "version.h"
 
 using namespace std;
 

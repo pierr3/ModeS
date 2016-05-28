@@ -3,8 +3,9 @@
 
 CModeSCodes::CModeSCodes()
 {
-	EQUIPEMENT_CODES = ::EQUIPEMENT_CODES;
-	ICAO_MODES = ::ICAO_MODES;
+	DefaultCodes dc;
+	EQUIPEMENT_CODES = std::move(dc.EQUIPEMENT_CODES);
+	ICAO_MODES = std::move(dc.ICAO_MODES);
 }
 
 CModeSCodes::CModeSCodes(vector<string>& EQUIPEMENT_CODES, vector<string>& ICAO_MODES)

@@ -7,7 +7,7 @@ CModeSDisplay::CModeSDisplay(const CModeSCodes& msc)
 
 void CModeSDisplay::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, RECT Area)
 {
-	if (FunctionId == TAG_FUNC_ASSIGNMODEAS) {
+	if (FunctionId == ItemCodes::TAG_FUNC_ASSIGNMODEAS) {
 		CFlightPlan FlightPlan = GetPlugIn()->FlightPlanSelectASEL();
 
 		if (!FlightPlan.IsValid())
