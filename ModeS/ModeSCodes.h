@@ -3,26 +3,25 @@
 #include <vector>
 #include <string>
 
-using namespace std;
-
 class CModeSCodes
 {
 public:
-	CModeSCodes();
-	CModeSCodes(vector<string>& EQUIPEMENT_CODES, vector<string>& ICAO_MODES);
-	CModeSCodes(vector<string>&& EQUIPEMENT_CODES, vector<string>&& ICAO_MODES);
+	explicit CModeSCodes(const DefaultCodes && dc = DefaultCodes());
+	CModeSCodes(std::vector<std::string> & EQUIPEMENT_CODES, std::vector<std::string> & ICAO_MODES);
+	CModeSCodes(std::vector<std::string> && EQUIPEMENT_CODES, std::vector<std::string> && ICAO_MODES);
 	virtual ~CModeSCodes();
 
-	bool isAcModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
-	bool isApModeS(const std::string& icao) const;
+	bool isAcModeS(const EuroScopePlugIn::CFlightPlan & FlightPlan) const;
+	bool isApModeS(const std::string & icao) const;
+	bool isFlightModeS(const EuroScopePlugIn::CFlightPlan & FlightPlan) const;
 
-	void SetEquipementCodes(vector<string>&& EQUIPEMENT_CODES);
-	void SetICAOModeS(vector<string>&& ICAO_MODES);
+	void SetEquipementCodes(std::vector<std::string> && EQUIPEMENT_CODES);
+	void SetICAOModeS(std::vector<std::string> && ICAO_MODES);
 
 private:
-	vector<string> EQUIPEMENT_CODES;
-	vector<string> ICAO_MODES;
+	std::vector<std::string> EQUIPEMENT_CODES;
+	std::vector<std::string> ICAO_MODES;
 
-	static bool startsWith(const char *pre, const char *str);
-	static bool startsWith(const string& zone, const string& icao);
+	static bool startsWith(const char * pre, const char * str);
+	static bool startsWith(const std::string & zone, const std::string & icao);
 };

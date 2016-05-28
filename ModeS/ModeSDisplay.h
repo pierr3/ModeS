@@ -15,14 +15,11 @@ class CModeSDisplay :
 	public EuroScopePlugIn::CRadarScreen
 {
 public:
-	explicit CModeSDisplay(const CModeSCodes& msc);
-	virtual ~CModeSDisplay(){}
-	inline void OnAsrContentToBeClosed()
-	{
-		delete this;
-	}
+	explicit CModeSDisplay(const CModeSCodes & msc);
+	virtual ~CModeSDisplay() {}
+	inline void OnAsrContentToBeClosed() { delete this; }
 	void OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, RECT Area);
 
 private:
-	const CModeSCodes& msc;
+	const CModeSCodes &ModeSCodes;
 };

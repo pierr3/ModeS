@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Helpers.h"
 
-std::string LoadUpdateString(const PluginData& p)
+std::string LoadUpdateString(const PluginData & p)
 {
 	const std::string AGENT { "EuroScopeModeS/" + std::string { p.PLUGIN_VERSION } };
 	HINTERNET connect = InternetOpen(AGENT.c_str(), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);

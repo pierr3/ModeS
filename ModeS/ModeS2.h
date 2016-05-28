@@ -17,38 +17,38 @@ class CModeS :
 	public EuroScopePlugIn::CPlugIn
 {
 public:
-	CModeS(PluginData&& p);
+	explicit CModeS(PluginData && p = PluginData());
 	~CModeS();
 
-	std::future<string> fUpdateString;
-	std::vector<std::string> ProcessedFlightPlans;
+	future<string> fUpdateString;
+	vector<string> ProcessedFlightPlans;
 
 	CModeSCodes msc;
 	const PluginData pluginData;
-	
+
 	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
-		int ItemCode,
-		int TagData,
-		char sItemString[16],
-		int * pColorCode,
-		COLORREF * pRGB,
-		double * pFontSize);
+					  int ItemCode,
+					  int TagData,
+					  char sItemString[16],
+					  int * pColorCode,
+					  COLORREF * pRGB,
+					  double * pFontSize);
 
 	void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
 	void OnFlightPlanDisconnect(CFlightPlan FlightPlan);
 
 	void OnFunctionCall(int FunctionId,
-		const char * sItemString,
-		POINT Pt,
-		RECT Area);
+						const char * sItemString,
+						POINT Pt,
+						RECT Area);
 
 	void OnRadarTargetPositionUpdate(CRadarTarget RadarTarget);
 	void OnTimer(int Counter);
-	CRadarScreen * OnRadarScreenCreated(const char * sDisplayName, 
-										bool NeedRadarContent, 
-										bool GeoReferenced, 
-										bool CanBeSaved, 
+	CRadarScreen * OnRadarScreenCreated(const char * sDisplayName,
+										bool NeedRadarContent,
+										bool GeoReferenced,
+										bool CanBeSaved,
 										bool CanBeCreated);
 
-	void DoInitialLoad(string& message);
+	void DoInitialLoad(const string & message);
 };

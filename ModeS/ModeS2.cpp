@@ -1,13 +1,13 @@
 #include "stdafx.h"
 #include "ModeS2.h"
 
-CModeS::CModeS(PluginData&& p)
-	: CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
-			  p.PLUGIN_NAME,
-			  p.PLUGIN_VERSION,
-			  p.PLUGIN_AUTHOR,
-			  p.PLUGIN_LICENSE),
-	pluginData(std::move(p))
+CModeS::CModeS(PluginData && pd) :
+	CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
+			pd.PLUGIN_NAME,
+			pd.PLUGIN_VERSION,
+			pd.PLUGIN_AUTHOR,
+			pd.PLUGIN_LICENSE),
+	pluginData(move(pd))
 {
 	RegisterTagItemType("Transponder type", ItemCodes::TAG_ITEM_ISMODES);
 	RegisterTagItemType("Mode S: Reported Heading", ItemCodes::TAG_ITEM_MODESHDG);
@@ -20,16 +20,15 @@ CModeS::CModeS(PluginData&& p)
 	// Display to reach StartTagFunction from the normal plugin
 	RegisterDisplayType("ModeS Function Relay (no display)", false, false, false, false);
 
+	// Start new thread to get the version file from the server
 	fUpdateString = async(LoadUpdateString, pluginData);
 }
 
 CModeS::~CModeS()
-{
-}
+{}
 
 void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int ItemCode, int TagData, char sItemString[16], int * pColorCode, COLORREF * pRGB, double * pFontSize)
 {
-
 	if (ItemCode == ItemCodes::TAG_ITEM_ISMODES) {
 		if (!FlightPlan.IsValid())
 			return;
@@ -42,8 +41,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		}
 	}
 
-	if (ItemCode == ItemCodes::TAG_ITEM_MODESHDG)
-	{
+	if (ItemCode == ItemCodes::TAG_ITEM_MODESHDG) {
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
@@ -53,8 +51,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		}
 	}
 
-	if (ItemCode == ItemCodes::TAG_ITEM_MODESROLLAGL)
-	{
+	if (ItemCode == ItemCodes::TAG_ITEM_MODESROLLAGL) {
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
@@ -64,7 +61,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 			if (rollb < 0) {
 				roll = "R";
 			}
-			roll += std::to_string(abs(rollb));
+			roll += to_string(abs(rollb));
 
 			strcpy_s(sItemString, 16, roll.c_str());
 		}
@@ -75,20 +72,20 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 			return;
 
 		if (msc.isAcModeS(FlightPlan) && FlightPlan.GetCorrelatedRadarTarget().IsValid())
-			strcpy_s(sItemString, 16, std::to_string(RadarTarget.GetPosition().GetReportedGS()).c_str());
+			strcpy_s(sItemString, 16, to_string(RadarTarget.GetPosition().GetReportedGS()).c_str());
 	}
 }
 
 void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 {
 	if (!FlightPlan.GetTrackingControllerIsMe())
-		ProcessedFlightPlans.erase(std::remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()), 
+		ProcessedFlightPlans.erase(remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()),
 								   ProcessedFlightPlans.end());
 }
 
 void CModeS::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
 {
-	ProcessedFlightPlans.erase(std::remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()), 
+	ProcessedFlightPlans.erase(remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()),
 							   ProcessedFlightPlans.end());
 }
 
@@ -108,7 +105,7 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 
 		string Dest { FlightPlan.GetFlightPlanData().GetDestination() };
 		if (msc.isAcModeS(FlightPlan) && msc.isApModeS(Dest))
-				FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
+			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 	}
 }
 
@@ -117,7 +114,7 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
 		return;
 
-	if (RadarTarget.GetPosition().IsFPTrackPosition() || 
+	if (RadarTarget.GetPosition().IsFPTrackPosition() ||
 		RadarTarget.GetPosition().GetFlightLevel() < 24500)
 		return;
 
@@ -142,18 +139,17 @@ void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 			return;
 	ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
 
-	auto squawk = RadarTarget.GetPosition().GetSquawk();
+	auto pssr = RadarTarget.GetPosition().GetSquawk();
 	if ((strlen(assr) == 0 ||
-		 strcmp(assr, squawk) != 0 ||
+		 strcmp(assr, pssr) != 0 ||
 		 strcmp(assr, "0000") == 0 ||
 		 strcmp(assr, "2000") == 0 ||
 		 strcmp(assr, "1200") == 0 ||
-		 strcmp(assr, "2200") == 0))
-	{
+		 strcmp(assr, "2200") == 0)) {
 		string destination { FlightPlan.GetFlightPlanData().GetDestination() };
 		if (msc.isApModeS(destination)) {
 #ifndef NDEBUG
-			string message { "Code 1000 assigned to " + std::string { FlightPlan.GetCallsign() } };
+			string message { "Code 1000 assigned to " + string { FlightPlan.GetCallsign() } };
 			DisplayUserMessage("Mode S", "Debug", message.c_str(), true, false, false, false, false);
 #endif
 			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
@@ -166,19 +162,17 @@ void CModeS::OnTimer(int Counter)
 	if (fUpdateString.valid()) {
 		if (fUpdateString.wait_for(0ms) == future_status::ready) {
 			try {
-				string UpdateString = fUpdateString.get();
-				DoInitialLoad(UpdateString);
+				DoInitialLoad(fUpdateString.get());
 			}
-			catch (modesexception& e) {
+			catch (modesexception &e) {
 				MessageBox(NULL, e.what(), "Mode S", MB_OK | e.icon());
 			}
-			catch (std::exception& e) {
+			catch (exception &e) {
 				MessageBox(NULL, e.what(), "Mode S", MB_OK | MB_ICONERROR);
 			}
 			fUpdateString = future<string>();
 		}
 	}
-
 }
 
 CRadarScreen * CModeS::OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated)
@@ -186,10 +180,9 @@ CRadarScreen * CModeS::OnRadarScreenCreated(const char * sDisplayName, bool Need
 	return new CModeSDisplay(msc);
 }
 
-void CModeS::DoInitialLoad(string & message)
+void CModeS::DoInitialLoad(const string & message)
 {
-	if (regex_match(message, regex("^([A-z,]+)[|]([A-z,]+)[|]([0-9]{1,3})$")))
-	{
+	if (regex_match(message, regex("^([A-z,]+)[|]([A-z,]+)[|]([0-9]{1,3})$"))) {
 		vector<string> data = split(message, '|');
 		if (data.size() != 3)
 			throw error { "The mode S plugin couldn't parse the server data" };
