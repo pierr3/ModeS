@@ -5,6 +5,7 @@
 #include <future>
 #include <thread>
 #include <exception>
+#include <cstdio>
 #include <EuroScopePlugIn.h>
 #include "ModeSDisplay.h"
 #include "ModeSCodes.h"

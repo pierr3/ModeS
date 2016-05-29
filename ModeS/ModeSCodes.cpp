@@ -65,5 +65,7 @@ inline bool CModeSCodes::startsWith(const char * pre, const char * str)
 
 inline bool CModeSCodes::startsWith(const std::string & zone, const std::string & icao)
 {
-	return zone.compare(0, zone.length(), icao, 0, zone.length()) == 0;
+	if (zone.compare(0, zone.length(), icao, 0, zone.length()) == 0)
+		return true;
+	return false;
 }

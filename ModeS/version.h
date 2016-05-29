@@ -16,7 +16,7 @@ struct ItemCodes
 {
 	enum ItemTypes : int
 	{
-		TAG_ITEM_ISMODES = 1,
+		TAG_ITEM_ISMODES = 501,
 		TAG_ITEM_MODESHDG,
 		TAG_ITEM_MODESROLLAGL,
 		TAG_ITEM_MODESREPGS
@@ -24,7 +24,7 @@ struct ItemCodes
 
 	enum ItemFunctions : int
 	{
-		TAG_FUNC_ASSIGNMODES = 1,
+		TAG_FUNC_ASSIGNMODES = 869,
 		TAG_FUNC_ASSIGNMODEAS
 	};
 };

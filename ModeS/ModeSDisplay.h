@@ -8,9 +8,6 @@
 // Class for calling Tag Item Functions, to be able to open the standard
 // squawk assignment menu
 
-using namespace std;
-using namespace EuroScopePlugIn;
-
 class CModeSDisplay :
 	public EuroScopePlugIn::CRadarScreen
 {
