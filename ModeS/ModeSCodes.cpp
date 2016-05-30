@@ -6,16 +6,6 @@ CModeSCodes::CModeSCodes(const DefaultCodes && dc) :
 	ICAO_MODES(std::move(dc.ICAO_MODES))
 {}
 
-CModeSCodes::CModeSCodes(std::vector<std::string> & EQUIPEMENT_CODES, std::vector<std::string> & ICAO_MODES) :
-	EQUIPEMENT_CODES(EQUIPEMENT_CODES),
-	ICAO_MODES(ICAO_MODES)
-{}
-
-CModeSCodes::CModeSCodes(std::vector<std::string> && EQUIPEMENT_CODES, std::vector<std::string> && ICAO_MODES) :
-	EQUIPEMENT_CODES(std::move(EQUIPEMENT_CODES)),
-	ICAO_MODES(std::move(ICAO_MODES))
-{}
-
 CModeSCodes::~CModeSCodes() 
 {}
 

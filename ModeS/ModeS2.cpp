@@ -1,13 +1,13 @@
 #include "stdafx.h"
 #include "ModeS2.h"
 
-CModeS::CModeS(PluginData && pd) :
+CModeS::CModeS(PluginData pd) :
 	CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 			pd.PLUGIN_NAME,
 			pd.PLUGIN_VERSION,
 			pd.PLUGIN_AUTHOR,
 			pd.PLUGIN_LICENSE),
-	pluginData(move(pd))
+	pluginData(pd)
 {
 	RegisterTagItemType("Transponder type", ItemCodes::TAG_ITEM_ISMODES);
 	RegisterTagItemType("Mode S: Reported Heading", ItemCodes::TAG_ITEM_MODESHDG);
@@ -21,7 +21,7 @@ CModeS::CModeS(PluginData && pd) :
 	RegisterDisplayType("ModeS Function Relay (no display)", false, false, false, false);
 
 	// Start new thread to get the version file from the server
-	fUpdateString = async(LoadUpdateString, pluginData);
+	fUpdateString = async(LoadUpdateString, pd);
 }
 
 CModeS::~CModeS()
@@ -97,87 +97,101 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 	}
 }
 
-void CModeS::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
-{
-	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
-		return;
-
-	if (RadarTarget.GetPosition().IsFPTrackPosition() ||
-		RadarTarget.GetPosition().GetFlightLevel() < 24500)
-		return;
-
-	CFlightPlan FlightPlan = RadarTarget.GetCorrelatedFlightPlan();
-	if (!FlightPlan.IsValid() || !FlightPlan.GetTrackingControllerIsMe())
-		return;
-
-	//Check if we already processed this FlightPlan
-	for (auto& pfp : ProcessedFlightPlans)
-		if (pfp.compare(FlightPlan.GetCallsign()) == 0)
-			return;
-	ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
-
-	if (strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
-		return;
-
-	if (!msc.isAcModeS(FlightPlan) || !msc.isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
-		return;
-
-	auto assr = FlightPlan.GetControllerAssignedData().GetSquawk();
-	if (strcmp(::mode_s_code, assr) == 0)
-		return;
-
-	auto pssr = RadarTarget.GetPosition().GetSquawk();
-	if ((strlen(assr) == 0 ||
-		 strcmp(assr, pssr) != 0 ||
-		 strcmp(assr, "0000") == 0 ||
-		 strcmp(assr, "2000") == 0 ||
-		 strcmp(assr, "1200") == 0 ||
-		 strcmp(assr, "2200") == 0)) {
-		FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
-		
-		// Debug message, to be removed
-		string message { "Code 1000 assigned to " + string { FlightPlan.GetCallsign() } };
-		DisplayUserMessage("Mode S", "Debug", message.c_str(), true, false, false, false, false);
-	}
-}
-
 void CModeS::OnTimer(int Counter)
 {
-	if (fUpdateString.valid()) {
-		if (fUpdateString.wait_for(0ms) == future_status::ready) {
-			try {
-				DoInitialLoad(fUpdateString.get());
-			}
-			catch (modesexception & e) {
-				MessageBox(NULL, e.what(), "Mode S", MB_OK | e.icon());
-			}
-			catch (exception & e) {
-				MessageBox(NULL, e.what(), "Mode S", MB_OK | MB_ICONERROR);
-			}
-			fUpdateString = future<string>();
-		}
-	}
+	if (fUpdateString.valid() && fUpdateString.wait_for(0ms) == future_status::ready)
+		DoInitialLoad(fUpdateString);
+	
+	if (ControllerMyself().IsValid() && ControllerMyself().IsController())
+		AutoAssignMSCC();
 }
 
-CRadarScreen * CModeS::OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated)
+CRadarScreen * CModeS::OnRadarScreenCreated(const char * sDisplayName,
+											bool NeedRadarContent,
+											bool GeoReferenced,
+											bool CanBeSaved,
+											bool CanBeCreated)
 {
 	return new CModeSDisplay(msc);
 }
 
-void CModeS::DoInitialLoad(const string & message)
+void CModeS::AutoAssignMSCC()
 {
-	if (regex_match(message, regex("^([A-z,]+)[|]([A-z,]+)[|]([0-9]{1,3})$"))) {
-		vector<string> data = split(message, '|');
-		if (data.size() != 3)
-			throw error { "The mode S plugin couldn't parse the server data" };
+	for (CRadarTarget RadarTarget = RadarTargetSelectFirst();
+		 RadarTarget.IsValid();
+		 RadarTarget = RadarTargetSelectNext(RadarTarget)) {
 
-		msc.SetEquipementCodes(split(data.front(), ','));
-		msc.SetICAOModeS(split(data.at(1), ','));
+		if (RadarTarget.GetPosition().IsFPTrackPosition() ||
+			RadarTarget.GetPosition().GetFlightLevel() < 24500)
+			return;
 
-		int new_v = stoi(data.back(), nullptr, 0);
-		if (new_v > pluginData.VERSION_CODE)
-			throw warning { "A new version of the mode S plugin is available, please update it" };
+		CFlightPlan FlightPlan = RadarTarget.GetCorrelatedFlightPlan();
+		if (!FlightPlan.IsValid() || !FlightPlan.GetTrackingControllerIsMe())
+			return;
+
+		//Check if FlightPlan is already processed
+		if (IsFlightPlanProcessed(FlightPlan))
+			return;
+
+		if (strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
+			return;
+
+		if (!msc.isAcModeS(FlightPlan) ||
+			!msc.isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
+			return;
+
+		auto assr = FlightPlan.GetControllerAssignedData().GetSquawk();
+		if (strcmp(::mode_s_code, assr) == 0)
+			return;
+
+		auto pssr = RadarTarget.GetPosition().GetSquawk();
+		if ((strlen(assr) == 0 ||
+			 strcmp(assr, pssr) != 0 ||
+			 strcmp(assr, "0000") == 0 ||
+			 strcmp(assr, "2000") == 0 ||
+			 strcmp(assr, "1200") == 0 ||
+			 strcmp(assr, "2200") == 0)) {
+			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
+
+			// Debug message, to be removed
+			string message { "Code 1000 assigned to " + string { FlightPlan.GetCallsign() } };
+			DisplayUserMessage("Mode S", "Debug", message.c_str(), true, false, false, false, false);
+		}
 	}
-	else
-		throw error { "The mode S plugin couldn't parse the server data" };
+}
+
+void CModeS::DoInitialLoad(future<string> & fmessage)
+{
+	try {
+		string message = fmessage.get();
+		regex update_string { "^([A-z,]+)[|]([A-z,]+)[|]([0-9]{1,3})$" };
+		smatch match;
+		if (regex_match(message, match, update_string)) {
+			msc.SetEquipementCodes(split(match[1].str(), ','));
+			msc.SetICAOModeS(split(match[2].str(), ','));
+
+			int new_v = stoi(match[3].str(), nullptr, 0);
+			if (new_v > pluginData.VERSION_CODE)
+				throw warning { "A new version of the mode S plugin is available, please update it" };
+		}
+		else
+			throw error { "The mode S plugin couldn't parse the server data" };
+	}
+	catch (modesexception & e) {
+		MessageBox(NULL, e.what(), "Mode S", MB_OK | e.icon());
+	}
+	catch (exception & e) {
+		MessageBox(NULL, e.what(), "Mode S", MB_OK | MB_ICONERROR);
+	}
+	fmessage = future<string>();
+}
+
+inline bool CModeS::IsFlightPlanProcessed(CFlightPlan & FlightPlan)
+{
+	for (auto &pfp : ProcessedFlightPlans)
+		if (pfp.compare(FlightPlan.GetCallsign()) == 0)
+			return true;
+
+	ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
+	return false;
 }

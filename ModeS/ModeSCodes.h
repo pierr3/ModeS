@@ -7,9 +7,7 @@ class CModeSCodes
 {
 public:
 	explicit CModeSCodes(const DefaultCodes && dc = DefaultCodes());
-	CModeSCodes(std::vector<std::string> & EQUIPEMENT_CODES, std::vector<std::string> & ICAO_MODES);
-	CModeSCodes(std::vector<std::string> && EQUIPEMENT_CODES, std::vector<std::string> && ICAO_MODES);
-	virtual ~CModeSCodes();
+	~CModeSCodes();
 
 	bool isAcModeS(const EuroScopePlugIn::CFlightPlan & FlightPlan) const;
 	bool isApModeS(const std::string & icao) const;

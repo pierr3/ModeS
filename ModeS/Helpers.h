@@ -6,7 +6,7 @@
 #include <WinInet.h>
 #include "version.h"
 
-std::string LoadUpdateString(const PluginData & p);
+std::string LoadUpdateString(PluginData p);
 
 inline std::vector<std::string> split(const std::string & s, char delim)
 {

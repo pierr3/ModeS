@@ -18,14 +18,8 @@ class CModeS :
 	public EuroScopePlugIn::CPlugIn
 {
 public:
-	explicit CModeS(PluginData && p = PluginData());
+	explicit CModeS(PluginData p = PluginData());
 	~CModeS();
-
-	future<string> fUpdateString;
-	vector<string> ProcessedFlightPlans;
-
-	CModeSCodes msc;
-	const PluginData pluginData;
 
 	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
 					  int ItemCode,
@@ -43,7 +37,6 @@ public:
 						POINT Pt,
 						RECT Area);
 
-	void OnRadarTargetPositionUpdate(CRadarTarget RadarTarget);
 	void OnTimer(int Counter);
 	CRadarScreen * OnRadarScreenCreated(const char * sDisplayName,
 										bool NeedRadarContent,
@@ -51,5 +44,14 @@ public:
 										bool CanBeSaved,
 										bool CanBeCreated);
 
-	void DoInitialLoad(const string & message);
+private:
+	future<string> fUpdateString;
+	vector<string> ProcessedFlightPlans;
+	CModeSCodes msc;
+	const PluginData pluginData;
+	
+	void AutoAssignMSCC();
+	void DoInitialLoad(future<string> & message);
+	bool IsFlightPlanProcessed(CFlightPlan & FlightPlan);
+	
 };
