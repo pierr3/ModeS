@@ -23,7 +23,7 @@ class modesexception
 	: public std::exception
 {
 public:
-	explicit modesexception(const char * what) : std::exception { what } {}
+	explicit modesexception(std::string & what) : std::exception { what.c_str() } {}
 	virtual inline const long icon() const = 0;
 };
 
@@ -31,7 +31,7 @@ class error
 	: public modesexception
 {
 public:
-	explicit error(const char * what) : modesexception { what } {}
+	explicit error(std::string && what) : modesexception { what } {}
 	inline const long icon() const
 	{
 		return MB_ICONERROR;
@@ -42,7 +42,7 @@ class warning
 	: public modesexception
 {
 public:
-	explicit warning(const char * what) : modesexception { what } {}
+	explicit warning(std::string && what) : modesexception { what } {}
 	inline const long icon() const
 	{
 		return MB_ICONWARNING;
