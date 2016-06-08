@@ -44,6 +44,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <CodeAnalysisRuleSet>MixedRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -54,7 +55,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_USRDLL;CURL_STATICLIB;CURL_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\Olli\Documents\GitHub\ModeS\lib\include;C:\Users\Olli\Documents\GitHub\ModeS\lib\include\curl</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Olli\Documents\GitHub\ModeS\lib\include</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
     </ClCompile>
     <Link>
@@ -84,7 +85,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_USRDLL;CURL_STATICLIB;CURL_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
-      <AdditionalIncludeDirectories>C:\Users\Olli\Documents\GitHub\ModeS\lib\include;C:\Users\Olli\Documents\GitHub\ModeS\lib\include\curl</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Olli\Documents\GitHub\ModeS\lib\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -95,6 +96,7 @@
       </ModuleDefinitionFile>
       <AdditionalDependencies>EuroScopePlugInDll.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Users\Olli\Documents\GitHub\ModeS\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <Profile>true</Profile>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -108,20 +110,21 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Helpers.cpp" />
-    <ClCompile Include="HttpHelper.cpp" />
     <ClCompile Include="ModeS.cpp" />
     <ClCompile Include="ModeS2.cpp" />
+    <ClCompile Include="ModeSCodes.cpp" />
     <ClCompile Include="ModeSDisplay.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Helpers.h" />
-    <ClInclude Include="HttpHelper.h" />
     <ClInclude Include="ModeS.h" />
     <ClInclude Include="ModeS2.h" />
+    <ClInclude Include="ModeSCodes.h" />
     <ClInclude Include="ModeSDisplay.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />

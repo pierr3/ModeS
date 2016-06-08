@@ -4,9 +4,11 @@
 #include <regex>
 #include <future>
 #include <thread>
+#include <exception>
+#include <cstdio>
 #include <EuroScopePlugIn.h>
-#include "HttpHelper.h"
 #include "ModeSDisplay.h"
+#include "ModeSCodes.h"
 #include "Helpers.h"
 
 using namespace std;
@@ -16,39 +18,40 @@ class CModeS :
 	public EuroScopePlugIn::CPlugIn
 {
 public:
-	CModeS();
+	explicit CModeS(PluginData p = PluginData());
 	~CModeS();
 
-	const int TAG_ITEM_ISMODES = 501;
-	const int TAG_ITEM_MODESHDG = 502;
-	const int TAG_ITEM_MODESROLLAGL = 503;
-	const int TAG_ITEM_MODESREPGS = 504;
-
-	const int TAG_FUNC_ASSIGNMODES = 869;
-	const int TAG_FUNC_ASSIGNMODEAS = 870;
-
-	const char* mode_s_code = "1000";
-
-	future<string> fUpdateString;
-
 	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
-		int ItemCode,
-		int TagData,
-		char sItemString[16],
-		int * pColorCode,
-		COLORREF * pRGB,
-		double * pFontSize);
+					  int ItemCode,
+					  int TagData,
+					  char sItemString[16],
+					  int * pColorCode,
+					  COLORREF * pRGB,
+					  double * pFontSize);
+
+	void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
+	void OnFlightPlanDisconnect(CFlightPlan FlightPlan);
 
 	void OnFunctionCall(int FunctionId,
-		const char * sItemString,
-		POINT Pt,
-		RECT Area);
+						const char * sItemString,
+						POINT Pt,
+						RECT Area);
 
-	void OnRadarTargetPositionUpdate(CRadarTarget RadarTarget);
 	void OnTimer(int Counter);
-	CRadarScreen * OnRadarScreenCreated(const char * sDisplayName, 
-										bool NeedRadarContent, 
-										bool GeoReferenced, 
-										bool CanBeSaved, 
+	CRadarScreen * OnRadarScreenCreated(const char * sDisplayName,
+										bool NeedRadarContent,
+										bool GeoReferenced,
+										bool CanBeSaved,
 										bool CanBeCreated);
+
+private:
+	future<string> fUpdateString;
+	vector<string> ProcessedFlightPlans;
+	CModeSCodes msc;
+	const PluginData pluginData;
+	
+	void AutoAssignMSCC();
+	void DoInitialLoad(future<string> & message);
+	bool IsFlightPlanProcessed(CFlightPlan & FlightPlan);
+	
 };
