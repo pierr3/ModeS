@@ -15,8 +15,10 @@ void CModeSDisplay::OnFunctionCall(int FunctionId, const char * sItemString, POI
 		if (!FlightPlan.IsValid())
 			return;
 
-		if (!strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V"))
+		if (!strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V")) {
+			StartTagFunction(FlightPlan.GetCallsign(), nullptr, 0, "", nullptr, EuroScopePlugIn::TAG_ITEM_FUNCTION_SQUAWK_POPUP, Pt, Area);
 			return;
+		}
 
 		if (ModeSCodes.isAcModeS(FlightPlan) && ModeSCodes.isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
 			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
