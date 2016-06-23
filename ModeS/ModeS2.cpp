@@ -101,7 +101,7 @@ void CModeS::OnTimer(int Counter)
 {
 	if (fUpdateString.valid() && fUpdateString.wait_for(0ms) == future_status::ready)
 		DoInitialLoad(fUpdateString);
-	
+
 	if (ControllerMyself().IsValid() && ControllerMyself().IsController())
 		AutoAssignMSCC();
 }
@@ -188,8 +188,9 @@ void CModeS::DoInitialLoad(future<string> & fmessage)
 
 inline bool CModeS::IsFlightPlanProcessed(CFlightPlan & FlightPlan)
 {
+	string callsign { FlightPlan.GetCallsign() };
 	for (auto &pfp : ProcessedFlightPlans)
-		if (pfp.compare(FlightPlan.GetCallsign()) == 0)
+		if (pfp.compare(callsign) == 0)
 			return true;
 
 	ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
