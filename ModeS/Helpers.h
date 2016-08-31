@@ -25,6 +25,10 @@ class modesexception
 public:
 	explicit modesexception(std::string & what) : std::exception { what.c_str() } {}
 	virtual inline const long icon() const = 0;
+	inline void whatMessageBox()
+	{
+		MessageBox(NULL, what(), "Mode S", MB_OK | icon());
+	}
 };
 
 class error
