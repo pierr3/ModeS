@@ -44,7 +44,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 			return;
 
 		if (msc.isAcModeS(FlightPlan))
-			snprintf(sItemString, 16, "%03i", RadarTarget.GetPosition().GetReportedHeading());
+			snprintf(sItemString, 16, "%03i", RadarTarget.GetPosition().GetReportedHeading() % 360);
 	}
 
 	else if (ItemCode == ItemCodes::TAG_ITEM_MODESROLLAGL) {
@@ -62,7 +62,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 			return;
 
 		if (msc.isAcModeS(FlightPlan) && FlightPlan.GetCorrelatedRadarTarget().IsValid())
-			strcpy_s(sItemString, 16, to_string(RadarTarget.GetPosition().GetReportedGS()).c_str());
+			snprintf(sItemString, 16, "%03i", RadarTarget.GetPosition().GetReportedGS());
 	}
 }
 
@@ -101,7 +101,7 @@ void CModeS::OnTimer(int Counter)
 {
 	if (fUpdateString.valid() && fUpdateString.wait_for(0ms) == future_status::ready)
 		DoInitialLoad(fUpdateString);
-	
+
 	if (ControllerMyself().IsValid() && ControllerMyself().IsController())
 		AutoAssignMSCC();
 }
@@ -188,8 +188,9 @@ void CModeS::DoInitialLoad(future<string> & fmessage)
 
 inline bool CModeS::IsFlightPlanProcessed(CFlightPlan & FlightPlan)
 {
+	string callsign { FlightPlan.GetCallsign() };
 	for (auto &pfp : ProcessedFlightPlans)
-		if (pfp.compare(FlightPlan.GetCallsign()) == 0)
+		if (pfp.compare(callsign) == 0)
 			return true;
 
 	ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
