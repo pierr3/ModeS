@@ -5,11 +5,11 @@
 struct PluginData
 {
 	const char * PLUGIN_NAME	{ "Mode S PlugIn" };
-	const char * PLUGIN_VERSION { "1.3.6e32" };
+	const char * PLUGIN_VERSION { "1.3.7e32" };
 	const char * PLUGIN_AUTHOR	{ "Pierre Ferran / Oliver Grützmann" };
 	const char * PLUGIN_LICENSE { "GPL v3" };
 	const char * UPDATE_URL		{ "http://www.cherryx.de/modes/version.txt" };
-	const int VERSION_CODE		{ 906 };
+	const int VERSION_CODE		{ 907 };
 };
 
 struct ItemCodes
