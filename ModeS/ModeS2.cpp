@@ -44,7 +44,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 			return;
 
 		if (msc.isAcModeS(FlightPlan))
-			snprintf(sItemString, 16, "%03i", RadarTarget.GetPosition().GetReportedHeading());
+			snprintf(sItemString, 16, "%03i", RadarTarget.GetPosition().GetReportedHeading() % 360);
 	}
 
 	else if (ItemCode == ItemCodes::TAG_ITEM_MODESROLLAGL) {
@@ -62,7 +62,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 			return;
 
 		if (msc.isAcModeS(FlightPlan) && FlightPlan.GetCorrelatedRadarTarget().IsValid())
-			strcpy_s(sItemString, 16, to_string(RadarTarget.GetPosition().GetReportedGS()).c_str());
+			snprintf(sItemString, 16, "%03i", RadarTarget.GetPosition().GetReportedGS());
 	}
 }
 
