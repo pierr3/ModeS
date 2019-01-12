@@ -29,7 +29,8 @@ CModeS::~CModeS()
 
 void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int ItemCode, int TagData, char sItemString[16], int * pColorCode, COLORREF * pRGB, double * pFontSize)
 {
-	if (ItemCode == ItemCodes::TAG_ITEM_ISMODES) {
+	if (ItemCode == ItemCodes::TAG_ITEM_ISMODES)
+	{
 		if (!FlightPlan.IsValid())
 			return;
 
@@ -39,7 +40,8 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 			strcpy_s(sItemString, 16, "A");
 	}
 
-	else if (ItemCode == ItemCodes::TAG_ITEM_MODESHDG) {
+	else if (ItemCode == ItemCodes::TAG_ITEM_MODESHDG)
+	{
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
@@ -47,17 +49,20 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 			snprintf(sItemString, 16, "%03i", RadarTarget.GetPosition().GetReportedHeading() % 360);
 	}
 
-	else if (ItemCode == ItemCodes::TAG_ITEM_MODESROLLAGL) {
+	else if (ItemCode == ItemCodes::TAG_ITEM_MODESROLLAGL)
+	{
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
-		if (msc.isAcModeS(FlightPlan)) {
+		if (msc.isAcModeS(FlightPlan))
+		{
 			auto rollb = RadarTarget.GetPosition().GetReportedBank();
 			snprintf(sItemString, 16, "%c%i", rollb < 0 ? 'R' : 'L', abs(rollb));
 		}
 	}
 
-	else if (ItemCode == ItemCodes::TAG_ITEM_MODESREPGS) {
+	else if (ItemCode == ItemCodes::TAG_ITEM_MODESREPGS)
+	{
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
@@ -81,7 +86,8 @@ void CModeS::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
 
 void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, RECT Area)
 {
-	if (FunctionId == ItemCodes::TAG_FUNC_ASSIGNMODES) {
+	if (FunctionId == ItemCodes::TAG_FUNC_ASSIGNMODES)
+	{
 		if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
 			return;
 
@@ -119,7 +125,8 @@ void CModeS::AutoAssignMSCC()
 {
 	for (CRadarTarget RadarTarget = RadarTargetSelectFirst();
 		 RadarTarget.IsValid();
-		 RadarTarget = RadarTargetSelectNext(RadarTarget)) {
+		 RadarTarget = RadarTargetSelectNext(RadarTarget))
+	{
 
 		if (RadarTarget.GetPosition().IsFPTrackPosition() ||
 			RadarTarget.GetPosition().GetFlightLevel() < 24500)
@@ -146,11 +153,12 @@ void CModeS::AutoAssignMSCC()
 
 		auto pssr = RadarTarget.GetPosition().GetSquawk();
 		if ((strlen(assr) == 0 ||
-			 strcmp(assr, pssr) != 0 ||
+			 strncmp(assr, pssr, 4) != 0 ||
 			 strcmp(assr, "0000") == 0 ||
 			 strcmp(assr, "2000") == 0 ||
 			 strcmp(assr, "1200") == 0 ||
-			 strcmp(assr, "2200") == 0)) {
+			 strcmp(assr, "2200") == 0))
+		{
 			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 
 			// Debug message, to be removed
@@ -162,25 +170,29 @@ void CModeS::AutoAssignMSCC()
 
 void CModeS::DoInitialLoad(future<string> & fmessage)
 {
-	try {
+	try
+	{
 		string message = fmessage.get();
 		regex update_string { "^([A-z,]+)[|]([A-z,]+)[|]([0-9]{1,3})$" };
 		smatch match;
-		if (regex_match(message, match, update_string)) {
+		if (regex_match(message, match, update_string))
+		{
 			msc.SetEquipementCodes(split(match[1].str(), ','));
 			msc.SetICAOModeS(split(match[2].str(), ','));
 
 			int new_v = stoi(match[3].str(), nullptr, 0);
 			if (new_v > pluginData.VERSION_CODE)
-				throw warning { "A new version of the mode S plugin is available, please update it" };
+				throw warning { "A new version of Mode S plugin is available, please update it\n\nhttps://github.com/ogruetzmann/ModeS/releases" };
 		}
 		else
-			throw error { "The mode S plugin couldn't parse the server data" };
+			throw error { "Mode S plugin couldn't parse the server data" };
 	}
-	catch (modesexception & e) {
-		MessageBox(NULL, e.what(), "Mode S", MB_OK | e.icon());
+	catch (modesexception & e)
+	{
+		e.whatMessageBox();
 	}
-	catch (exception & e) {
+	catch (exception & e)
+	{
 		MessageBox(NULL, e.what(), "Mode S", MB_OK | MB_ICONERROR);
 	}
 	fmessage = future<string>();
