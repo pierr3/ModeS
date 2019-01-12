@@ -183,6 +183,9 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="ver.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

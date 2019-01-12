@@ -8,7 +8,7 @@ struct PluginData
 	const char * PLUGIN_VERSION { "1.3.7e32" };
 	const char * PLUGIN_AUTHOR	{ "Pierre Ferran / Oliver Grützmann" };
 	const char * PLUGIN_LICENSE { "GPL v3" };
-	const char * UPDATE_URL		{ "http://www.cherryx.de/modes/version.txt" };
+	const char * UPDATE_URL		{ "https://raw.githubusercontent.com/ogruetzmann/ModeS/Master/ModeS/ver.txt" };
 	const int VERSION_CODE		{ 907 };
 };
 
