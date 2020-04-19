@@ -5,11 +5,11 @@
 struct PluginData
 {
 	const char * PLUGIN_NAME	{ "Mode S PlugIn" };
-	const char * PLUGIN_VERSION { "1.3.8e32" };
+	const char * PLUGIN_VERSION { "1.3.9e32" };
 	const char * PLUGIN_AUTHOR	{ "Pierre Ferran / Oliver Grützmann" };
 	const char * PLUGIN_LICENSE { "GPL v3" };
 	const char * UPDATE_URL		{ "https://raw.githubusercontent.com/ogruetzmann/ModeS/master/ModeS/ver.txt" };
-	const int VERSION_CODE		{ 908 };
+	const int VERSION_CODE		{ 909 };
 };
 
 struct ItemCodes
@@ -32,7 +32,7 @@ struct ItemCodes
 struct DefaultCodes
 {
 	const std::vector<std::string> EQUIPEMENT_CODES { "H", "L", "E", "G", "W", "Q", "S" };
-	const std::vector<std::string> ICAO_MODES { "EB", "EL", "ET", "ED", "LF", "LH", "LR", "LZ", "EH", "LK", "LO", "LIM", "LIR" };
+	const std::vector<std::string> ICAO_MODES { "EB", "EL", "ET", "ED", "LF", "LH", "LR", "LZ", "EH", "LK", "LO", "LIM", "LIR", "EP" };
 };
 
-static constexpr char * mode_s_code { "1000" };
+static const char * mode_s_code { "1000" };
