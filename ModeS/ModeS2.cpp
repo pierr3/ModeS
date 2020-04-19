@@ -108,7 +108,7 @@ void CModeS::OnTimer(int Counter)
 	if (fUpdateString.valid() && fUpdateString.wait_for(0ms) == future_status::ready)
 		DoInitialLoad(fUpdateString);
 
-	if (ControllerMyself().IsValid() && ControllerMyself().IsController())
+	if (!(Counter % 5) && ControllerMyself().IsValid() && ControllerMyself().IsController())
 		AutoAssignMSCC();
 }
 
@@ -162,8 +162,8 @@ void CModeS::AutoAssignMSCC()
 			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 
 			// Debug message, to be removed
-			string message { "Code 1000 assigned to " + string { FlightPlan.GetCallsign() } };
-			DisplayUserMessage("Mode S", "Debug", message.c_str(), true, false, false, false, false);
+			//string message { "Code 1000 assigned to " + string { FlightPlan.GetCallsign() } };
+			//DisplayUserMessage("Mode S", "Debug", message.c_str(), true, false, false, false, false);
 		}
 	}
 }
