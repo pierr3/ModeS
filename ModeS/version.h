@@ -32,8 +32,8 @@ struct ItemCodes
 struct DefaultCodes
 {
 	const std::vector<std::string> EQUIPEMENT_CODES { "H", "L", "E", "G", "W", "Q", "S" };
-	const std::vector<std::string> EQUIPEMENT_CODES_ICAO{ "E", "H", "I", "L", "S" };
-	const std::vector<std::string> ICAO_MODES { "EB", "EL", "ET", "ED", "LF", "LH", "LR", "LZ", "EH", "LK", "LO", "LIM", "LIR", "EP" };
+	const std::vector<std::string> EQUIPEMENT_CODES_ICAO { "E", "H", "I", "L", "S" };
+	const std::vector<std::string> ICAO_MODES { "EB", "EL", "ET", "ED", "LF", "LH", "LR", "LZ", "EH", "LK", "LO", "LIM", "LIR", "EP", "LD" };
 };
 
 static const char * mode_s_code { "1000" };
