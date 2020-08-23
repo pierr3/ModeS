@@ -12,7 +12,7 @@ CModeSCodes::~CModeSCodes()
 
 bool CModeSCodes::isAcModeS(const EuroScopePlugIn::CFlightPlan & FlightPlan) const
 {
-	//check for ICAO data
+	//check for ICAO suffix
 	std::string actype = FlightPlan.GetFlightPlanData().GetAircraftInfo();
 	std::regex icao_format("(.{2,4})\\/([LMHJ])-(.*)\\/(.*)", std::regex::icase);
 	std::smatch acdata;
