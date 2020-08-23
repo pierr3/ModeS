@@ -2,6 +2,7 @@
 #include <EuroScopePlugIn.h>
 #include <vector>
 #include <string>
+#include <regex>
 
 class CModeSCodes
 {
@@ -18,6 +19,7 @@ public:
 
 private:
 	std::vector<std::string> EQUIPEMENT_CODES;
+	std::vector<std::string> EQUIPEMENT_CODES_ICAO;
 	std::vector<std::string> ICAO_MODES;
 
 	static bool startsWith(const char * pre, const char * str);

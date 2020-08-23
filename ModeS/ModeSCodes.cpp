@@ -3,6 +3,7 @@
 
 CModeSCodes::CModeSCodes(const DefaultCodes && dc) :
 	EQUIPEMENT_CODES(std::move(dc.EQUIPEMENT_CODES)),
+	EQUIPEMENT_CODES_ICAO(std::move(dc.EQUIPEMENT_CODES_ICAO)),
 	ICAO_MODES(std::move(dc.ICAO_MODES))
 {}
 
@@ -11,6 +12,18 @@ CModeSCodes::~CModeSCodes()
 
 bool CModeSCodes::isAcModeS(const EuroScopePlugIn::CFlightPlan & FlightPlan) const
 {
+	//check for ICAO data
+	std::string actype = FlightPlan.GetFlightPlanData().GetAircraftInfo();
+	std::regex icao_format("(.{2,4})\\/([LMHJ])-(.*)\\/(.*)", std::regex::icase);
+	std::smatch acdata;
+	if (std::regex_match(actype, acdata, icao_format) && acdata.size() == 5)
+	{
+		for (const auto &code : EQUIPEMENT_CODES_ICAO)
+		if (acdata[4].str()._Starts_with(code))
+			return true;
+	}
+
+	//check for FAA suffix
 	std::string equipement_suffix { FlightPlan.GetFlightPlanData().GetCapibilities() };
 	if (equipement_suffix == "?")
 		return false;
