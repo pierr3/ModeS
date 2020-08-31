@@ -8,7 +8,7 @@ struct PluginData
 	const char * PLUGIN_VERSION { "1.3.10e32" };
 	const char * PLUGIN_AUTHOR	{ "Pierre Ferran / Oliver Grützmann" };
 	const char * PLUGIN_LICENSE { "GPL v3" };
-	const char * UPDATE_URL		{ "https://raw.githubusercontent.com/ogruetzmann/ModeS/master/ModeS/ver.txt" };
+	const char * UPDATE_URL		{ "https://raw.githubusercontent.com/ogruetzmann/ModeS/master/version.txt" };
 	const int VERSION_CODE		{ 909 };
 };
 
