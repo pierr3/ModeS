@@ -182,7 +182,7 @@ void CModeS::DoInitialLoad(future<string> & fmessage)
 
 			int new_v = stoi(match[3].str(), nullptr, 0);
 			if (new_v > pluginData.VERSION_CODE)
-				throw warning { "A new version of Mode S plugin is available, please update it\n\nhttps://github.com/ogruetzmann/ModeS/releases" };
+				throw error{ "A new version of Mode S plugin is available, please update it\n\nhttps://github.com/pierr3/ModeS" };
 		}
 		else
 			throw error { "Mode S plugin couldn't parse the server data" };
