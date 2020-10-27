@@ -1,12 +1,15 @@
 #pragma once
-#include <EuroScopePlugIn.h>
 #include <vector>
-#include <sstream>
-#include <iomanip>
 #include <string>
 #include <regex>
-#include <iostream>
-#include "HttpHelper.hpp"
+#include <future>
+#include <thread>
+#include <exception>
+#include <cstdio>
+#include <EuroScopePlugIn.h>
+#include "ModeSDisplay.h"
+#include "ModeSCodes.h"
+#include "Helpers.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
@@ -15,51 +18,40 @@ class CModeS :
 	public EuroScopePlugIn::CPlugIn
 {
 public:
-	CModeS();
+	explicit CModeS(PluginData p = PluginData());
 	~CModeS();
 
-	const int TAG_ITEM_ISMODES = 501;
-	const int TAG_ITEM_MODESHDG = 502;
-	const int TAG_ITEM_MODESROLLAGL = 503;
-	const int TAG_ITEM_MODESREPGS = 504;
-
-	const int TAG_FUNC_ASSIGNMODES = 869;
-
-	const char* mode_s_code = "1000";
-
-	clock_t delayedStart;
-
 	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
-		int ItemCode,
-		int TagData,
-		char sItemString[16],
-		int * pColorCode,
-		COLORREF * pRGB,
-		double * pFontSize);
-
-	void OnFunctionCall(int FunctionId,
-		const char * sItemString,
-		POINT Pt,
-		RECT Area);
+					  int ItemCode,
+					  int TagData,
+					  char sItemString[16],
+					  int * pColorCode,
+					  COLORREF * pRGB,
+					  double * pFontSize);
 
 	void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
+	void OnFlightPlanDisconnect(CFlightPlan FlightPlan);
+
+	void OnFunctionCall(int FunctionId,
+						const char * sItemString,
+						POINT Pt,
+						RECT Area);
 
 	void OnTimer(int Counter);
+	CRadarScreen * OnRadarScreenCreated(const char * sDisplayName,
+										bool NeedRadarContent,
+										bool GeoReferenced,
+										bool CanBeSaved,
+										bool CanBeCreated);
 
-	bool isAcModeS(CFlightPlan FlightPlan);
-	inline bool startsWith(const char *pre, const char *str)
-	{
-		size_t lenpre = strlen(pre),
-			lenstr = strlen(str);
-		return lenstr < lenpre ? false : strncmp(pre, str, lenpre) == 0;
-	}
-
-	inline string padWithZeros(int padding, int s)
-	{
-		stringstream ss;
-		ss << setfill('0') << setw(padding) << s;
-		return ss.str();
-	}
-
+private:
+	future<string> fUpdateString;
+	vector<string> ProcessedFlightPlans;
+	CModeSCodes msc;
+	const PluginData pluginData;
+	
+	void AutoAssignMSCC();
+	void DoInitialLoad(future<string> & message);
+	bool IsFlightPlanProcessed(CFlightPlan & FlightPlan);
+	
 };
-
