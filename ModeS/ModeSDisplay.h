@@ -25,5 +25,5 @@ public:
 private:
 	const CModeSCodes &ModeSCodes;
 
-	std::map<std::string, std::future<std::string>> PendingSquawks;
+	std::map<const char *, std::future<std::string>> PendingSquawks;
 };

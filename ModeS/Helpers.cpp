@@ -48,5 +48,11 @@ std::string LoadWebSquawk()
 
 	InternetCloseHandle(OpenAddress);
 	InternetCloseHandle(connect);
-	return answer;
+	unsigned first = answer.find("<body>");
+	unsigned last = answer.find("</body>");
+
+	std::string r = answer.substr(first + 6, last - (first + 6));
+	trim(r);
+
+	return r;
 }

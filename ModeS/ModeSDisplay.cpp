@@ -24,7 +24,7 @@ void CModeSDisplay::OnFunctionCall(int FunctionId, const char * sItemString, POI
 			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 		else {
 			if (PendingSquawks.find(FlightPlan.GetCallsign()) == PendingSquawks.end())
-				PendingSquawks.insert(std::make_pair(std::string(FlightPlan.GetCallsign()), std::async(LoadWebSquawk)));
+				PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk)));
 		}
 
 	}
@@ -36,8 +36,8 @@ void CModeSDisplay::OnRefresh(HDC hDC, int Phase)
 	{
 		bool must_delete = false;
 		if (it->second.valid() && it->second.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
-			EuroScopePlugIn::CFlightPlan FlightPlan = GetPlugIn()->FlightPlanSelect(it->first.c_str());
-			FlightPlan.GetControllerAssignedData().SetSquawk(it->second.get().c_str());
+			std::string squawk = it->second.get();
+			GetPlugIn()->FlightPlanSelect(it->first).GetControllerAssignedData().SetSquawk(squawk.c_str());
 
 			must_delete = true;
 		}
