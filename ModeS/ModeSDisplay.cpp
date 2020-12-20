@@ -24,7 +24,8 @@ void CModeSDisplay::OnFunctionCall(int FunctionId, const char * sItemString, POI
 			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 		else {
 			if (PendingSquawks.find(FlightPlan.GetCallsign()) == PendingSquawks.end())
-				PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk)));
+				PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk, 
+					std::string(FlightPlan.GetFlightPlanData().GetOrigin()), std::string(GetPlugIn()->ControllerMyself().GetCallsign()))));
 		}
 
 	}

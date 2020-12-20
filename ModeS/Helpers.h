@@ -11,7 +11,7 @@
 
 std::string LoadUpdateString(PluginData p);
 
-std::string LoadWebSquawk();
+std::string LoadWebSquawk(std::string origin, std::string callsign);
 
 
 inline std::vector<std::string> split(const std::string & s, char delim)

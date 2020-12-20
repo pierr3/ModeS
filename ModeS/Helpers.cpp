@@ -26,7 +26,7 @@ std::string LoadUpdateString(PluginData p)
 	return answer;
 }
 
-std::string LoadWebSquawk()
+std::string LoadWebSquawk(std::string origin, std::string callsign)
 {
 	const std::string AGENT{ "EuroScopeModeS/EXP" };
 	HINTERNET connect = InternetOpen(AGENT.c_str(), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
@@ -34,7 +34,9 @@ std::string LoadWebSquawk()
 		throw error{ std::string {"Connection Failed. Error: " + std::to_string(GetLastError()) } };
 	}
 
-	HINTERNET OpenAddress = InternetOpenUrl(connect, "http://kilojuliett.ch/webtools/ssrcode", NULL, 0, INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD, 0);
+	std::string build_url = "https://kilojuliett.ch/webtools/api/ssrcode?orig=" + origin + "&callsign=" + callsign;
+
+	HINTERNET OpenAddress = InternetOpenUrl(connect, build_url.c_str(), NULL, 0, INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD, 0);
 	if (!OpenAddress) {
 		InternetCloseHandle(connect);
 		throw error{ std::string { "Failed to load URL. Error: " + std::to_string(GetLastError()) } };
@@ -48,11 +50,8 @@ std::string LoadWebSquawk()
 
 	InternetCloseHandle(OpenAddress);
 	InternetCloseHandle(connect);
-	unsigned first = answer.find("<body>");
-	unsigned last = answer.find("</body>");
 
-	std::string r = answer.substr(first + 6, last - (first + 6));
-	trim(r);
+	trim(answer);
 
-	return r;
+	return answer;
 }
