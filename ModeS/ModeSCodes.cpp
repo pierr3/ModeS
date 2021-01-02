@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ModeSCodes.h"
+#include "ModeS2.h"
 
 CModeSCodes::CModeSCodes(const DefaultCodes && dc) :
 	EQUIPEMENT_CODES(std::move(dc.EQUIPEMENT_CODES)),
@@ -13,24 +14,31 @@ CModeSCodes::~CModeSCodes()
 bool CModeSCodes::isAcModeS(const EuroScopePlugIn::CFlightPlan & FlightPlan) const
 {
 	//check for ICAO suffix
-	std::string actype = FlightPlan.GetFlightPlanData().GetAircraftInfo();
-	std::regex icao_format("(.{2,4})\\/([LMHJ])-(.*)\\/(.*)", std::regex::icase);
-	std::smatch acdata;
-	if (std::regex_match(actype, acdata, icao_format) && acdata.size() == 5)
+	if (&CModeS::ICAO)
 	{
-		for (const auto &code : EQUIPEMENT_CODES_ICAO)
-		if (acdata[4].str()._Starts_with(code))
-			return true;
+		std::string actype = FlightPlan.GetFlightPlanData().GetAircraftInfo();
+		std::regex icao_format("(.{2,4})\\/([LMHJ])-(.*)\\/(.*)", std::regex::icase);
+		std::smatch acdata;
+		if (std::regex_match(actype, acdata, icao_format) && acdata.size() == 5)
+		{
+			for (const auto& code : EQUIPEMENT_CODES_ICAO)
+				if (acdata[4].str()._Starts_with(code))
+					return true;
+		}
 	}
 
 	//check for FAA suffix
-	std::string equipement_suffix { FlightPlan.GetFlightPlanData().GetCapibilities() };
-	if (equipement_suffix == "?")
-		return false;
+	if (&CModeS::FAA)
+	{
+		std::string equipement_suffix{ FlightPlan.GetFlightPlanData().GetCapibilities() };
+		if (equipement_suffix == "?")
+			return false;
 
-	for (auto &code : EQUIPEMENT_CODES)
-		if (equipement_suffix == code)
-			return true;
+		for (auto& code : EQUIPEMENT_CODES)
+			if (equipement_suffix == code)
+				return true;
+	}
+	
 	return false;
 }
 

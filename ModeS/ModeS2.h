@@ -5,9 +5,10 @@
 #include <future>
 #include <thread>
 #include <exception>
+#include <map>
 #include <cstdio>
 #include <EuroScopePlugIn.h>
-#include "ModeSDisplay.h"
+//#include "ModeSDisplay.h"
 #include "ModeSCodes.h"
 #include "Helpers.h"
 
@@ -38,20 +39,23 @@ public:
 						RECT Area);
 
 	void OnTimer(int Counter);
-	CRadarScreen * OnRadarScreenCreated(const char * sDisplayName,
-										bool NeedRadarContent,
-										bool GeoReferenced,
-										bool CanBeSaved,
-										bool CanBeCreated);
+
+	bool ICAO();
+	bool FAA();
 
 private:
 	future<string> fUpdateString;
 	vector<string> ProcessedFlightPlans;
 	CModeSCodes msc;
 	const PluginData pluginData;
-	
+	const char* squawkVFR;
+	bool acceptEquipmentICAO;
+	bool acceptEquipmentFAA;
+
 	void AutoAssignMSCC();
+	void AssignPendingSquawks();
 	void DoInitialLoad(future<string> & message);
 	bool IsFlightPlanProcessed(CFlightPlan & FlightPlan);
 	
+	std::map<const char*, std::future<std::string>> PendingSquawks;
 };

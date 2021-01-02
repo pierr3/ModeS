@@ -14,14 +14,54 @@ CModeS::CModeS(PluginData pd) :
 	RegisterTagItemType("Mode S: Roll Angle", ItemCodes::TAG_ITEM_MODESROLLAGL);
 	RegisterTagItemType("Mode S: Reported GS", ItemCodes::TAG_ITEM_MODESREPGS);
 
-	RegisterTagItemFunction("Assign mode S squawk", ItemCodes::TAG_FUNC_ASSIGNMODES);
-	RegisterTagItemFunction("Assign mode S/A squawk", ItemCodes::TAG_FUNC_ASSIGNMODEAS);
-
-	// Display to reach StartTagFunction from the normal plugin
-	RegisterDisplayType("ModeS Function Relay (no display)", false, false, false, false);
+	RegisterTagItemFunction("Assign mode S squawk", ItemCodes::TAG_FUNC_ASSIGN_MODES);
+	RegisterTagItemFunction("Auto assign squawk", ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_AUTO);
+	RegisterTagItemFunction("Open SQUAWK assign popup", ItemCodes::TAG_FUNC_SQUAWK_POPUP);
 
 	// Start new thread to get the version file from the server
 	fUpdateString = async(LoadUpdateString, pd);
+
+	// Set default setting values
+	this->squawkVFR = "7000";
+	this->acceptEquipmentICAO = true;
+	this->acceptEquipmentFAA = true;
+	
+	// Overwrite setting values by plugin settings, if available
+	try
+	{
+		const char* cstrSetting = GetDataFromSettings("SquawkVFR");
+		if (cstrSetting != NULL)
+		{
+			this->squawkVFR = cstrSetting;
+		}
+
+		cstrSetting = GetDataFromSettings("ICAO");
+		if (cstrSetting != NULL)
+		{
+			if (strcmp(cstrSetting, "0") == 0)
+			{
+				this->acceptEquipmentICAO = false;
+			}
+		}
+
+		cstrSetting = GetDataFromSettings("FAA");
+		if (cstrSetting != NULL)
+		{
+			if (strcmp(cstrSetting, "0") == 0)
+			{
+				this->acceptEquipmentFAA = false;
+			}
+		}
+	}
+	catch (std::runtime_error const& e)
+	{
+		DisplayUserMessage("Mode S", "Mode S", (string("Error: ") + e.what()).c_str(), true, true, true, true, true);
+	}
+	catch (...)
+	{
+		DisplayUserMessage("Mode S", "Mode S", ("Unexpected error: " + std::to_string(GetLastError())).c_str(), true, true, true, true, true);
+	}
+
 }
 
 CModeS::~CModeS()
@@ -84,10 +124,54 @@ void CModeS::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
 							   ProcessedFlightPlans.end());
 }
 
-void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, RECT Area)
+void CModeS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area)
 {
-	if (FunctionId == ItemCodes::TAG_FUNC_ASSIGNMODES)
+	if (FunctionId == ItemCodes::TAG_FUNC_SQUAWK_POPUP)
 	{
+		OpenPopupList(Area, "Squawk", 1);
+		AddPopupListElement("Auto assign", "", ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_AUTO);
+		AddPopupListElement("Manual set", "", ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_MANUAL);
+		AddPopupListElement("Mode S", "", ItemCodes::TAG_FUNC_ASSIGN_MODES);
+		AddPopupListElement("VFR", "", ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_VFR);
+	}
+	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_MANUAL)
+	{
+		OpenPopupEdit(Area, ItemCodes::TAG_FUNC_ASSIGN_SQUAWK, "");
+	}
+	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK)
+	{
+		if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
+			return;
+
+		CFlightPlan FlightPlan = FlightPlanSelectASEL();
+		if (!FlightPlan.IsValid())
+			return;
+
+		FlightPlan.GetControllerAssignedData().SetSquawk(sItemString);
+	}
+	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_AUTO)
+	{
+		if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
+			return;
+
+		CFlightPlan FlightPlan = FlightPlanSelectASEL();
+		if (!FlightPlan.IsValid())
+			return;
+
+		if (!strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V"))
+			FlightPlan.GetControllerAssignedData().SetSquawk(this->squawkVFR);
+
+		if (msc.isAcModeS(FlightPlan) && msc.isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
+			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
+		else {
+			if (PendingSquawks.find(FlightPlan.GetCallsign()) == PendingSquawks.end())
+				PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
+					std::string(FlightPlan.GetFlightPlanData().GetOrigin()), std::string(ControllerMyself().GetCallsign()))));
+		}
+	}
+	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_MODES)
+	{
+		// if the AC is not mode S eligible, then no squawk code change is done
 		if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
 			return;
 
@@ -101,6 +185,17 @@ void CModeS::OnFunctionCall(int FunctionId, const char * sItemString, POINT Pt, 
 		if (msc.isAcModeS(FlightPlan) && msc.isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
 			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 	}
+	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_VFR)
+	{
+		if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
+			return;
+
+		CFlightPlan FlightPlan = FlightPlanSelectASEL();
+		if (!FlightPlan.IsValid())
+			return;
+
+		FlightPlan.GetControllerAssignedData().SetSquawk(this->squawkVFR);
+	}
 }
 
 void CModeS::OnTimer(int Counter)
@@ -110,15 +205,9 @@ void CModeS::OnTimer(int Counter)
 
 	if (!(Counter % 5) && ControllerMyself().IsValid() && ControllerMyself().IsController())
 		AutoAssignMSCC();
-}
 
-CRadarScreen * CModeS::OnRadarScreenCreated(const char * sDisplayName,
-											bool NeedRadarContent,
-											bool GeoReferenced,
-											bool CanBeSaved,
-											bool CanBeCreated)
-{
-	return new CModeSDisplay(msc);
+	if (ControllerMyself().IsValid() && ControllerMyself().IsController())
+		AssignPendingSquawks();
 }
 
 void CModeS::AutoAssignMSCC()
@@ -161,9 +250,32 @@ void CModeS::AutoAssignMSCC()
 		{
 			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 
-			// Debug message, to be removed
-			//string message { "Code 1000 assigned to " + string { FlightPlan.GetCallsign() } };
-			//DisplayUserMessage("Mode S", "Debug", message.c_str(), true, false, false, false, false);
+#ifdef _DEBUG
+			string message { "Code 1000 assigned to " + string { FlightPlan.GetCallsign() } };
+			DisplayUserMessage("Mode S", "Debug", message.c_str(), true, false, false, false, false);
+
+#endif // DEBUG
+
+		}
+	}
+}
+
+void CModeS::AssignPendingSquawks()
+{
+	for (auto it = PendingSquawks.begin(), next_it = it; it != PendingSquawks.end(); it = next_it)
+	{
+		bool must_delete = false;
+		if (it->second.valid() && it->second.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+			std::string squawk = it->second.get();
+			FlightPlanSelect(it->first).GetControllerAssignedData().SetSquawk(squawk.c_str());
+
+			must_delete = true;
+		}
+
+		++next_it;
+		if (must_delete)
+		{
+			PendingSquawks.erase(it);
 		}
 	}
 }
@@ -207,4 +319,14 @@ inline bool CModeS::IsFlightPlanProcessed(CFlightPlan & FlightPlan)
 
 	ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
 	return false;
+}
+
+bool CModeS::ICAO()
+{
+	return this->acceptEquipmentICAO;
+}
+
+bool CModeS::FAA()
+{
+	return this->acceptEquipmentFAA;
 }
