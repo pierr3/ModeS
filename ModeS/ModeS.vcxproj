@@ -113,8 +113,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
-      <AdditionalDependencies>C:\Users\Pierre\Documents\GitHub\ModeS\lib\EuroScopePlugInDll.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:\Repos\ogruetzmann\ModeS\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>WinInet.lib;Libs/EuroScopePlugInDll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <Profile>true</Profile>
     </Link>
     <Midl>
@@ -186,9 +186,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="ver.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="ModeS.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

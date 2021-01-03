@@ -42,6 +42,22 @@ bool CModeSCodes::isAcModeS(const EuroScopePlugIn::CFlightPlan & FlightPlan) con
 	return false;
 }
 
+bool CModeSCodes::isEHS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
+{
+	//check for ICAO suffix
+	std::string actype = FlightPlan.GetFlightPlanData().GetAircraftInfo();
+	std::regex icao_format("(.{2,4})\\/([LMHJ])-(.*)\\/(.*)", std::regex::icase);
+	std::smatch acdata;
+	if (std::regex_match(actype, acdata, icao_format) && acdata.size() == 5)
+	{
+		for (const auto& code : EQUIPEMENT_CODES_EHS)
+			if (acdata[4].str()._Starts_with(code))
+				return true;
+	}
+
+	return false;
+}
+
 bool CModeSCodes::isApModeS(const std::string & icao) const
 {
 	for (auto& zone : ICAO_MODES)

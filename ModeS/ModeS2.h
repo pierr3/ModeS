@@ -47,6 +47,7 @@ private:
 	future<string> fUpdateString;
 	vector<string> ProcessedFlightPlans;
 	CModeSCodes msc;
+	CFlightPlanList FPlistEHS;
 	const PluginData pluginData;
 	const char* squawkVFR;
 	bool acceptEquipmentICAO;
