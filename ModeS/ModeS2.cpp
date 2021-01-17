@@ -21,12 +21,14 @@ CModeS::CModeS(PluginData pd) :
 	RegisterTagItemFunction("Auto assign squawk", ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_AUTO);
 	RegisterTagItemFunction("Open SQUAWK assign popup", ItemCodes::TAG_FUNC_SQUAWK_POPUP);
 
-	//CFlightPlanList FPListEHS = RegisterFpList("Mode S EHS");
-	//FPListEHS.DeleteAllColumns();
-	//FPListEHS.AddColumnDefinition("ID", 7, false, NULL, TAG_ITEM_TYPE_CALLSIGN, NULL, TAG_ITEM_FUNCTION_OPEN_FP_DIALOG, NULL, NULL);
-	//FPListEHS.AddColumnDefinition("HDG", 4, true, "Mode S PlugIn", ItemCodes::TAG_ITEM_EHS_HDG, NULL, NULL, NULL, NULL);
-	//FPListEHS.AddColumnDefinition("Roll", 5, true, "Mode S PlugIn", ItemCodes::TAG_ITEM_EHS_ROLL, NULL, NULL, NULL, NULL);
-	//FPListEHS.AddColumnDefinition("GS", 4, true, "Mode S PlugIn", ItemCodes::TAG_ITEM_EHS_GS, NULL, NULL, NULL, NULL);
+#ifdef _DEBUG
+	CFlightPlanList FPListEHS = RegisterFpList("Mode S EHS");
+	FPListEHS.DeleteAllColumns();
+	FPListEHS.AddColumnDefinition("C/S", 7, false, NULL, TAG_ITEM_TYPE_CALLSIGN, NULL, TAG_ITEM_FUNCTION_OPEN_FP_DIALOG, NULL, NULL);
+	FPListEHS.AddColumnDefinition("HDG", 4, true, pd.PLUGIN_NAME, ItemCodes::TAG_ITEM_EHS_HDG, NULL, NULL, NULL, NULL);
+	FPListEHS.AddColumnDefinition("Roll", 5, true, pd.PLUGIN_NAME, ItemCodes::TAG_ITEM_EHS_ROLL, NULL, NULL, NULL, NULL);
+	FPListEHS.AddColumnDefinition("GS", 4, true, pd.PLUGIN_NAME, ItemCodes::TAG_ITEM_EHS_GS, NULL, NULL, NULL, NULL);
+#endif
 
 	// Start new thread to get the version file from the server
 	fUpdateString = async(LoadUpdateString, pd);
@@ -35,17 +37,18 @@ CModeS::CModeS(PluginData pd) :
 	this->squawkVFR = "7000";
 	this->acceptEquipmentICAO = true;
 	this->acceptEquipmentFAA = true;
+	this->autoAssignMSCC = true;
 	
 	// Overwrite setting values by plugin settings, if available
 	try
 	{
-		const char* cstrSetting = GetDataFromSettings("SquawkVFR");
+		const char* cstrSetting = GetDataFromSettings("codeVFR");
 		if (cstrSetting != NULL)
 		{
 			this->squawkVFR = cstrSetting;
 		}
 
-		cstrSetting = GetDataFromSettings("ICAO");
+		cstrSetting = GetDataFromSettings("acceptFPLformatICAO");
 		if (cstrSetting != NULL)
 		{
 			if (strcmp(cstrSetting, "0") == 0)
@@ -54,7 +57,16 @@ CModeS::CModeS(PluginData pd) :
 			}
 		}
 
-		cstrSetting = GetDataFromSettings("FAA");
+		cstrSetting = GetDataFromSettings("acceptFPLformatFAA");
+		if (cstrSetting != NULL)
+		{
+			if (strcmp(cstrSetting, "0") == 0)
+			{
+				this->acceptEquipmentFAA = false;
+			}
+		}
+
+		cstrSetting = GetDataFromSettings("AutoAssign");
 		if (cstrSetting != NULL)
 		{
 			if (strcmp(cstrSetting, "0") == 0)
@@ -65,11 +77,11 @@ CModeS::CModeS(PluginData pd) :
 	}
 	catch (std::runtime_error const& e)
 	{
-		DisplayUserMessage("Mode S", "Mode S", (string("Error: ") + e.what()).c_str(), true, true, true, true, true);
+		DisplayUserMessage(pd.PLUGIN_NAME, "Error", e.what(), true, true, false, false, false);
 	}
 	catch (...)
 	{
-		DisplayUserMessage("Mode S", "Mode S", ("Unexpected error: " + std::to_string(GetLastError())).c_str(), true, true, true, true, true);
+		DisplayUserMessage(pd.PLUGIN_NAME, "Error", std::to_string(GetLastError()).c_str(), true, true, false, false, false);
 	}
 
 }
@@ -120,42 +132,15 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 			snprintf(sItemString, 16, "%03i", RadarTarget.GetPosition().GetReportedGS());
 	}
 
+#ifdef _DEBUG
 	else if (FlightPlanSelectASEL().GetCallsign() == FlightPlan.GetCallsign())
 	{
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
-		//CModeS::FPlistEHS.AddFpToTheList(FlightPlan);
+		this->FPlistEHS.AddFpToTheList(FlightPlan);
 	}
-
-	else if (ItemCode == TAG_ITEM_TYPE_DUPLICATED_SQUAWK)
-	{
-#ifdef _DEBUG
-		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
-			return;
-
-		auto assr = FlightPlan.GetControllerAssignedData().GetSquawk();
-		auto pssr = RadarTarget.GetPosition().GetSquawk();
-		if ((strlen(assr) == 0 ||
-			strcmp(assr, "0000") == 0 ||
-			strcmp(assr, "2000") == 0 ||
-			strcmp(assr, "1200") == 0 ||
-			strcmp(assr, "2200") == 0 ||
-			strcmp(assr, ::mode_s_code) == 0 ||
-			//strncmp(assr, pssr, 4) != 0 ||
-			strcmp(assr, this->squawkVFR) == 0))
-			return;
-
-		string DisplayMsg { "Duplicate squawk " + string {assr} + " assigned to " + string { FlightPlan.GetCallsign() } };
-		DisplayUserMessage("Mode S", "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-		// a duplicate squawk has been detected and another should be requested
-
-		// ask for another code
-		//if (PendingSquawks.find(FlightPlan.GetCallsign()) == PendingSquawks.end())
-		//	PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
-		//		std::string(FlightPlan.GetFlightPlanData().GetOrigin()), std::string(ControllerMyself().GetCallsign()))));
 #endif
-	}
 }
 
 void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
@@ -205,16 +190,63 @@ void CModeS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, R
 		if (!FlightPlan.IsValid())
 			return;
 
-		if (!strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V"))
-			FlightPlan.GetControllerAssignedData().SetSquawk(this->squawkVFR);
+		vector<const char*> usedCodes;
+		for (EuroScopePlugIn::CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
+			RadarTarget = RadarTargetSelectNext(RadarTarget))
+		{
+			if (RadarTarget.GetCallsign() == FlightPlanSelectASEL().GetCallsign())
+				continue;
 
-		if (msc.isAcModeS(FlightPlan) && msc.isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
-			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
-		else {
-			if (PendingSquawks.find(FlightPlan.GetCallsign()) == PendingSquawks.end())
-				PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
-					std::string(FlightPlan.GetFlightPlanData().GetOrigin()), std::string(ControllerMyself().GetCallsign()))));
+			auto assr = RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk();
+			if (strlen(assr) == 4 &&
+				strcmp(assr, "0000") != 0 &&
+				strcmp(assr, "2000") != 0 &&
+				strcmp(assr, "1200") != 0 &&
+				strcmp(assr, "2200") != 0 &&
+				strcmp(assr, ::mode_s_code) != 0 &&
+				strcmp(assr, this->squawkVFR) != 0)
+			{
+				usedCodes.push_back(assr);
+			}
 		}
+
+#ifdef _DEBUG
+		//std::ostringstream codes;
+		//std::copy(usedCodes.begin(), usedCodes.end(), std::ostream_iterator<std::string>(codes, ","));
+		//string codes;
+		//for (int i = 0; i < usedCodes.size(); i++)
+		//{
+		//	if (i > 0)
+		//		codes += ",";
+		//	codes += usedCodes[i];
+		//}
+
+		//string DisplayMsg{ "These codes have been found in your area while requesting a new code:" };
+		//DisplayUserMessage("Mode S", "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+		//DisplayUserMessage("Mode S", "Debug", codes.c_str(), true, false, false, false, false);
+#endif
+
+		try
+		{
+			if (!strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V"))
+				FlightPlan.GetControllerAssignedData().SetSquawk(this->squawkVFR);
+			else if (msc.isAcModeS(FlightPlan) && msc.isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
+				FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
+			else {
+				if (PendingSquawks.find(FlightPlan.GetCallsign()) == PendingSquawks.end())
+					PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
+						std::string(FlightPlan.GetFlightPlanData().GetOrigin()), std::string(ControllerMyself().GetCallsign()), usedCodes)));
+			}
+		}
+		catch (std::runtime_error const& e)
+		{
+			DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Error", e.what(), true, true, false, false, false);
+		}
+		catch (...)
+		{
+			DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Error", std::to_string(GetLastError()).c_str(), true, true, false, false, false);
+		}
+
 	}
 	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_MODES)
 	{
@@ -250,7 +282,7 @@ void CModeS::OnTimer(int Counter)
 	if (fUpdateString.valid() && fUpdateString.wait_for(0ms) == future_status::ready)
 		DoInitialLoad(fUpdateString);
 
-	if (!(Counter % 5) && ControllerMyself().IsValid() && ControllerMyself().IsController())
+	if (!(Counter % 5) && ControllerMyself().IsValid() && ControllerMyself().IsController() && this->autoAssignMSCC)
 		AutoAssignMSCC();
 
 	if (ControllerMyself().IsValid() && ControllerMyself().IsController())
@@ -299,9 +331,8 @@ void CModeS::AutoAssignMSCC()
 
 #ifdef _DEBUG
 			string DisplayMsg { "Code 1000 automatically assigned to " + string { FlightPlan.GetCallsign() } };
-			DisplayUserMessage("Mode S", "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+			DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
-
 		}
 	}
 }
@@ -313,7 +344,11 @@ void CModeS::AssignPendingSquawks()
 		bool must_delete = false;
 		if (it->second.valid() && it->second.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 			std::string squawk = it->second.get();
-			FlightPlanSelect(it->first).GetControllerAssignedData().SetSquawk(squawk.c_str());
+			if (!FlightPlanSelect(it->first).GetControllerAssignedData().SetSquawk(squawk.c_str()))
+			{
+				string DisplayMsg{ "The connection to the centralised code server failed. Try again or revert to the ES built-in functionalities for assigning a squawk (F9)." };
+				DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Error", DisplayMsg.c_str(), true, true, false, false, false);
+			}
 
 #ifdef _DEBUG
 
@@ -344,10 +379,10 @@ void CModeS::DoInitialLoad(future<string> & fmessage)
 
 			int new_v = stoi(match[3].str(), nullptr, 0);
 			if (new_v > pluginData.VERSION_CODE)
-				throw error{ "A new version of Mode S plugin is available, please update it\n\nhttps://github.com/pierr3/ModeS" };
+				throw error{ "A new version of the " + string { this->pluginData.PLUGIN_NAME } + " plugin is available, please update it\n\nhttps://github.com/pierr3/ModeS" };
 		}
 		else
-			throw error { "Mode S plugin couldn't parse the server data" };
+			throw error{ string { this->pluginData.PLUGIN_NAME }  + " plugin couldn't parse the server data" };
 	}
 	catch (modesexception & e)
 	{
@@ -355,7 +390,7 @@ void CModeS::DoInitialLoad(future<string> & fmessage)
 	}
 	catch (exception & e)
 	{
-		MessageBox(NULL, e.what(), "Mode S", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, e.what(), this->pluginData.PLUGIN_NAME, MB_OK | MB_ICONERROR);
 	}
 	fmessage = future<string>();
 }

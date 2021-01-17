@@ -8,7 +8,6 @@
 #include <map>
 #include <cstdio>
 #include <EuroScopePlugIn.h>
-//#include "ModeSDisplay.h"
 #include "ModeSCodes.h"
 #include "Helpers.h"
 
@@ -52,11 +51,12 @@ private:
 	const char* squawkVFR;
 	bool acceptEquipmentICAO;
 	bool acceptEquipmentFAA;
+	bool autoAssignMSCC;
 
 	void AutoAssignMSCC();
 	void AssignPendingSquawks();
 	void DoInitialLoad(future<string> & message);
 	bool IsFlightPlanProcessed(CFlightPlan & FlightPlan);
-	
+
 	std::map<const char*, std::future<std::string>> PendingSquawks;
 };
