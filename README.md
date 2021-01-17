@@ -28,7 +28,7 @@ The following settings can be added to the Plugins.txt file to customise the plu
 * Load up the plugin
 * Set your mode S string to ```HLEGWQS```
 * Add ```1000``` to your VFR squawk list (to prevent squawk duplicates)
-* Set the "CCAMS / Open SQUAWK popup" function to replace the default
+* Set the "CCAMS / Open SQUAWK assign popup" function to replace the default
 
 ## Add a country to the mode S list
 
