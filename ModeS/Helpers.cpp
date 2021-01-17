@@ -1,9 +1,10 @@
 #include "stdafx.h"
 #include "Helpers.h"
 
+
 std::string LoadUpdateString(PluginData p)
 {
-	const std::string AGENT { "EuroScopeModeS/" + std::string { p.PLUGIN_VERSION } };
+	const std::string AGENT { "EuroScopeCCAMS/" + std::string { p.PLUGIN_VERSION } };
 	HINTERNET connect = InternetOpen(AGENT.c_str(), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if (!connect) {
 		throw error { std::string {"Connection Failed. Error: " + std::to_string(GetLastError()) } };
@@ -26,20 +27,35 @@ std::string LoadUpdateString(PluginData p)
 	return answer;
 }
 
-std::string LoadWebSquawk(std::string origin, std::string callsign)
+std::string LoadWebSquawk(std::string origin, std::string callsign, std::vector<const char*> usedCodes)
 {
-	const std::string AGENT{ "EuroScopeModeS/EXP" };
+	const std::string AGENT{ "EuroScopeCCAMS/EXP" };
 	HINTERNET connect = InternetOpen(AGENT.c_str(), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if (!connect) {
-		throw error{ std::string {"Connection Failed. Error: " + std::to_string(GetLastError()) } };
+		//throw error{ std::string {"Connection Failed. Error: " + std::to_string(GetLastError()) } };
+#ifdef _DEBUG
+		//std::string DisplayMsg{ "Failed to load URL. Error: " + std::to_string(GetLastError()) };
+#endif
+		return "0000";
 	}
 
-	std::string build_url = "https://kilojuliett.ch/webtools/api/ssrcode?orig=" + origin + "&callsign=" + callsign;
+	std::string codes;
+	for (size_t i = 0; i < usedCodes.size(); i++)
+	{
+		if (i > 0)
+			codes += ",";
+		codes += usedCodes[i];
+	}
+
+	std::string build_url = "https://kilojuliett.ch/webtools/api/ssrcode?orig=" + origin + "&callsign=" + callsign + "&codes=" + codes;
+
+
 
 	HINTERNET OpenAddress = InternetOpenUrl(connect, build_url.c_str(), NULL, 0, INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD, 0);
 	if (!OpenAddress) {
 		InternetCloseHandle(connect);
-		throw error{ std::string { "Failed to load URL. Error: " + std::to_string(GetLastError()) } };
+		//throw error{ std::string { "Failed to load URL. Error: " + std::to_string(GetLastError()) } };
+		return "0000";
 	}
 
 	char DataReceived[256];

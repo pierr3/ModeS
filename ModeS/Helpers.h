@@ -7,11 +7,13 @@
 #include <algorithm> 
 #include <cctype>
 #include <locale>
+#include <EuroScopePlugIn.h>
 #include "version.h"
+#include "ModeS2.h"
 
 std::string LoadUpdateString(PluginData p);
 
-std::string LoadWebSquawk(std::string origin, std::string callsign);
+std::string LoadWebSquawk(std::string origin, std::string callsign, std::vector<const char*> usedCodes);
 
 
 inline std::vector<std::string> split(const std::string & s, char delim)
@@ -53,7 +55,7 @@ public:
 	virtual inline const long icon() const = 0;
 	inline void whatMessageBox()
 	{
-		MessageBox(NULL, what(), "Mode S", MB_OK | icon());
+		MessageBox(NULL, what(), "CCAMS", MB_OK | icon());
 	}
 };
 

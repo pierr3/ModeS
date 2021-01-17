@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "ModeSCodes.h"
 #include "ModeS2.h"
 
 CModeSCodes::CModeSCodes(const DefaultCodes && dc) :
@@ -8,7 +7,7 @@ CModeSCodes::CModeSCodes(const DefaultCodes && dc) :
 	ICAO_MODES(std::move(dc.ICAO_MODES))
 {}
 
-CModeSCodes::~CModeSCodes() 
+CModeSCodes::~CModeSCodes()
 {}
 
 bool CModeSCodes::isAcModeS(const EuroScopePlugIn::CFlightPlan & FlightPlan) const
@@ -22,7 +21,7 @@ bool CModeSCodes::isAcModeS(const EuroScopePlugIn::CFlightPlan & FlightPlan) con
 		if (std::regex_match(actype, acdata, icao_format) && acdata.size() == 5)
 		{
 			for (const auto& code : EQUIPEMENT_CODES_ICAO)
-				if (acdata[4].str()._Starts_with(code))
+				if (strncmp(acdata[4].str().c_str(), code.c_str(), 1))
 					return true;
 		}
 	}
@@ -51,7 +50,7 @@ bool CModeSCodes::isEHS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
 	if (std::regex_match(actype, acdata, icao_format) && acdata.size() == 5)
 	{
 		for (const auto& code : EQUIPEMENT_CODES_EHS)
-			if (acdata[4].str()._Starts_with(code))
+			if (strncmp(acdata[4].str().c_str(), code.c_str(), 1))
 				return true;
 	}
 
