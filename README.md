@@ -4,6 +4,7 @@ This project has been upgraded to include additional functions and is intending 
 
 This plugin was designed to support controllers of the VATSIM network when assigning a squawk to aircraft. The web-based part of the application is acting as the central interface to manage all squawk assignment. The "rules" covered initially are following the VATEUD code assignment scheme. Therefore, the plugin primarily is intended to serve VATEUD members. Local ops/tech staff may define and fine tune the rule setting for the squawk assignment in collaboration with VATEUD8.
 This plugin includes Mode S functionalities as introduced previously by Oliver Gruetzmann and Pierre Ferran. Additionally, plugin settings are available to customise the plugin behaviour and limit certain functionalities to comply with the vACCs local needs and requirements.
+
 This plugin provides as the core functionality:
 * Manual code assignment options for all aircraft on ground (improved popup menu, tag functions)
 * Automatic assignment of squawk 1000 for capable aircraft above FL245 without assigned squawk or with generic codes like 0000, 1200, 2000, 2200
