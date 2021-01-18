@@ -1,4 +1,4 @@
-This project has been upgraded to include additional functions and is intending to replace earlier versions maintained by Oliver Gruetzmann [ogruetzmann/ModeS] and Pierre Ferran [pierr3/ModeS].
+This project has been upgraded to include additional functions and is intending to replace earlier versions maintained by Oliver Gruetzmann [ogruetzmann/ModeS](https://github.com/ogruetzmann/ModeS) and Pierre Ferran [pierr3/ModeS](https://github.com/pierr3/ModeS).
 
 # CCAMS (Centralised code assignment and management system) plugin
 
