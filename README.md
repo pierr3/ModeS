@@ -18,7 +18,7 @@ This plugin provides as the core functionality:
 
 ## Available tag functions
 * Assign mode S squawk: assigns code 1000 to eligible aircraft with mode S transponder
-* Auto assign squawk: intended to replace the default ES (F9) function, assigns code 1000 if eligible, otherwise assigns a squawk according the implemented code scheme
+* Auto assign squawk: intended to be used instead of the default ES (F9) function, assigns code 1000 if eligible, otherwise assigns a squawk according the implemented code scheme
 * Open SQUAWK assign popup: improved options compared to the default ES functions, including the above assign mode S option and a specific VFR code assignment
 
 ## Available plugin settings
