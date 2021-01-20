@@ -23,10 +23,10 @@ This plugin provides as the core functionality:
 
 ## Available plugin settings
 The following settings can be added to the Plugins.txt file to customise the plugins behaviour:
-* Add "CCMAS:codeVFR:[your default VFR code]" to define the code used for VFR aircraft (both by the auto assign tag function and the specific option in the SQUAWk assign popup), if not defined, 7000 is used
-* Add "CCMAS:acceptFPLformatICAO:0" to suppress the assignment of squawk 1000 to aircraft using an ICAO format flight plan
-* Add "CCMAS:acceptFPLformatFAA:0" to suppress the assignment of squawk 1000 to aircraft using an FAA format flight plan
-* Add "CCMAS:AutoAssign:0" to suppress the automatic assignment of squawk 1000 to eligible aircraft above FL 245
+* Add "CCAMS:codeVFR:[your default VFR code]" to define the code used for VFR aircraft (both by the auto assign tag function and the specific option in the SQUAWk assign popup), if not defined, 7000 is used
+* Add "CCAMS:acceptFPLformatICAO:0" to suppress the assignment of squawk 1000 to aircraft using an ICAO format flight plan
+* Add "CCAMS:acceptFPLformatFAA:0" to suppress the assignment of squawk 1000 to aircraft using an FAA format flight plan
+* Add "CCAMS:AutoAssign:0" to suppress the automatic assignment of squawk 1000 to eligible aircraft above FL 245
 
 ## EuroScope set up
 * Load up the plugin
