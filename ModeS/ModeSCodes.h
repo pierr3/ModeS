@@ -24,6 +24,6 @@ private:
 	std::vector<std::string> EQUIPEMENT_CODES_EHS;
 	std::vector<std::string> ICAO_MODES;
 
-	static bool startsWith(const char * pre, const char * str);
+	//static bool startsWith(const char * pre, const char * str);
 	static bool startsWith(const std::string & zone, const std::string & icao);
 };

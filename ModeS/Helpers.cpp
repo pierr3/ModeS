@@ -32,10 +32,6 @@ std::string LoadWebSquawk(std::string origin, std::string callsign, std::vector<
 	const std::string AGENT{ "EuroScopeCCAMS/EXP" };
 	HINTERNET connect = InternetOpen(AGENT.c_str(), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if (!connect) {
-		//throw error{ std::string {"Connection Failed. Error: " + std::to_string(GetLastError()) } };
-#ifdef _DEBUG
-		//std::string DisplayMsg{ "Failed to load URL. Error: " + std::to_string(GetLastError()) };
-#endif
 		return "0000";
 	}
 
@@ -49,12 +45,9 @@ std::string LoadWebSquawk(std::string origin, std::string callsign, std::vector<
 
 	std::string build_url = "https://kilojuliett.ch/webtools/api/ssrcode?orig=" + origin + "&callsign=" + callsign + "&codes=" + codes;
 
-
-
 	HINTERNET OpenAddress = InternetOpenUrl(connect, build_url.c_str(), NULL, 0, INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD, 0);
 	if (!OpenAddress) {
 		InternetCloseHandle(connect);
-		//throw error{ std::string { "Failed to load URL. Error: " + std::to_string(GetLastError()) } };
 		return "0000";
 	}
 

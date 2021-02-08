@@ -2,9 +2,9 @@
 #include "ModeS2.h"
 
 CModeSCodes::CModeSCodes(const DefaultCodes && dc) :
-	EQUIPEMENT_CODES(std::move(dc.EQUIPEMENT_CODES)),
-	EQUIPEMENT_CODES_ICAO(std::move(dc.EQUIPEMENT_CODES_ICAO)),
-	ICAO_MODES(std::move(dc.ICAO_MODES))
+	EQUIPEMENT_CODES(dc.EQUIPEMENT_CODES),
+	EQUIPEMENT_CODES_ICAO(dc.EQUIPEMENT_CODES_ICAO),
+	ICAO_MODES(dc.ICAO_MODES)
 {}
 
 CModeSCodes::~CModeSCodes()
@@ -82,12 +82,12 @@ void CModeSCodes::SetICAOModeS(std::vector<std::string> && icao_modes)
 	ICAO_MODES = std::move(icao_modes);
 }
 
-inline bool CModeSCodes::startsWith(const char * pre, const char * str)
-{
-	size_t lenpre = strlen(pre),
-		lenstr = strlen(str);
-	return lenstr < lenpre ? false : strncmp(pre, str, lenpre) == 0;
-}
+//inline bool CModeSCodes::startsWith(const char * pre, const char * str)
+//{
+//	size_t lenpre = strlen(pre),
+//		lenstr = strlen(str);
+//	return lenstr < lenpre ? false : strncmp(pre, str, lenpre) == 0;
+//}
 
 inline bool CModeSCodes::startsWith(const std::string & zone, const std::string & icao)
 {

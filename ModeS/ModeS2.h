@@ -58,5 +58,7 @@ private:
 	void DoInitialLoad(future<string> & message);
 	bool IsFlightPlanProcessed(CFlightPlan & FlightPlan);
 
+	//bool isEHS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
+
 	std::map<const char*, std::future<std::string>> PendingSquawks;
 };
