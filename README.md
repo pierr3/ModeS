@@ -1,37 +1,40 @@
-# This project is now maintained by Oliver Gruetzmann on [ogruetzmann/ModeS](https://github.com/ogruetzmann/ModeS), please download the plugin from there. This repository is only here for archiving purposes.
+This project has been upgraded to include additional functions and is intending to replace earlier versions maintained by Oliver Gruetzmann [ogruetzmann/ModeS](https://github.com/ogruetzmann/ModeS) and Pierre Ferran [pierr3/ModeS](https://github.com/pierr3/ModeS).
 
-# Mode S plugin
+# CCAMS (Centralised code assignment and management system) plugin
 
-This plugin was designed to simulate mode S correlation on EuroScope, for use on the VATSIM Network. Just load the plugin in EuroScope, and squawk 1000 will be assigned for capable aircraft above FL245 without assigned sqauwk or with generic codes like 0000, 1200, 2000, 2200.
-Manual assignment is available for all applicable aircraft and aircraft on ground.
+This plugin was designed to support controllers of the VATSIM network when assigning a squawk to aircraft. The web-based part of the application is acting as the central interface to manage all squawk assignment. The "rules" covered initially are following the VATEUD code assignment scheme. Therefore, the plugin primarily is intended to serve VATEUD members. Local ops/tech staff may define and fine tune the rule setting for the squawk assignment in collaboration with VATEUD8.
+This plugin includes Mode S functionalities as introduced previously by Oliver Gruetzmann and Pierre Ferran. Additionally, plugin settings are available to customise the plugin behaviour and limit certain functionalities to comply with the vACCs local needs and requirements.
 
-The plugin needs the Visual C++ Redistributable for Visual Studio 2015. If you have trouble to load the plugin, install it from here: https://www.microsoft.com/en-us/download/details.aspx?id=48145
+This plugin provides as the core functionality:
+* Manual code assignment options for all aircraft on ground (improved popup menu, tag functions)
+* Automatic assignment of squawk 1000 for capable aircraft above FL245 without assigned squawk or with generic codes like 0000, 1200, 2000, 2200
+* Tag items representing Mode S EHS (Enhanced Surveillance) data
 
 ## Available tag items
-
 * Transponder type: Show wether the aircraft is mode S or not
-* Mode S: Reported Heading: Reported magnetic heading of the aircraft
-* Mode S: Roll Angle: Reported roll angle (L for LEFT and R for RIGHT + value in degrees)
-* Mode S: Reported GS: Reported groundspeed of the aircraft in knots.
+* EHS Heading: Reported magnetic heading of the aircraft
+* EHS Roll Angle: Reported roll angle (L for LEFT and R for RIGHT + value in degrees)
+* EHS GS: Reported groundspeed of the aircraft in knots.
 
 ## Available tag functions
+* Assign mode S squawk: assigns code 1000 to eligible aircraft with mode S transponder
+* Auto assign squawk: intended to be used instead of the default ES (F9) function, assigns code 1000 if eligible, otherwise assigns a squawk according the implemented code scheme
+* Open SQUAWK assign popup: improved options compared to the default ES functions, including the above assign mode S option and a specific VFR code assignment
 
-* Assign mode S squawk - assigns code 1000 to aircraft with mode S transponder
-* Assign mode S/A squawk - same as above, but opens the default assignment popup for aircraft without mode S transponder (meant to be used in the EuroScope lists).
+## Available plugin settings
+The following settings can be added to the Plugins.txt file to customise the plugins behaviour:
+* Add "CCAMS:codeVFR:[your default VFR code]" to define the code used for VFR aircraft (both by the auto assign tag function and the specific option in the SQUAWk assign popup), if not defined, 7000 is used
+* Add "CCAMS:acceptFPLformatICAO:0" to suppress the assignment of squawk 1000 to aircraft using an ICAO format flight plan
+* Add "CCAMS:acceptFPLformatFAA:0" to suppress the assignment of squawk 1000 to aircraft using an FAA format flight plan
+* Add "CCAMS:AutoAssign:0" to suppress the automatic assignment of squawk 1000 to eligible aircraft above FL 245
 
 ## EuroScope set up
 * Load up the plugin
 * Set your mode S string to ```HLEGWQS```
-* Add ```1000``` to your VFR squawk list (to prevent squawk duplicates)
-* Set the "Mode S Plugin / Assign mode S/A sqauwk" function to replace the default
-* Allow the plugin to draw on all types of radarscreens
-![Tag Setup](http://cherryx.de/modes/modespluginlist.png)
-![Plugin Setup](http://cherryx.de/modes/modesplugin.png)
+* Optionally: Remove the Squawk code for S-mode transponders (to ensure squawk 1000 is only assigned by the plugin logic)
+* Add ```1000``` to your VFR squawk list (to prevent duplicates indications for squawk 1000)
+* Set the "CCAMS / Open SQUAWK assign popup" function to replace the default one in your list and tag definitions
 
 ## Add a country to the mode S list
 
-If you would like to add a series of airports to the mode S, create an issue on this GitHub with your request, you can see all the currently enabled areas in the file "version.txt"
-
-The current mode S airspace for the plugin is as follows:
-
-![Mode S Map](https://s3.eu-central-1.amazonaws.com/pithos/ShareX/2015/12/23.12.2015.modeS.gif)
+If you would like to add a region or set of airports to the list of Mode S capable ones, create an issue on this GitHub with your request, you can see all the currently enabled areas in the file "version.txt"

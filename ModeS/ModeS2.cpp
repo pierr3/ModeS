@@ -251,6 +251,7 @@ void CModeS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, R
 		{
 			DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Error", std::to_string(GetLastError()).c_str(), true, true, false, false, false);
 		}
+
 	}
 	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_MODES)
 	{
