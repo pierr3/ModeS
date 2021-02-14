@@ -33,7 +33,7 @@ The following settings can be added to the Plugins.txt file to customise the plu
 * Set your mode S string to ```HLEGWQS```
 * Optionally: Remove the Squawk code for S-mode transponders (to ensure squawk 1000 is only assigned by the plugin logic)
 * Add ```1000``` to your VFR squawk list (to prevent duplicates indications for squawk 1000)
-* Set the "CCAMS / Open SQUAWK assign popup" function to replace the default one in your list and tag definitions
+* Select the "CCAMS / Open SQUAWK assign popup" function to replace the default one in your list and tag definitions
 
 ## Add a country to the mode S list
 
