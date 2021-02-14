@@ -23,7 +23,8 @@ This plugin provides as the core functionality:
 
 ## Available plugin settings
 The following settings can be added to the Plugins.txt file to customise the plugins behaviour:
-* Add "CCAMS:codeVFR:[your default VFR code]" to define the code used for VFR aircraft (both by the auto assign tag function and the specific option in the SQUAWk assign popup), if not defined, 7000 is used
+* Add "CCAMS:codeVFR:[your default VFR code]" to define the code used when assigning a VFR code (by the specific option in the SQUAWk assign popup)
+  if not defined, 7000 is used
 * Add "CCAMS:acceptFPLformatICAO:0" to suppress the assignment of squawk 1000 to aircraft using an ICAO format flight plan
 * Add "CCAMS:acceptFPLformatFAA:0" to suppress the assignment of squawk 1000 to aircraft using an FAA format flight plan
 * Add "CCAMS:AutoAssign:0" to suppress the automatic assignment of squawk 1000 to eligible aircraft above FL 245
@@ -38,3 +39,8 @@ The following settings can be added to the Plugins.txt file to customise the plu
 ## Add a country to the mode S list
 
 If you would like to add a region or set of airports to the list of Mode S capable ones, create an issue on this GitHub with your request, you can see all the currently enabled areas in the file "version.txt"
+
+## Server data
+The current data used by the web-based part of the application can be reviewed as follows:
+* Ranges used to find a suitable code depending on FIR (which is compared to the controllers call sign) and the departure airport: https://kilojuliett.ch/webtools/ssrcoderanges
+* Currently reserved codes and expiry of the reservation time: https://kilojuliett.ch/webtools/ssrcodesused
