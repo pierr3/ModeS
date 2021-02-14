@@ -37,7 +37,7 @@ The following settings can be added to the Plugins.txt file to customise the plu
 
 ## Add a country to the mode S list
 
-If you would like to add a region or set of airports to the list of Mode S capable ones, create an issue on this GitHub with your request. You can see all the currently enabled areas in the file [version.txt](https://github.com/kusterjs/CCAMS/blob/master/ModeS/ver.txt).
+If you would like to add a region or set of airports to the list of Mode S capable ones, create an issue on this GitHub with your request. You can see all the currently enabled areas in the file [ver.txt](https://github.com/kusterjs/CCAMS/blob/master/ModeS/ver.txt).
 
 ## Server data
 The current data used by the web-based part of the application can be reviewed as follows:
