@@ -23,7 +23,7 @@ This plugin provides as the core functionality:
 
 ## Available plugin settings
 The following settings can be added to the Plugins.txt file to customise the plugins behaviour:
-* Add "CCAMS:codeVFR:[your default VFR code]" to define the code used for VFR aircraft (both by the auto assign tag function and the specific option in the SQUAWk assign popup), if not defined, 7000 is used
+* Add "CCAMS:codeVFR:[your default VFR code]" to define the code used when assigning a VFR code (by the specific option in the SQUAWK assign popup (if not defined, 7000 is used))
 * Add "CCAMS:acceptFPLformatICAO:0" to suppress the assignment of squawk 1000 to aircraft using an ICAO format flight plan
 * Add "CCAMS:acceptFPLformatFAA:0" to suppress the assignment of squawk 1000 to aircraft using an FAA format flight plan
 * Add "CCAMS:AutoAssign:0" to suppress the automatic assignment of squawk 1000 to eligible aircraft above FL 245
@@ -33,8 +33,14 @@ The following settings can be added to the Plugins.txt file to customise the plu
 * Set your mode S string to ```HLEGWQS```
 * Optionally: Remove the Squawk code for S-mode transponders (to ensure squawk 1000 is only assigned by the plugin logic)
 * Add ```1000``` to your VFR squawk list (to prevent duplicates indications for squawk 1000)
-* Set the "CCAMS / Open SQUAWK assign popup" function to replace the default one in your list and tag definitions
+* Select the "CCAMS / Open SQUAWK assign popup" function to replace the default one in your list and tag definitions
 
 ## Add a country to the mode S list
 
-If you would like to add a region or set of airports to the list of Mode S capable ones, create an issue on this GitHub with your request, you can see all the currently enabled areas in the file "version.txt"
+If you would like to add a region or set of airports to the list of Mode S capable ones, create an issue on this GitHub with your request. You can see all the currently enabled areas in the file [version.txt](https://github.com/kusterjs/CCAMS/blob/master/ModeS/ver.txt).
+
+## Server data
+The current data used by the web-based part of the application can be reviewed as follows:
+* Ranges used to find a suitable code depending on FIR (which is compared to the controllers call sign) and the departure airport: https://kilojuliett.ch/webtools/ssrcoderanges
+* Currently reserved codes and expiry of the reservation time: https://kilojuliett.ch/webtools/ssrcodesused
+For any change, please create an issue on this GitHub.
