@@ -6,9 +6,9 @@ struct PluginData
 {
 	const char * PLUGIN_NAME	{ "CCAMS" };
 	const char * PLUGIN_VERSION { "1.5.3" };
-	const char * PLUGIN_AUTHOR	{ "Pierre Ferran, Oliver Gr�tzmann, Jonas Kuster" };
+	const char * PLUGIN_AUTHOR	{ "Pierre Ferran, Oliver Grützmann, Jonas Kuster" };
 	const char * PLUGIN_LICENSE { "GPL v3" };
-	const char * UPDATE_URL		{ "https://raw.githubusercontent.com/ogruetzmann/ModeS/master/version.txt" };
+	const char * UPDATE_URL		{ "https://github.com/kusterjs/CCAMS/blob/master/ModeS/ver.txt" };
 	const int VERSION_CODE		{ 953 };
 };
 
