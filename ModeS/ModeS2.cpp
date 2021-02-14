@@ -212,9 +212,25 @@ void CModeS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, R
 				for (EuroScopePlugIn::CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
 					RadarTarget = RadarTargetSelectNext(RadarTarget))
 				{
-					if (RadarTarget.GetCallsign() == FlightPlanSelectASEL().GetCallsign())
+					if (!RadarTarget.IsValid())
+					{
+#ifdef _DEBUG
+						string DisplayMsg{ "Invalid radar target found" };
+						DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
 						continue;
+					}
 
+					if (RadarTarget.GetCallsign() == FlightPlanSelectASEL().GetCallsign())
+					{
+#ifdef _DEBUG
+						string DisplayMsg{ "The code of " + string { RadarTarget.GetCallsign() } + " is not considered" };
+						DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
+						continue;
+					}
+
+					// search for all controller assigned codes
 					auto assr = RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk();
 					if (strlen(assr) == 4 &&
 						strcmp(assr, "0000") != 0 &&
@@ -225,6 +241,20 @@ void CModeS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, R
 						strcmp(assr, this->squawkVFR) != 0)
 					{
 						usedCodes.push_back(assr);
+					}
+
+					// search for all actual codes used by pilots
+					auto pssr = RadarTarget.GetPosition().GetSquawk();
+					if (pssr != assr &&
+						strlen(pssr) == 4 &&
+						strcmp(pssr, "0000") != 0 &&
+						strcmp(pssr, "2000") != 0 &&
+						strcmp(pssr, "1200") != 0 &&
+						strcmp(pssr, "2200") != 0 &&
+						strcmp(pssr, ::mode_s_code) != 0 &&
+						strcmp(pssr, this->squawkVFR) != 0)
+					{
+						usedCodes.push_back(pssr);
 					}
 				}
 
