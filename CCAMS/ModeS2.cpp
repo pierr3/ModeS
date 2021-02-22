@@ -22,12 +22,14 @@ CModeS::CModeS(PluginData pd) :
 	RegisterTagItemFunction("Open SQUAWK assign popup", ItemCodes::TAG_FUNC_SQUAWK_POPUP);
 
 #ifdef _DEBUG
-	CFlightPlanList FPListEHS = RegisterFpList("Mode S EHS");
-	FPListEHS.DeleteAllColumns();
-	FPListEHS.AddColumnDefinition("C/S", 7, false, NULL, TAG_ITEM_TYPE_CALLSIGN, NULL, TAG_ITEM_FUNCTION_OPEN_FP_DIALOG, NULL, NULL);
-	FPListEHS.AddColumnDefinition("HDG", 4, true, pd.PLUGIN_NAME, ItemCodes::TAG_ITEM_EHS_HDG, NULL, NULL, NULL, NULL);
-	FPListEHS.AddColumnDefinition("Roll", 5, true, pd.PLUGIN_NAME, ItemCodes::TAG_ITEM_EHS_ROLL, NULL, NULL, NULL, NULL);
-	FPListEHS.AddColumnDefinition("GS", 4, true, pd.PLUGIN_NAME, ItemCodes::TAG_ITEM_EHS_GS, NULL, NULL, NULL, NULL);
+	this->FpListEHS = RegisterFpList("Mode S EHS");
+	if (this->FpListEHS.GetColumnNumber() == 0)
+	{
+		this->FpListEHS.AddColumnDefinition("C/S", 7, false, NULL, TAG_ITEM_TYPE_CALLSIGN, NULL, TAG_ITEM_FUNCTION_OPEN_FP_DIALOG, NULL, NULL);
+		this->FpListEHS.AddColumnDefinition("HDG", 4, true, this->pluginData.PLUGIN_NAME, ItemCodes::TAG_ITEM_EHS_HDG, NULL, NULL, NULL, NULL);
+		this->FpListEHS.AddColumnDefinition("Roll", 5, true, this->pluginData.PLUGIN_NAME, ItemCodes::TAG_ITEM_EHS_ROLL, NULL, NULL, NULL, NULL);
+		this->FpListEHS.AddColumnDefinition("GS", 4, true, this->pluginData.PLUGIN_NAME, ItemCodes::TAG_ITEM_EHS_GS, NULL, NULL, NULL, NULL);
+	}
 #endif
 
 	// Start new thread to get the version file from the server
@@ -38,6 +40,8 @@ CModeS::CModeS(PluginData pd) :
 	this->acceptEquipmentICAO = true;
 	this->acceptEquipmentFAA = true;
 	this->autoAssignMSCC = true;
+	this->APTcodeMaxGS = 50;
+	this->APTcodeMaxDist = 3;
 	
 	// Overwrite setting values by plugin settings, if available
 	try
@@ -45,7 +49,10 @@ CModeS::CModeS(PluginData pd) :
 		const char* cstrSetting = GetDataFromSettings("codeVFR");
 		if (cstrSetting != NULL)
 		{
-			this->squawkVFR = cstrSetting;
+			if (regex_search(cstrSetting, std::regex("[0-7]{4}")))
+			{
+				this->squawkVFR = cstrSetting;
+			}
 		}
 
 		cstrSetting = GetDataFromSettings("acceptFPLformatICAO");
@@ -89,6 +96,49 @@ CModeS::CModeS(PluginData pd) :
 CModeS::~CModeS()
 {}
 
+bool CModeS::OnCompileCommand(const char* command)
+{
+	string commandString(command);
+	smatch matches;
+
+	if (regex_match(commandString, matches, regex("\\.ccams\\s+(\\w+)", regex::icase)))
+	{
+		string pluginCommand = matches[1];
+		transform(pluginCommand.begin(), pluginCommand.end(), pluginCommand.begin(), ::tolower);
+
+#ifdef _DEBUG
+		if (pluginCommand == "ehslist")
+		{
+			this->FpListEHS.ShowFpList(true);
+			return true;
+		}
+#endif
+
+		return false;
+	}
+#ifdef _DEBUG
+	if (Help(command)) return true;
+#endif
+
+	return false;
+}
+
+bool CModeS::Help(const char* Command)
+{
+	if (_stricmp(Command, ".help") == 0)
+	{
+		DisplayUserMessage("HELP", "HELP", ".HELP CCAMS | Centralised code assignment and management system Help", true, true, true, true, false);
+		return NULL;
+	}
+	else if (_stricmp(Command, ".help ccams") == 0)
+	{
+		// Display HELP
+		DisplayUserMessage("HELP", this->pluginData.PLUGIN_NAME, ".CCAMS EHSLIST | Displays the flight plan list with EHS values of the currently selected aircraft.", true, true, true, true, false);
+		return true;
+	}
+	return false;
+}
+
 void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int ItemCode, int TagData, char sItemString[16], int * pColorCode, COLORREF * pRGB, double * pFontSize)
 {
 	if (ItemCode == ItemCodes::TAG_ITEM_ISMODES)
@@ -131,19 +181,6 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		if (msc.isEHS(FlightPlan) && FlightPlan.GetCorrelatedRadarTarget().IsValid())
 			snprintf(sItemString, 16, "%03i", RadarTarget.GetPosition().GetReportedGS());
 	}
-
-#ifdef _DEBUG
-	else if (FlightPlanSelectASEL().GetCallsign() == FlightPlan.GetCallsign())
-	{
-		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
-			return;
-
-		string DisplayMsg{ "The following call sign was identified to bea added to the EHS Mode S list: " + string { FlightPlan.GetCallsign() } };
-		DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-		this->FPlistEHS.AddFpToTheList(FlightPlan);
-		OnRefreshFpListContent(this->FPlistEHS);
-	}
-#endif
 }
 
 void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
@@ -157,6 +194,29 @@ void CModeS::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
 {
 	ProcessedFlightPlans.erase(remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()),
 							   ProcessedFlightPlans.end());
+
+#ifdef _DEBUG
+	this->FpListEHS.RemoveFpFromTheList(FlightPlan);
+#endif
+}
+
+void CModeS::OnRefreshFpListContent(CFlightPlanList AcList)
+{
+
+#ifdef _DEBUG
+	if (ControllerMyself().IsValid() && RadarTargetSelectASEL().IsValid())
+	{
+		string DisplayMsg{ "The following call sign was identified to bea added to the EHS Mode S list: " + string { FlightPlanSelectASEL().GetCallsign() } };
+		DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+		for (CFlightPlan FP = FlightPlanSelectFirst(); FP.IsValid(); FP = FlightPlanSelectNext(FP))
+		{
+			this->FpListEHS.RemoveFpFromTheList(FP);
+		}
+		this->FpListEHS.AddFpToTheList(FlightPlanSelectASEL());
+	}
+#endif
+
+
 }
 
 void CModeS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area)
@@ -245,14 +305,14 @@ void CModeS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, R
 
 					// search for all actual codes used by pilots
 					auto pssr = RadarTarget.GetPosition().GetSquawk();
-					if (pssr != assr &&
-						strlen(pssr) == 4 &&
+					if (strlen(pssr) == 4 &&
 						strcmp(pssr, "0000") != 0 &&
 						strcmp(pssr, "2000") != 0 &&
 						strcmp(pssr, "1200") != 0 &&
 						strcmp(pssr, "2200") != 0 &&
 						strcmp(pssr, ::mode_s_code) != 0 &&
-						strcmp(pssr, this->squawkVFR) != 0)
+						strcmp(pssr, this->squawkVFR) != 0 &&
+						strcmp(pssr, assr) != 0)
 					{
 						usedCodes.push_back(pssr);
 					}
@@ -269,8 +329,13 @@ void CModeS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, R
 				//	codes += usedCodes[i];
 				//}
 #endif
-				PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
-					std::string(FlightPlan.GetFlightPlanData().GetOrigin()), std::string(ControllerMyself().GetCallsign()), usedCodes)));
+				if (FlightPlan.GetCorrelatedRadarTarget().GetGS() > this->APTcodeMaxGS ||
+					FlightPlan.GetDistanceFromOrigin()>this->APTcodeMaxDist)
+					PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
+						"", std::string(ControllerMyself().GetCallsign()), usedCodes)));
+				else
+					PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
+						std::string(FlightPlan.GetFlightPlanData().GetOrigin()), std::string(ControllerMyself().GetCallsign()), usedCodes)));
 			}
 		}
 		catch (std::runtime_error const& e)
@@ -387,11 +452,6 @@ void CModeS::AssignPendingSquawks()
 				string DisplayMsg{ "The connection to the centralised code server failed. Try again or revert to the ES built-in functionalities for assigning a squawk (F9)." };
 				DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Error", DisplayMsg.c_str(), true, true, false, false, false);
 			}
-
-#ifdef _DEBUG
-
-#endif
-
 			must_delete = true;
 		}
 

@@ -29,7 +29,8 @@ std::string LoadUpdateString(PluginData p)
 
 std::string LoadWebSquawk(std::string origin, std::string callsign, std::vector<const char*> usedCodes)
 {
-	const std::string AGENT{ "EuroScope CCAMS/1.5.3" };
+	PluginData p;
+	const std::string AGENT{ "EuroScope CCAMS/" + std::string { p.PLUGIN_VERSION } };
 	HINTERNET connect = InternetOpen(AGENT.c_str(), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if (!connect) {
 		return "0000";
