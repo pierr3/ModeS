@@ -449,7 +449,7 @@ void CModeS::AssignPendingSquawks()
 			std::string squawk = it->second.get();
 			if (!FlightPlanSelect(it->first).GetControllerAssignedData().SetSquawk(squawk.c_str()))
 			{
-				string DisplayMsg{ "The connection to the centralised code server failed. Try again or revert to the ES built-in functionalities for assigning a squawk (F9)." };
+				string DisplayMsg{ "Your request for a squawk from the centralised code server failed. Check your plugin version, try again or revert to the ES built-in functionalities for assigning a squawk (F9)." };
 				DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Error", DisplayMsg.c_str(), true, true, false, false, false);
 			}
 			must_delete = true;

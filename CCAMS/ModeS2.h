@@ -19,7 +19,7 @@ class CModeS :
 {
 public:
 	explicit CModeS(PluginData p = PluginData());
-	~CModeS();
+	virtual ~CModeS();
 
 	bool OnCompileCommand(const char* command);
 	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
