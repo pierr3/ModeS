@@ -1,14 +1,14 @@
 #include "stdafx.h"
-#include "ModeS.h"
+#include "ESPlugin.h"
 
-CModeS * gpMyPlugin = NULL;
+CCAMS * gpMyPlugin = NULL;
 
 //---EuroScopePlugInInit-----------------------------------------------
 
 void __declspec (dllexport) EuroScopePlugInInit(EuroScopePlugIn::CPlugIn ** ppPlugInInstance)
 {
 	// create the instance
-	*ppPlugInInstance = gpMyPlugin = new CModeS();
+	*ppPlugInInstance = gpMyPlugin = new CCAMS();
 }
 
 

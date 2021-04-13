@@ -9,7 +9,7 @@
 #include <locale>
 #include <EuroScopePlugIn.h>
 #include "version.h"
-#include "ModeS2.h"
+#include "CCAMS.h"
 
 std::string LoadUpdateString(PluginData p);
 

@@ -13,7 +13,7 @@ public:
 	bool isAcModeS(const EuroScopePlugIn::CFlightPlan & FlightPlan) const;
 	bool isEHS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
 	bool isApModeS(const std::string & icao) const;
-	bool isFlightModeS(const EuroScopePlugIn::CFlightPlan & FlightPlan) const;
+	//bool isFlightModeS(const EuroScopePlugIn::CFlightPlan & FlightPlan) const;
 
 	void SetEquipementCodes(std::vector<std::string> && EQUIPEMENT_CODES);
 	void SetICAOModeS(std::vector<std::string> && ICAO_MODES);

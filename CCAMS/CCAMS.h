@@ -8,18 +8,18 @@
 #include <map>
 #include <cstdio>
 #include <EuroScopePlugIn.h>
-#include "ModeSCodes.h"
+//#include "ModeSCodes.h"
 #include "Helpers.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
 
-class CModeS :
+class CCAMS :
 	public EuroScopePlugIn::CPlugIn
 {
 public:
-	explicit CModeS(PluginData p = PluginData());
-	virtual ~CModeS();
+	explicit CCAMS(PluginData p = PluginData(), const DefaultCodes&& dc = DefaultCodes());
+	virtual ~CCAMS();
 
 	bool OnCompileCommand(const char* command);
 	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
@@ -48,7 +48,6 @@ public:
 private:
 	future<string> fUpdateString;
 	vector<string> ProcessedFlightPlans;
-	CModeSCodes msc;
 	CFlightPlanList FpListEHS;
 	const PluginData pluginData;
 	const char* squawkVFR;
@@ -57,14 +56,18 @@ private:
 	bool autoAssignMSCC;
 	int APTcodeMaxGS;
 	int APTcodeMaxDist;
+	std::vector<std::string> EQUIPMENT_CODES;
+	std::vector<std::string> EQUIPMENT_CODES_ICAO;
+	std::vector<std::string> EQUIPMENT_CODES_EHS;
+	std::vector<std::string> ICAO_MODES;
 
 	void AutoAssignMSCC();
 	void AssignPendingSquawks();
 	void DoInitialLoad(future<string> & message);
 	bool IsFlightPlanProcessed(CFlightPlan & FlightPlan);
-
-	bool isValidSquawk(const char* Squawk);
-	//bool isEHS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
+	bool isAcModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan);
+	bool isApModeS(const std::string& icao) const;
+	bool isEHS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
 
 	std::map<const char*, std::future<std::string>> PendingSquawks;
 };

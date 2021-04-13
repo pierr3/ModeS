@@ -5,11 +5,11 @@
 struct PluginData
 {
 	const char * PLUGIN_NAME	{ "CCAMS" };
-	const char * PLUGIN_VERSION { "1.6.1" };
+	const char * PLUGIN_VERSION { "1.6.5" };
 	const char * PLUGIN_AUTHOR	{ "Pierre Ferran, Oliver Grützmann, Jonas Kuster" };
 	const char * PLUGIN_LICENSE { "GPL v3" };
 	const char * UPDATE_URL		{ "https://raw.githubusercontent.com/kusterjs/CCAMS/master/CCAMS/ver.txt" };
-	const int VERSION_CODE		{ 961 };
+	const int VERSION_CODE		{ 965 };
 };
 
 struct ItemCodes
@@ -42,3 +42,6 @@ struct DefaultCodes
 };
 
 static const char * mode_s_code { "1000" };
+
+//#define MY_EQUIPEMENT_CODES = const std::vector<std::string> { "H", "L", "E", "G", "W", "Q", "S" };
+//#define MODE_S_CODE = "1000";

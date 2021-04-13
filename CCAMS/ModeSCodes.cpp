@@ -65,12 +65,12 @@ bool CModeSCodes::isApModeS(const std::string & icao) const
 	return false;
 }
 
-bool CModeSCodes::isFlightModeS(const EuroScopePlugIn::CFlightPlan & FlightPlan) const
-{
-	if (isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
-		return true;
-	return false;
-}
+//bool CModeSCodes::isFlightModeS(const EuroScopePlugIn::CFlightPlan & FlightPlan) const
+//{
+//	if (isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
+//		return true;
+//	return false;
+//}
 
 void CModeSCodes::SetEquipementCodes(std::vector<std::string> && equipement_codes)
 {

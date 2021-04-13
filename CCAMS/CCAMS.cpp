@@ -1,13 +1,16 @@
 #include "stdafx.h"
-#include "ModeS2.h"
+#include "CCAMS.h"
 
-CModeS::CModeS(PluginData pd) :
+CCAMS::CCAMS(PluginData pd, const DefaultCodes&& dc) :
 	CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 			pd.PLUGIN_NAME,
 			pd.PLUGIN_VERSION,
 			pd.PLUGIN_AUTHOR,
 			pd.PLUGIN_LICENSE),
-	pluginData(pd)
+	pluginData(pd),
+	EQUIPMENT_CODES(dc.EQUIPEMENT_CODES),
+	EQUIPMENT_CODES_ICAO(dc.EQUIPEMENT_CODES_ICAO),
+	ICAO_MODES(dc.ICAO_MODES)
 {
 	string DisplayMsg { "Version " + string { pd.PLUGIN_VERSION } + " loaded" };
 	DisplayUserMessage(pd.PLUGIN_NAME, "Initialisation", DisplayMsg.c_str(), true, false, false, false, false);
@@ -93,10 +96,10 @@ CModeS::CModeS(PluginData pd) :
 
 }
 
-CModeS::~CModeS()
+CCAMS::~CCAMS()
 {}
 
-bool CModeS::OnCompileCommand(const char* command)
+bool CCAMS::OnCompileCommand(const char* command)
 {
 	string commandString(command);
 	smatch matches;
@@ -123,7 +126,7 @@ bool CModeS::OnCompileCommand(const char* command)
 	return false;
 }
 
-bool CModeS::Help(const char* Command)
+bool CCAMS::Help(const char* Command)
 {
 	if (_stricmp(Command, ".help") == 0)
 	{
@@ -139,14 +142,14 @@ bool CModeS::Help(const char* Command)
 	return false;
 }
 
-void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int ItemCode, int TagData, char sItemString[16], int * pColorCode, COLORREF * pRGB, double * pFontSize)
+void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int ItemCode, int TagData, char sItemString[16], int * pColorCode, COLORREF * pRGB, double * pFontSize)
 {
 	if (ItemCode == ItemCodes::TAG_ITEM_ISMODES)
 	{
 		if (!FlightPlan.IsValid())
 			return;
 
-		if (msc.isAcModeS(FlightPlan))
+		if (isAcModeS(FlightPlan))
 			strcpy_s(sItemString, 16, "S");
 		else
 			strcpy_s(sItemString, 16, "A");
@@ -157,7 +160,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
-		if (msc.isEHS(FlightPlan))
+		if (isEHS(FlightPlan))
 			snprintf(sItemString, 16, "%03i", RadarTarget.GetPosition().GetReportedHeading() % 360);
 	}
 
@@ -166,7 +169,7 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
-		if (msc.isEHS(FlightPlan))
+		if (isEHS(FlightPlan))
 		{
 			auto rollb = RadarTarget.GetPosition().GetReportedBank();
 			snprintf(sItemString, 16, "%c%i", rollb < 0 ? 'R' : 'L', abs(rollb));
@@ -178,19 +181,19 @@ void CModeS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int 
 		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
 			return;
 
-		if (msc.isEHS(FlightPlan) && FlightPlan.GetCorrelatedRadarTarget().IsValid())
+		if (isEHS(FlightPlan) && FlightPlan.GetCorrelatedRadarTarget().IsValid())
 			snprintf(sItemString, 16, "%03i", RadarTarget.GetPosition().GetReportedGS());
 	}
 }
 
-void CModeS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
+void CCAMS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 {
 	if (!FlightPlan.GetTrackingControllerIsMe())
 		ProcessedFlightPlans.erase(remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()),
 								   ProcessedFlightPlans.end());
 }
 
-void CModeS::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
+void CCAMS::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
 {
 	ProcessedFlightPlans.erase(remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()),
 							   ProcessedFlightPlans.end());
@@ -200,7 +203,7 @@ void CModeS::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
 #endif
 }
 
-void CModeS::OnRefreshFpListContent(CFlightPlanList AcList)
+void CCAMS::OnRefreshFpListContent(CFlightPlanList AcList)
 {
 
 #ifdef _DEBUG
@@ -219,7 +222,7 @@ void CModeS::OnRefreshFpListContent(CFlightPlanList AcList)
 
 }
 
-void CModeS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area)
+void CCAMS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area)
 {
 	if (FunctionId == ItemCodes::TAG_FUNC_SQUAWK_POPUP)
 	{
@@ -257,7 +260,7 @@ void CModeS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, R
 		//	//FlightPlan.GetControllerAssignedData().SetSquawk(this->squawkVFR);
 		//	return;
 
-		if (msc.isAcModeS(FlightPlan) && msc.isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
+		if (isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
 		{
 			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 			return;
@@ -361,7 +364,7 @@ void CModeS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, R
 		if (!strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V"))
 			return;
 
-		if (msc.isAcModeS(FlightPlan) && msc.isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
+		if (isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
 			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 	}
 	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_VFR)
@@ -377,7 +380,7 @@ void CModeS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, R
 	}
 }
 
-void CModeS::OnTimer(int Counter)
+void CCAMS::OnTimer(int Counter)
 {
 	if (fUpdateString.valid() && fUpdateString.wait_for(0ms) == future_status::ready)
 		DoInitialLoad(fUpdateString);
@@ -392,7 +395,7 @@ void CModeS::OnTimer(int Counter)
 	}
 }
 
-void CModeS::AutoAssignMSCC()
+void CCAMS::AutoAssignMSCC()
 {
 	for (CRadarTarget RadarTarget = RadarTargetSelectFirst();
 		 RadarTarget.IsValid();
@@ -414,8 +417,8 @@ void CModeS::AutoAssignMSCC()
 		if (strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
 			return;
 
-		if (!msc.isAcModeS(FlightPlan) ||
-			!msc.isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
+		if (!isAcModeS(FlightPlan) ||
+			!isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
 			return;
 
 		auto assr = FlightPlan.GetControllerAssignedData().GetSquawk();
@@ -440,7 +443,7 @@ void CModeS::AutoAssignMSCC()
 	}
 }
 
-void CModeS::AssignPendingSquawks()
+void CCAMS::AssignPendingSquawks()
 {
 	for (auto it = PendingSquawks.begin(), next_it = it; it != PendingSquawks.end(); it = next_it)
 	{
@@ -463,7 +466,7 @@ void CModeS::AssignPendingSquawks()
 	}
 }
 
-void CModeS::DoInitialLoad(future<string> & fmessage)
+void CCAMS::DoInitialLoad(future<string> & fmessage)
 {
 	try
 	{
@@ -472,12 +475,14 @@ void CModeS::DoInitialLoad(future<string> & fmessage)
 		smatch match;
 		if (regex_match(message, match, update_string))
 		{
-			msc.SetEquipementCodes(split(match[1].str(), ','));
-			msc.SetICAOModeS(split(match[2].str(), ','));
+			//msc.SetEquipementCodes(split(match[1].str(), ','));
+			EQUIPMENT_CODES = std::move(split(match[1].str(), ','));
+			//msc.SetICAOModeS(split(match[2].str(), ','));
+			ICAO_MODES = std::move(split(match[2].str(), ','));
 
 			int new_v = stoi(match[3].str(), nullptr, 0);
 			if (new_v > pluginData.VERSION_CODE)
-				throw error{ "A new version of the " + string { this->pluginData.PLUGIN_NAME } + " plugin is available, please update it\n\nhttps://github.com/kusterjs/CCAMS" };
+				throw error{ "A new version of the " + string { this->pluginData.PLUGIN_NAME } + " plugin is available, please update it\n\nhttps://github.com/kusterjs/CCAMS/releases" };
 		}
 		else
 			throw error{ string { this->pluginData.PLUGIN_NAME }  + " plugin couldn't parse the server data" };
@@ -493,7 +498,7 @@ void CModeS::DoInitialLoad(future<string> & fmessage)
 	fmessage = future<string>();
 }
 
-inline bool CModeS::IsFlightPlanProcessed(CFlightPlan & FlightPlan)
+inline bool CCAMS::IsFlightPlanProcessed(CFlightPlan & FlightPlan)
 {
 	string callsign { FlightPlan.GetCallsign() };
 	for (auto &pfp : ProcessedFlightPlans)
@@ -504,12 +509,67 @@ inline bool CModeS::IsFlightPlanProcessed(CFlightPlan & FlightPlan)
 	return false;
 }
 
-bool CModeS::ICAO()
+bool CCAMS::isAcModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 {
-	return this->acceptEquipmentICAO;
+	//check for ICAO suffix
+	if (this->acceptEquipmentICAO)
+	{
+		std::string actype = FlightPlan.GetFlightPlanData().GetAircraftInfo();
+		std::regex icao_format("(.{2,4})\\/([LMHJ])-(.*)\\/(.*)", std::regex::icase);
+		std::smatch acdata;
+		if (std::regex_match(actype, acdata, icao_format) && acdata.size() == 5)
+		{
+			for (const auto& code : EQUIPMENT_CODES_ICAO)
+				if (strncmp(acdata[4].str().c_str(), code.c_str(), 1))
+					return true;
+		}
+	}
+
+	//check for FAA suffix
+	if (this->acceptEquipmentFAA)
+	{
+		std::string equipement_suffix{ FlightPlan.GetFlightPlanData().GetCapibilities() };
+		if (equipement_suffix == "?")
+			return false;
+
+		for (auto& code : EQUIPMENT_CODES)
+			if (equipement_suffix == code)
+				return true;
+	}
+
+	return false;
 }
 
-bool CModeS::FAA()
+bool CCAMS::isApModeS(const std::string& icao) const
 {
-	return this->acceptEquipmentFAA;
+	for (auto& zone : ICAO_MODES)
+		if (zone.compare(0, zone.length(), icao, 0, zone.length()) == 0)
+			return true;
+	return false;
 }
+
+bool CCAMS::isEHS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
+{
+	//check for ICAO suffix
+	std::string actype = FlightPlan.GetFlightPlanData().GetAircraftInfo();
+	std::regex icao_format("(.{2,4})\\/([LMHJ])-(.*)\\/(.*)", std::regex::icase);
+	std::smatch acdata;
+	if (std::regex_match(actype, acdata, icao_format) && acdata.size() == 5)
+	{
+		for (const auto& code : EQUIPMENT_CODES_EHS)
+			if (strncmp(acdata[4].str().c_str(), code.c_str(), 1))
+				return true;
+	}
+
+	return false;
+}
+
+//bool CModeS::ICAO()
+//{
+//	return this->acceptEquipmentICAO;
+//}
+//
+//bool CModeS::FAA()
+//{
+//	return this->acceptEquipmentFAA;
+//}
