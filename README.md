@@ -1,4 +1,4 @@
-# This project is now maintained by Oliver Gruetzmann on [ogruetzmann/ModeS](https://github.com/ogruetzmann/ModeS), please download the plugin from there. This repository is only here for archiving purposes.
+# This project is now upgraded to CCAMS (Centralised code assignment and management system) and maintained by Jonas Kuster on [kusterjs/CCAMS](https://github.com/kusterjs/CCAMS), please download the plugin from there. This repository is only here for archiving purposes.
 
 # Mode S plugin
 
