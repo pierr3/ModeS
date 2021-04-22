@@ -16,6 +16,7 @@ This plugin provides as the core functionality:
 * EHS Heading: Reported magnetic heading of the aircraft
 * EHS Roll Angle: Reported roll angle (L for LEFT and R for RIGHT + value in degrees)
 * EHS GS: Reported groundspeed of the aircraft in knots.
+* Mode S quawk error: Indicator of incorrect use or assignment of squawk 1000
 
 ## Available tag functions
 * Assign mode S squawk: assigns code 1000 to eligible aircraft with mode S transponder
