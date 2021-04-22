@@ -19,8 +19,8 @@ CCAMS::CCAMS(PluginData pd, const DefaultCodes&& dc) :
 	RegisterTagItemType("EHS Heading", ItemCodes::TAG_ITEM_EHS_HDG);
 	RegisterTagItemType("EHS Roll Angle", ItemCodes::TAG_ITEM_EHS_ROLL);
 	RegisterTagItemType("EHS GS", ItemCodes::TAG_ITEM_EHS_GS);
+	RegisterTagItemType("Mode S squawk error", ItemCodes::TAG_ITEM_ERROR_MODES_USE);
 
-	RegisterTagItemFunction("Assign mode S squawk", ItemCodes::TAG_FUNC_ASSIGN_MODES);
 	RegisterTagItemFunction("Auto assign squawk", ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_AUTO);
 	RegisterTagItemFunction("Open SQUAWK assign popup", ItemCodes::TAG_FUNC_SQUAWK_POPUP);
 
@@ -161,7 +161,13 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 			return;
 
 		if (isEHS(FlightPlan))
+		{
 			snprintf(sItemString, 16, "%03i", RadarTarget.GetPosition().GetReportedHeading() % 360);
+#ifdef _DEBUG
+			string DisplayMsg{ to_string(RadarTarget.GetPosition().GetReportedHeading()) };
+			DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
+		}
 	}
 
 	else if (ItemCode == ItemCodes::TAG_ITEM_EHS_ROLL)
@@ -173,6 +179,10 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 		{
 			auto rollb = RadarTarget.GetPosition().GetReportedBank();
 			snprintf(sItemString, 16, "%c%i", rollb < 0 ? 'R' : 'L', abs(rollb));
+#ifdef _DEBUG
+			string DisplayMsg{ to_string(abs(rollb)) };
+			DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
 		}
 	}
 
@@ -182,7 +192,33 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 			return;
 
 		if (isEHS(FlightPlan) && FlightPlan.GetCorrelatedRadarTarget().IsValid())
+		{
 			snprintf(sItemString, 16, "%03i", RadarTarget.GetPosition().GetReportedGS());
+#ifdef _DEBUG
+			string DisplayMsg{ to_string(RadarTarget.GetPosition().GetReportedGS()) };
+			DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
+		}
+	}
+
+	else if (ItemCode == ItemCodes::TAG_ITEM_ERROR_MODES_USE)
+	{
+		if (!FlightPlan.IsValid() || !RadarTarget.IsValid())
+			return;
+
+		if (isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()) &&
+			(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || !isADEPvicinity(FlightPlan)))
+			//(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || (!isADEPvicinity(FlightPlan) && isApModeS(ControllerMyself().GetCallsign()))))
+			return;
+
+		auto assr = RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk();
+		auto pssr = RadarTarget.GetPosition().GetSquawk();
+		if (strcmp(assr, ::mode_s_code) != 0 &&
+			strcmp(pssr, ::mode_s_code) != 0)
+			return;
+
+		*pColorCode = EuroScopePlugIn::TAG_COLOR_INFORMATION;
+		strcpy_s(sItemString, 16, "MSSQ");
 	}
 }
 
@@ -224,6 +260,16 @@ void CCAMS::OnRefreshFpListContent(CFlightPlanList AcList)
 
 void CCAMS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area)
 {
+	CFlightPlan FlightPlan = FlightPlanSelectASEL();
+	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
+		return;
+
+	if (!FlightPlan.IsValid())
+		return;
+
+	if (!FlightPlan.GetTrackingControllerIsMe() && strlen(FlightPlan.GetTrackingControllerCallsign())>0)
+		return;
+
 	if (FunctionId == ItemCodes::TAG_FUNC_SQUAWK_POPUP)
 	{
 		OpenPopupList(Area, "Squawk", 1);
@@ -238,34 +284,16 @@ void CCAMS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RE
 	}
 	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK)
 	{
-		if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
-			return;
-
-		CFlightPlan FlightPlan = FlightPlanSelectASEL();
-		if (!FlightPlan.IsValid())
-			return;
-
 		FlightPlan.GetControllerAssignedData().SetSquawk(sItemString);
 	}
 	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_AUTO)
 	{
-		if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
-			return;
-
-		CFlightPlan FlightPlan = FlightPlanSelectASEL();
-		if (!FlightPlan.IsValid())
-			return;
-
-		//if (!strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V"))
-		//	//FlightPlan.GetControllerAssignedData().SetSquawk(this->squawkVFR);
-		//	return;
-
-		if (isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
+		if (isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()) &&
+			(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || (!isADEPvicinity(FlightPlan) && isApModeS(ControllerMyself().GetCallsign()))))
 		{
 			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 			return;
 		}
-
 
 		try
 		{
@@ -321,24 +349,8 @@ void CCAMS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RE
 					}
 				}
 
-#ifdef _DEBUG
-				//std::ostringstream codes;
-				//std::copy(usedCodes.begin(), usedCodes.end(), std::ostream_iterator<std::string>(codes, ","));
-				//string codes;
-				//for (int i = 0; i < usedCodes.size(); i++)
-				//{
-				//	if (i > 0)
-				//		codes += ",";
-				//	codes += usedCodes[i];
-				//}
-#endif
-				if (FlightPlan.GetCorrelatedRadarTarget().GetGS() > this->APTcodeMaxGS ||
-					FlightPlan.GetDistanceFromOrigin()>this->APTcodeMaxDist)
-					PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
-						"", std::string(ControllerMyself().GetCallsign()), usedCodes)));
-				else
-					PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
-						std::string(FlightPlan.GetFlightPlanData().GetOrigin()), std::string(ControllerMyself().GetCallsign()), usedCodes)));
+				PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
+					FlightPlan, ControllerMyself(), usedCodes, isADEPvicinity(FlightPlan))));
 			}
 		}
 		catch (std::runtime_error const& e)
@@ -351,31 +363,8 @@ void CCAMS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RE
 		}
 
 	}
-	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_MODES)
-	{
-		// if the AC is not mode S eligible, then no squawk code change is done
-		if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
-			return;
-
-		CFlightPlan FlightPlan = FlightPlanSelectASEL();
-		if (!FlightPlan.IsValid())
-			return;
-
-		if (!strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V"))
-			return;
-
-		if (isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
-			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
-	}
 	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_VFR)
 	{
-		if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
-			return;
-
-		CFlightPlan FlightPlan = FlightPlanSelectASEL();
-		if (!FlightPlan.IsValid())
-			return;
-
 		FlightPlan.GetControllerAssignedData().SetSquawk(this->squawkVFR);
 	}
 }
@@ -401,13 +390,17 @@ void CCAMS::AutoAssignMSCC()
 		 RadarTarget.IsValid();
 		 RadarTarget = RadarTargetSelectNext(RadarTarget))
 	{
-
 		if (RadarTarget.GetPosition().IsFPTrackPosition() ||
 			RadarTarget.GetPosition().GetFlightLevel() < 24500)
 			return;
 
 		CFlightPlan FlightPlan = RadarTarget.GetCorrelatedFlightPlan();
-		if (!FlightPlan.IsValid() || !FlightPlan.GetTrackingControllerIsMe())
+		if (!FlightPlan.IsValid())
+			return;
+
+		if ((!FlightPlan.GetTrackingControllerIsMe() && (strlen(FlightPlan.GetTrackingControllerCallsign()) > 0 || 
+			FlightPlan.GetCoordinatedNextController()!=ControllerMyself().GetCallsign()) ||
+			FlightPlan.GetSectorEntryMinutes()>15))
 			return;
 
 		//Check if FlightPlan is already processed
@@ -417,6 +410,8 @@ void CCAMS::AutoAssignMSCC()
 		if (strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
 			return;
 
+		//if (isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()) &&
+		//	(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || (!isADEPvicinity(FlightPlan) && isApModeS(ControllerMyself().GetCallsign()))))
 		if (!isAcModeS(FlightPlan) ||
 			!isApModeS(FlightPlan.GetFlightPlanData().GetDestination()))
 			return;
@@ -475,9 +470,7 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 		smatch match;
 		if (regex_match(message, match, update_string))
 		{
-			//msc.SetEquipementCodes(split(match[1].str(), ','));
 			EQUIPMENT_CODES = std::move(split(match[1].str(), ','));
-			//msc.SetICAOModeS(split(match[2].str(), ','));
 			ICAO_MODES = std::move(split(match[2].str(), ','));
 
 			int new_v = stoi(match[3].str(), nullptr, 0);
@@ -540,6 +533,14 @@ bool CCAMS::isAcModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 	return false;
 }
 
+bool CCAMS::isADEPvicinity(const EuroScopePlugIn::CFlightPlan& FlightPlan)
+{
+	if (FlightPlan.GetCorrelatedRadarTarget().GetGS() < this->APTcodeMaxGS &&
+		FlightPlan.GetDistanceFromOrigin() < this->APTcodeMaxDist)
+		return true;
+	return false;
+}
+
 bool CCAMS::isApModeS(const std::string& icao) const
 {
 	for (auto& zone : ICAO_MODES)
@@ -563,13 +564,3 @@ bool CCAMS::isEHS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
 
 	return false;
 }
-
-//bool CModeS::ICAO()
-//{
-//	return this->acceptEquipmentICAO;
-//}
-//
-//bool CModeS::FAA()
-//{
-//	return this->acceptEquipmentFAA;
-//}

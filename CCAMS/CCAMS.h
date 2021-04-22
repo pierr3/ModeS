@@ -42,8 +42,6 @@ public:
 	void OnTimer(int Counter);
 
 	bool Help(const char* Command);
-	bool ICAO();
-	bool FAA();
 
 private:
 	future<string> fUpdateString;
@@ -68,6 +66,7 @@ private:
 	bool isAcModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan);
 	bool isApModeS(const std::string& icao) const;
 	bool isEHS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
+	bool isADEPvicinity(const EuroScopePlugIn::CFlightPlan& FlightPlan);
 
 	std::map<const char*, std::future<std::string>> PendingSquawks;
 };

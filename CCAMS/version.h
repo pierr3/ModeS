@@ -5,11 +5,11 @@
 struct PluginData
 {
 	const char * PLUGIN_NAME	{ "CCAMS" };
-	const char * PLUGIN_VERSION { "1.6.5" };
+	const char * PLUGIN_VERSION { "1.7.0" };
 	const char * PLUGIN_AUTHOR	{ "Pierre Ferran, Oliver Grützmann, Jonas Kuster" };
 	const char * PLUGIN_LICENSE { "GPL v3" };
 	const char * UPDATE_URL		{ "https://raw.githubusercontent.com/kusterjs/CCAMS/master/CCAMS/ver.txt" };
-	const int VERSION_CODE		{ 965 };
+	const int VERSION_CODE		{ 970 };
 };
 
 struct ItemCodes
@@ -19,7 +19,8 @@ struct ItemCodes
 		TAG_ITEM_ISMODES = 501,
 		TAG_ITEM_EHS_HDG,
 		TAG_ITEM_EHS_ROLL,
-		TAG_ITEM_EHS_GS
+		TAG_ITEM_EHS_GS,
+		TAG_ITEM_ERROR_MODES_USE
 	};
 
 	enum ItemFunctions : int

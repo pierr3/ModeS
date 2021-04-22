@@ -2,7 +2,7 @@
 #include "Helpers.h"
 
 
-std::string LoadUpdateString(PluginData p)
+string LoadUpdateString(PluginData p)
 {
 	const std::string AGENT { "EuroScope CCAMS/" + std::string { p.PLUGIN_VERSION } };
 	HINTERNET connect = InternetOpen(AGENT.c_str(), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
@@ -27,7 +27,7 @@ std::string LoadUpdateString(PluginData p)
 	return answer;
 }
 
-std::string LoadWebSquawk(std::string origin, std::string callsign, std::vector<const char*> usedCodes)
+string LoadWebSquawk(EuroScopePlugIn::CFlightPlan FP, EuroScopePlugIn::CController ATCO, vector<const char*> usedCodes, bool vicinityADEP)
 {
 	PluginData p;
 	const std::string AGENT{ "EuroScope CCAMS/" + std::string { p.PLUGIN_VERSION } };
@@ -36,7 +36,7 @@ std::string LoadWebSquawk(std::string origin, std::string callsign, std::vector<
 		return "0000";
 	}
 
-	std::string codes;
+	string codes;
 	for (size_t i = 0; i < usedCodes.size(); i++)
 	{
 		if (i > 0)
@@ -44,11 +44,30 @@ std::string LoadWebSquawk(std::string origin, std::string callsign, std::vector<
 		codes += usedCodes[i];
 	}
 
-	std::string build_url = "https://kilojuliett.ch/webtools/api/ssrcode?orig=" + origin + "&callsign=" + callsign + "&codes=" + codes;
+	string build_url = "https://ccams.kilojuliett.ch/squawk?callsign=" + string(ATCO.GetCallsign());
+	if (FP.IsValid())
+	{
+		if (vicinityADEP)
+		{
+			build_url += "&orig=" + string(FP.GetFlightPlanData().GetOrigin());
+		}
+		build_url += "&dest=" + string(FP.GetFlightPlanData().GetDestination()) +
+			"&flightrules=" + string(FP.GetFlightPlanData().GetPlanType());
+		if (FP.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED)
+		{
+			build_url += "&sim";
+		}
+	}
+	build_url += "&codes=" + codes;
 
 	HINTERNET OpenAddress = InternetOpenUrl(connect, build_url.c_str(), NULL, 0, INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD, 0);
 	if (!OpenAddress) {
 		InternetCloseHandle(connect);
+#ifdef _DEBUG
+		throw error{ std::string { "Failed reach the CCAMS server. Error: " + std::to_string(GetLastError()) } };
+
+#endif // DEBUG
+
 		return "0000";
 	}
 
