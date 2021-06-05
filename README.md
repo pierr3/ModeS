@@ -3,7 +3,7 @@ Find the latest version in the section [Releases](https://github.com/kusterjs/CC
 
 # CCAMS (Centralised code assignment and management system) plugin
 
-This plugin was designed to support controllers of the VATSIM network when assigning a squawk to aircraft, also especially when the local prescribed squawk ranges are exhausted. The web-based part of the application is acting as the central interface to manage all squawk assignments and will also find alternative, non-used squawks outside the preferential range. The "rules" covered initially are following the VATEUD code assignment scheme. Therefore, the plugin primarily is intended to serve VATEUD members. Local ops/tech staff may define and fine tune the rule setting for the squawk assignment in collaboration with VATEUD8.
+This plugin was designed to support controllers of the VATSIM network when assigning a squawk to aircraft, also especially when the local prescribed squawk ranges are exhausted. The web-based part of the application is acting as the central interface to manage all squawk assignments and will also find alternative, non-used squawks outside the preferential range. Local ops/tech staff may define and fine tune the rule setting for the squawk assignment to comply with regional and local squawk ranges and schemes. This collaboration is done by issue reporting on github.
 This plugin includes Mode S functionalities as introduced previously by Oliver Gruetzmann and Pierre Ferran. It is fully capabale to correctly differentiate between FAA and ICAO flight plan format. Additionally, plugin settings are available to customise the plugin behaviour and limit certain functionalities to comply with the vACCs local needs and requirements.
 
 This plugin provides as the core functionality:
