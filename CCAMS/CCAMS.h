@@ -5,22 +5,23 @@
 #include <future>
 #include <thread>
 #include <exception>
+#include <map>
 #include <cstdio>
 #include <EuroScopePlugIn.h>
-#include "ModeSDisplay.h"
-#include "ModeSCodes.h"
+//#include "ModeSCodes.h"
 #include "Helpers.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
 
-class CModeS :
+class CCAMS :
 	public EuroScopePlugIn::CPlugIn
 {
 public:
-	explicit CModeS(PluginData p = PluginData());
-	~CModeS();
+	explicit CCAMS(PluginData p = PluginData(), const DefaultCodes&& dc = DefaultCodes());
+	virtual ~CCAMS();
 
+	bool OnCompileCommand(const char* command);
 	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
 					  int ItemCode,
 					  int TagData,
@@ -32,26 +33,40 @@ public:
 	void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
 	void OnFlightPlanDisconnect(CFlightPlan FlightPlan);
 
+	void OnRefreshFpListContent(CFlightPlanList AcList);
 	void OnFunctionCall(int FunctionId,
 						const char * sItemString,
 						POINT Pt,
 						RECT Area);
 
 	void OnTimer(int Counter);
-	CRadarScreen * OnRadarScreenCreated(const char * sDisplayName,
-										bool NeedRadarContent,
-										bool GeoReferenced,
-										bool CanBeSaved,
-										bool CanBeCreated);
+
+	bool Help(const char* Command);
 
 private:
 	future<string> fUpdateString;
 	vector<string> ProcessedFlightPlans;
-	CModeSCodes msc;
+	CFlightPlanList FpListEHS;
 	const PluginData pluginData;
-	
+	const char* squawkVFR;
+	bool acceptEquipmentICAO;
+	bool acceptEquipmentFAA;
+	bool autoAssignMSCC;
+	int APTcodeMaxGS;
+	int APTcodeMaxDist;
+	std::vector<std::string> EQUIPMENT_CODES;
+	std::vector<std::string> EQUIPMENT_CODES_ICAO;
+	std::vector<std::string> EQUIPMENT_CODES_EHS;
+	std::vector<std::string> ICAO_MODES;
+
 	void AutoAssignMSCC();
+	void AssignPendingSquawks();
 	void DoInitialLoad(future<string> & message);
 	bool IsFlightPlanProcessed(CFlightPlan & FlightPlan);
-	
+	bool isAcModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan);
+	bool isApModeS(const std::string& icao) const;
+	bool isEHS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
+	bool isADEPvicinity(const EuroScopePlugIn::CFlightPlan& FlightPlan);
+
+	std::map<const char*, std::future<std::string>> PendingSquawks;
 };

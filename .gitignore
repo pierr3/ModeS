@@ -201,3 +201,5 @@ FakesAssemblies/
 /ModeS/SectorFileProviderDescriptor.txt
 /ModeS/euroscope_sector_providers.txt
 /ModeS/ipaddr.txt
+/ModeS/Libs/EuroScopePlugInDll.lib
+/ModeS/Libs/EuroScopePlugIn.h
