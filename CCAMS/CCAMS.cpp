@@ -619,10 +619,10 @@ bool CCAMS::isEHS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
 
 bool CCAMS::isEligibleSquawkModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
 {
-	return isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()) &&
-		(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || !isADEPvicinity(FlightPlan));
 	//return isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()) &&
-	//	(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || (!isADEPvicinity(FlightPlan) && isApModeS(ControllerMyself().GetCallsign())))
+	//	(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || !isADEPvicinity(FlightPlan));
+	return isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()) &&
+		(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || (!isADEPvicinity(FlightPlan) && isApModeS(ControllerMyself().GetCallsign())));
 }
 
 bool CCAMS::hasValidSquawkAssigned(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
