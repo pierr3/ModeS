@@ -638,8 +638,21 @@ bool CCAMS::hasValidSquawkAssigned(const EuroScopePlugIn::CFlightPlan& FlightPla
 		return true;
 	else if (atoi(assr) % 100 == 0)
 		return false;
-	else
-		return true;
+
+	// searching for duplicate assignments
+	for (EuroScopePlugIn::CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
+		RadarTarget = RadarTargetSelectNext(RadarTarget))
+	{
+		if (!RadarTarget.IsValid())
+			continue;
+
+		if (RadarTarget.GetCallsign() == FlightPlanSelectASEL().GetCallsign())
+			continue;
+
+		if (strcmp(assr, RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk()) == 0)
+			return false;
+	}
+	return true;
 }
 
 std::vector<const char*> CCAMS::collectUsedCodes(const EuroScopePlugIn::CFlightPlan& FlightPlan)
