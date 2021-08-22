@@ -244,10 +244,12 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 
 			if (!isEligibleSquawkModeS(FlightPlan) && (strcmp(assr, ::mode_s_code) == 0 || strcmp(pssr, ::mode_s_code) == 0))
 			{
+				// mode S code assigned, but not eligible
 				*pColorCode = EuroScopePlugIn::TAG_COLOR_REDUNDANT;
 			}
 			else if(strcmp(assr, pssr) != 0)
 			{
+				// assigned squawk is not set
 				*pColorCode = EuroScopePlugIn::TAG_COLOR_INFORMATION;
 			}
 			strcpy_s(sItemString, 16, assr);
@@ -321,8 +323,7 @@ void CCAMS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RE
 	}
 	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_AUTO)
 	{
-		if (isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()) &&
-			(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || (!isADEPvicinity(FlightPlan) && isApModeS(ControllerMyself().GetCallsign()))))
+		if (isEligibleSquawkModeS(FlightPlan))
 		{
 			FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 			return;
@@ -450,8 +451,7 @@ void CCAMS::AutoAssignMSCC()
 			return;
 		}
 			
-		if (isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()) &&
-			(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || (!isADEPvicinity(FlightPlan) && isApModeS(ControllerMyself().GetCallsign()))))
+		if (isEligibleSquawkModeS(FlightPlan))
 		{
 #ifdef _DEBUG
 			DisplayMsg = "Code 1000 is inteded to be assigned for " + string { FlightPlan.GetCallsign() };
