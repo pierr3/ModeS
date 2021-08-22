@@ -673,10 +673,7 @@ std::vector<const char*> CCAMS::collectUsedCodes(const EuroScopePlugIn::CFlightP
 		// search for all controller assigned codes
 		auto assr = RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk();
 		if (strlen(assr) == 4 &&
-			strcmp(assr, "0000") != 0 &&
-			strcmp(assr, "2000") != 0 &&
-			strcmp(assr, "1200") != 0 &&
-			strcmp(assr, "2200") != 0 &&
+			atoi(assr) % 100 != 0 &&
 			strcmp(assr, ::mode_s_code) != 0 &&
 			strcmp(assr, this->squawkVFR) != 0)
 		{
@@ -686,10 +683,7 @@ std::vector<const char*> CCAMS::collectUsedCodes(const EuroScopePlugIn::CFlightP
 		// search for all actual codes used by pilots
 		auto pssr = RadarTarget.GetPosition().GetSquawk();
 		if (strlen(pssr) == 4 &&
-			strcmp(pssr, "0000") != 0 &&
-			strcmp(pssr, "2000") != 0 &&
-			strcmp(pssr, "1200") != 0 &&
-			strcmp(pssr, "2200") != 0 &&
+			atoi(pssr) % 100 != 0 &&
 			strcmp(pssr, ::mode_s_code) != 0 &&
 			strcmp(pssr, this->squawkVFR) != 0 &&
 			strcmp(pssr, assr) != 0)
