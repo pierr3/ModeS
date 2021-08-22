@@ -52,6 +52,7 @@ private:
 	bool acceptEquipmentICAO;
 	bool acceptEquipmentFAA;
 	bool autoAssignMSCC;
+	bool autoAssign;
 	int APTcodeMaxGS;
 	int APTcodeMaxDist;
 	std::vector<std::string> EQUIPMENT_CODES;
@@ -63,10 +64,13 @@ private:
 	void AssignPendingSquawks();
 	void DoInitialLoad(future<string> & message);
 	bool IsFlightPlanProcessed(CFlightPlan & FlightPlan);
-	bool isAcModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan);
+	bool isAcModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
 	bool isApModeS(const std::string& icao) const;
 	bool isEHS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
-	bool isADEPvicinity(const EuroScopePlugIn::CFlightPlan& FlightPlan);
+	bool isADEPvicinity(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
+	bool isEligibleSquawkModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
+	bool hasValidSquawkAssigned(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
 
 	std::map<const char*, std::future<std::string>> PendingSquawks;
+	std::vector<const char*> collectUsedCodes(const EuroScopePlugIn::CFlightPlan& FlightPlan);
 };
