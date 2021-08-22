@@ -276,18 +276,18 @@ void CCAMS::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
 void CCAMS::OnRefreshFpListContent(CFlightPlanList AcList)
 {
 
-#ifdef _DEBUG
 	if (ControllerMyself().IsValid() && RadarTargetSelectASEL().IsValid())
 	{
+#ifdef _DEBUG
 		string DisplayMsg{ "The following call sign was identified to be added to the EHS Mode S list: " + string { FlightPlanSelectASEL().GetCallsign() } };
 		//DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
 		for (CFlightPlan FP = FlightPlanSelectFirst(); FP.IsValid(); FP = FlightPlanSelectNext(FP))
 		{
 			this->FpListEHS.RemoveFpFromTheList(FP);
 		}
 		this->FpListEHS.AddFpToTheList(FlightPlanSelectASEL());
 	}
-#endif
 
 
 }
@@ -309,7 +309,6 @@ void CCAMS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RE
 		OpenPopupList(Area, "Squawk", 1);
 		AddPopupListElement("Auto assign", "", ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_AUTO);
 		AddPopupListElement("Manual set", "", ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_MANUAL);
-		//AddPopupListElement("Mode S", "", ItemCodes::TAG_FUNC_ASSIGN_MODES);
 		AddPopupListElement("VFR", "", ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_VFR);
 	}
 	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_MANUAL)
@@ -333,66 +332,14 @@ void CCAMS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RE
 		{
 			if (PendingSquawks.find(FlightPlan.GetCallsign()) == PendingSquawks.end())
 			{
-//				vector<const char*> usedCodes;
-//				for (EuroScopePlugIn::CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
-//					RadarTarget = RadarTargetSelectNext(RadarTarget))
-//				{
-//					if (!RadarTarget.IsValid())
-//					{
-//#ifdef _DEBUG
-//						string DisplayMsg{ "Invalid radar target found" };
-//						DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-//#endif
-//						continue;
-//					}
-//
-//					if (RadarTarget.GetCallsign() == FlightPlanSelectASEL().GetCallsign())
-//					{
-//#ifdef _DEBUG
-//						string DisplayMsg{ "The code of " + (string) RadarTarget.GetCallsign() + " is not considered" };
-//						//DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-//#endif
-//						continue;
-//					}
-//
-//					// search for all controller assigned codes
-//					auto assr = RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk();
-//					if (strlen(assr) == 4 &&
-//						strcmp(assr, "0000") != 0 &&
-//						strcmp(assr, "2000") != 0 &&
-//						strcmp(assr, "1200") != 0 &&
-//						strcmp(assr, "2200") != 0 &&
-//						strcmp(assr, ::mode_s_code) != 0 &&
-//						strcmp(assr, this->squawkVFR) != 0)
-//					{
-//						usedCodes.push_back(assr);
-//					}
-//
-//					// search for all actual codes used by pilots
-//					auto pssr = RadarTarget.GetPosition().GetSquawk();
-//					if (strlen(pssr) == 4 &&
-//						strcmp(pssr, "0000") != 0 &&
-//						strcmp(pssr, "2000") != 0 &&
-//						strcmp(pssr, "1200") != 0 &&
-//						strcmp(pssr, "2200") != 0 &&
-//						strcmp(pssr, ::mode_s_code) != 0 &&
-//						strcmp(pssr, this->squawkVFR) != 0 &&
-//						strcmp(pssr, assr) != 0)
-//					{
-//						usedCodes.push_back(pssr);
-//					}
-//				}
-//
-				//PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
-				//	FlightPlan, ControllerMyself(), usedCodes, isADEPvicinity(FlightPlan), CCAMS::GetConnectionType())));
 				PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
 					FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), isADEPvicinity(FlightPlan), CCAMS::GetConnectionType())));
 #ifdef _DEBUG
-if (CCAMS::GetConnectionType() > 2)
-{
-	string DisplayMsg{ "A request for a simulated aircraft has been detected: " + string { FlightPlan.GetCallsign() } };
-	DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-}
+				if (CCAMS::GetConnectionType() > 2)
+				{
+					string DisplayMsg{ "A request for a simulated aircraft has been detected: " + string { FlightPlan.GetCallsign() } };
+					DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+				}
 #endif
 			}
 		}
@@ -680,16 +627,16 @@ bool CCAMS::isEligibleSquawkModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan
 
 bool CCAMS::hasValidSquawkAssigned(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
 {
-	auto assr = FlightPlan.GetControllerAssignedData().GetSquawk();
+	const char* assr = FlightPlan.GetControllerAssignedData().GetSquawk();
 		//RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk();
-	if (strlen(assr) != 4 ||
-		strcmp(assr, "0000") == 0 ||
-		strcmp(assr, "2000") == 0 ||
-		strcmp(assr, "1200") == 0 ||
-		strcmp(assr, "2200") == 0 ||
-		strcmp(assr, this->squawkVFR) == 0 ||
-		(strcmp(assr, ::mode_s_code) == 0 && !isEligibleSquawkModeS(FlightPlan))
-		)
+
+	if (strlen(assr) != 4)
+		return false;
+	else if (strcmp(assr, this->squawkVFR) == 0 && strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
+		return true;
+	else if (strcmp(assr, ::mode_s_code) == 0 && isEligibleSquawkModeS(FlightPlan))
+		return true;
+	else if (atoi(assr) % 100 == 0)
 		return false;
 	else
 		return true;
