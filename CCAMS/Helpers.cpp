@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "Helpers.h"
 
-
 string LoadUpdateString(PluginData p)
 {
 	const std::string AGENT { "EuroScope CCAMS/" + std::string { p.PLUGIN_VERSION } };
@@ -27,14 +26,35 @@ string LoadUpdateString(PluginData p)
 	return answer;
 }
 
-string LoadWebSquawk(EuroScopePlugIn::CFlightPlan FP, EuroScopePlugIn::CController ATCO, vector<const char*> usedCodes, bool vicinityADEP)
+string LoadWebSquawk(EuroScopePlugIn::CFlightPlan FP, EuroScopePlugIn::CController ATCO, vector<const char*> usedCodes, bool vicinityADEP, int ConnectionType)
 {
 	PluginData p;
 	const std::string AGENT{ "EuroScope CCAMS/" + std::string { p.PLUGIN_VERSION } };
 	HINTERNET connect = InternetOpen(AGENT.c_str(), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if (!connect) {
-		return "0000";
+#ifdef _DEBUG
+		//throw error { std::string { "Failed reach the CCAMS server. Error: " + std::to_string(GetLastError()) } };
+#endif
+		return string{ "E404" };
 	}
+
+	//int statusCode;
+	char responseText[MAX_PATH]; // change to wchar_t for unicode
+	DWORD responseTextSize = sizeof(responseText);
+
+	//Check existance of page (for 404 error)
+	if (HttpQueryInfo(connect, HTTP_QUERY_STATUS_CODE, &responseText, &responseTextSize, NULL))
+	{
+		//statusCode = ;
+		if (atoi(responseText) != 200)
+			return string{ "E" + string(responseText) };
+	}
+
+	//cpr::Response r = cpr::Get(cpr::Url{ "http://localhost/webtools/CCAMS/squawk" },
+	//	cpr::Parameters{ {"callsign", ATCO.GetCallsign()} });
+	//if (r.status_code != 200)
+	//	return "CURL ERROR";
+
 
 	string codes;
 	for (size_t i = 0; i < usedCodes.size(); i++)
@@ -44,6 +64,7 @@ string LoadWebSquawk(EuroScopePlugIn::CFlightPlan FP, EuroScopePlugIn::CControll
 		codes += usedCodes[i];
 	}
 
+	//string build_url = "http://localhost/webtools/CCAMS/squawk?callsign=" + string(ATCO.GetCallsign());
 	string build_url = "https://ccams.kilojuliett.ch/squawk?callsign=" + string(ATCO.GetCallsign());
 	if (FP.IsValid())
 	{
@@ -52,23 +73,25 @@ string LoadWebSquawk(EuroScopePlugIn::CFlightPlan FP, EuroScopePlugIn::CControll
 			build_url += "&orig=" + string(FP.GetFlightPlanData().GetOrigin());
 		}
 		build_url += "&dest=" + string(FP.GetFlightPlanData().GetDestination()) +
-			"&flightrules=" + string(FP.GetFlightPlanData().GetPlanType());
-		if (FP.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED)
+			"&flightrule=" + string(FP.GetFlightPlanData().GetPlanType());
+		if (ConnectionType > 2)
 		{
 			build_url += "&sim";
 		}
 	}
-	build_url += "&codes=" + codes;
+	if (codes.size() > 0)
+	{
+		build_url += "&codes=" + codes;
+	}
 
 	HINTERNET OpenAddress = InternetOpenUrl(connect, build_url.c_str(), NULL, 0, INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD, 0);
 	if (!OpenAddress) {
 		InternetCloseHandle(connect);
 #ifdef _DEBUG
-		throw error{ std::string { "Failed reach the CCAMS server. Error: " + std::to_string(GetLastError()) } };
+		//throw error{ std::string { "Failed reach the CCAMS server. Error: " + std::to_string(GetLastError()) } };
+#endif
 
-#endif // DEBUG
-
-		return "0000";
+		return string{ "E406" };
 	}
 
 	char DataReceived[256];
