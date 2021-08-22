@@ -90,7 +90,7 @@ CCAMS::CCAMS(PluginData pd, const DefaultCodes&& dc) :
 		{
 			if (strcmp(cstrSetting, "0") == 0)
 			{
-				this->acceptEquipmentFAA = false;
+				this->autoAssign = false;
 			}
 		}
 	}
@@ -356,7 +356,7 @@ void CCAMS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RE
 	}
 	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_VFR)
 	{
-	FlightPlan.GetControllerAssignedData().SetSquawk(this->squawkVFR);
+		FlightPlan.GetControllerAssignedData().SetSquawk(this->squawkVFR);
 	}
 }
 
