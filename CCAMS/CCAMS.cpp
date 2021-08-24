@@ -130,7 +130,6 @@ bool CCAMS::OnCompileCommand(const char* command)
 	}
 #ifdef _DEBUG
 	if (Help(command)) return true;
-#endif
 
 	return false;
 }
@@ -148,6 +147,12 @@ bool CCAMS::Help(const char* Command)
 		DisplayUserMessage("HELP", this->pluginData.PLUGIN_NAME, ".CCAMS EHSLIST | Displays the flight plan list with EHS values of the currently selected aircraft.", true, true, true, true, false);
 		return true;
 	}
+#ifdef _DEBUG
+	else if (_stricmp(Command, ".ccams reset") == 0)
+	{
+		this->ProcessedFlightPlans.clear();
+	}
+#endif
 	return false;
 }
 
