@@ -250,7 +250,7 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 			auto assr = RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk();
 			auto pssr = RadarTarget.GetPosition().GetSquawk();
 
-			if (!isEligibleSquawkModeS(FlightPlan) && (strcmp(assr, ::mode_s_code) == 0 || (strcmp(pssr, ::mode_s_code) == 0) && strlen(assr) == 0))
+			if (!isEligibleSquawkModeS(FlightPlan) && (strcmp(assr, ::mode_s_code) == 0 || (strcmp(pssr, ::mode_s_code) == 0 && strlen(assr) == 0)))
 			{
 				// mode S code assigned, but not eligible
 				*pColorCode = EuroScopePlugIn::TAG_COLOR_REDUNDANT;
