@@ -61,6 +61,7 @@ private:
 	std::vector<std::string> ICAO_MODES;
 
 	void AutoAssignMSCC();
+	void AssignAutoSquawk(CFlightPlan& FlightPlan);
 	void AssignPendingSquawks();
 	void DoInitialLoad(future<string> & message);
 	bool IsFlightPlanProcessed(CFlightPlan & FlightPlan);

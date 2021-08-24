@@ -130,6 +130,7 @@ bool CCAMS::OnCompileCommand(const char* command)
 	}
 #ifdef _DEBUG
 	if (Help(command)) return true;
+#endif
 
 	return false;
 }
@@ -160,6 +161,8 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 {
 	if (!FlightPlan.IsValid())
 		return;
+
+	AssignAutoSquawk(FlightPlan);
 
 	if (ItemCode == ItemCodes::TAG_ITEM_ISMODES)
 	{
@@ -295,8 +298,6 @@ void CCAMS::OnRefreshFpListContent(CFlightPlanList AcList)
 		}
 		this->FpListEHS.AddFpToTheList(FlightPlanSelectASEL());
 	}
-
-
 }
 
 void CCAMS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area)
@@ -376,111 +377,116 @@ void CCAMS::OnTimer(int Counter)
 		AssignPendingSquawks();
 
 		if (!(Counter % 5) && this->autoAssign)
-			AutoAssignMSCC();
+		{
+			for (CRadarTarget RadarTarget = RadarTargetSelectFirst();
+				RadarTarget.IsValid();
+				RadarTarget = RadarTargetSelectNext(RadarTarget))
+			{
+				if (!RadarTarget.GetPosition().IsFPTrackPosition())
+					continue;
+
+				AssignAutoSquawk(RadarTarget.GetCorrelatedFlightPlan());
+			}
+
+		}
 	}
 }
 
-void CCAMS::AutoAssignMSCC()
+void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 {
+	string DisplayMsg;
+
 	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
 		return;
 
-	string DisplayMsg;
-	for (CRadarTarget RadarTarget = RadarTargetSelectFirst();
-		RadarTarget.IsValid();
-		RadarTarget = RadarTargetSelectNext(RadarTarget))
-	{
-		if (RadarTarget.GetPosition().IsFPTrackPosition())
-			return;
-
 #ifndef _DEBUG
-		if (RadarTarget.GetPosition().GetFlightLevel() < 24500)
+	if (RadarTarget.GetPosition().GetFlightLevel() < 24500)
+	if (FlightPlan.GetCorrelatedRadarTarget().GetPosition().GetFlightLevel() < 10000)
 			return;
 #endif // _DEBUG
 
-		CFlightPlan FlightPlan = RadarTarget.GetCorrelatedFlightPlan();
-		// Check if FlightPlan is already processed
-		if (IsFlightPlanProcessed(FlightPlan))
-			return;
+	// Check if FlightPlan is already processed
+	if (IsFlightPlanProcessed(FlightPlan))
+		return;
 
-		// disregard if the flight is assumed in the vicinity of the departure airport
-		if (isADEPvicinity(FlightPlan))
-			return;
+	// disregard if the flight is assumed in the vicinity of the departure airport
+	if (isADEPvicinity(FlightPlan))
+		return;
 
-		// disregard simulated flight plans
-		if (FlightPlan.GetSimulated())
-			return;
+	// disregard simulated flight plans
+	if (FlightPlan.GetSimulated())
+		return;
 
-		// disregard flight with flight rule VFR
-		if (strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
-			return;
+	// disregard flight with flight rule VFR
+	if (strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
+		return;
 
 #ifdef _DEBUG
-		DisplayMsg = string{ FlightPlan.GetCallsign() } + ": Tracking Controller Len '" + to_string(strlen(FlightPlan.GetTrackingControllerCallsign())) + "', CoordNextC '" + string{ FlightPlan.GetCoordinatedNextController() } + "', Minutes to entry " + to_string(FlightPlan.GetSectorEntryMinutes()) + ", TrackingMe: " + to_string(FlightPlan.GetTrackingControllerIsMe());
-		//DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+	DisplayMsg = string{ FlightPlan.GetCallsign() } + ": Tracking Controller Len '" + to_string(strlen(FlightPlan.GetTrackingControllerCallsign())) + "', CoordNextC '" + string{ FlightPlan.GetCoordinatedNextController() } + "', Minutes to entry " + to_string(FlightPlan.GetSectorEntryMinutes()) + ", TrackingMe: " + to_string(FlightPlan.GetTrackingControllerIsMe());
+	//DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
-		if (!FlightPlan.GetTrackingControllerIsMe())
+	if (!FlightPlan.GetTrackingControllerIsMe())
+	{
+		// the current controller is not tracking the flight plan
+		if (strlen(FlightPlan.GetTrackingControllerCallsign()) > 0)
 		{
-			// the current controller is not tracking the flight plan
-			if (strlen(FlightPlan.GetTrackingControllerCallsign()) > 0)
-			{
-				// another controller is currently tracking the flight
-				return;
-			}
-			else if ((strlen(FlightPlan.GetCoordinatedNextController()) > 0 && FlightPlan.GetCoordinatedNextController() != ControllerMyself().GetCallsign()))
-			{
-				// the current controller is not the next controller of this flight
-				return;
-			}
-			else if (FlightPlan.GetSectorEntryMinutes() > 15)
-			{
-				// the flight is still too far away from the current controllers sector
-				return;
-			}
-			else
-			{
-#ifdef _DEBUG
-				// The current controller is not tracking the flight, but automatic squawk assignment is applicable
-				DisplayMsg = "The non-tracked flight " + string{ FlightPlan.GetCallsign() } + " IS eligible for automatic squawk assingment. Tracking Controller Len: '" + to_string(strlen(FlightPlan.GetTrackingControllerCallsign())) + "', CoordNextC: '" + string{ FlightPlan.GetCoordinatedNextController() } + "', Minutes to entry: " + to_string(FlightPlan.GetSectorEntryMinutes());
-				DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-#endif
-			}
-		}
-
-		// if the function has not been ended, the flight is subject to automatic squawk assignment
-		
-		if (hasValidSquawkAssigned(FlightPlan))
-		{
-			// this flight has already assigned a valid unique code, add this flight to the processed flight plans for performance
-			ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
+			// another controller is currently tracking the flight
 			return;
 		}
-
-		auto assr = FlightPlan.GetControllerAssignedData().GetSquawk();
-		//auto pssr = RadarTarget.GetPosition().GetSquawk();
-			
-		if (isEligibleSquawkModeS(FlightPlan))
+		else if ((strlen(FlightPlan.GetCoordinatedNextController()) > 0 && FlightPlan.GetCoordinatedNextController() != ControllerMyself().GetCallsign()))
 		{
-			//FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
-#ifdef _DEBUG
-			DisplayMsg = "Code 1000 would be automatically assigned to " + string{ FlightPlan.GetCallsign() };
-			//DisplayMsg = "Code 1000 automatically assigned to " + string { FlightPlan.GetCallsign() };
-			DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-#endif
+			// the current controller is not the next controller of this flight
+			return;
+		}
+		else if (FlightPlan.GetSectorEntryMinutes() > 15)
+		{
+			// the flight is still too far away from the current controllers sector
+			return;
 		}
 		else
 		{
-			//PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
-			//	FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), isADEPvicinity(FlightPlan), CCAMS::GetConnectionType())));
 #ifdef _DEBUG
-			DisplayMsg = "A unique code would be automatically assigned to " + string { FlightPlan.GetCallsign() };
+			// The current controller is not tracking the flight, but automatic squawk assignment is applicable
+			DisplayMsg = "The non-tracked flight " + string{ FlightPlan.GetCallsign() } + " IS eligible for automatic squawk assingment. Tracking Controller Len: '" + to_string(strlen(FlightPlan.GetTrackingControllerCallsign())) + "', CoordNextC: '" + string{ FlightPlan.GetCoordinatedNextController() } + "', Minutes to entry: " + to_string(FlightPlan.GetSectorEntryMinutes());
 			DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
 		}
-#ifdef _DEBUG
+	}
+
+	// if the function has not been ended, the flight is subject to automatic squawk assignment
+
+	if (hasValidSquawkAssigned(FlightPlan))
+	{
+		// this flight has already assigned a valid unique code, add this flight to the processed flight plans for performance
 		ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
+		return;
+	}
+
+	auto assr = FlightPlan.GetControllerAssignedData().GetSquawk();
+	//auto pssr = RadarTarget.GetPosition().GetSquawk();
+
+	if (isEligibleSquawkModeS(FlightPlan))
+	{
+		//FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
+#ifdef _DEBUG
+		DisplayMsg = "Code 1000 would be automatically assigned to " + string{ FlightPlan.GetCallsign() };
+		//DisplayMsg = "Code 1000 automatically assigned to " + string { FlightPlan.GetCallsign() };
+		DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
 	}
+	else
+	{
+		//PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
+		//	FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), isADEPvicinity(FlightPlan), CCAMS::GetConnectionType())));
+#ifdef _DEBUG
+		DisplayMsg = "A unique code would be automatically assigned to " + string{ FlightPlan.GetCallsign() };
+		DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
+	}
+#ifdef _DEBUG
+	ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
+#endif
+
 }
 
 void CCAMS::AssignPendingSquawks()
