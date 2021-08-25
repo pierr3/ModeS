@@ -8,27 +8,31 @@ This plugin includes Mode S functionalities as introduced previously by Oliver G
 
 This plugin provides as the core functionality:
 * Manual code assignment options for all aircraft on ground (improved popup menu, tag functions)
-* Automatic assignment of squawk 1000 for capable aircraft flying above FL245 without assigned squawk or with generic codes like 0000, 1200, 2000, 2200
+* Automatic assignment of squawk 1000 for capable aircraft flying without assigned squawk or with non-discrete codes (ending with 00)
 * Tag items representing Mode S EHS (Enhanced Surveillance) data
 
 ## Available tag items
+* Assigned squawk: the assigned squawk, including color indication for non-set squawks and incorrect use or assignment of squawk 1000
+* Mode S quawk error: Indicator of incorrect use or assignment of squawk 1000
 * Transponder type: Show wether the aircraft is mode S or not
 * EHS Heading: Reported magnetic heading of the aircraft
 * EHS Roll Angle: Reported roll angle (L for LEFT and R for RIGHT + value in degrees)
 * EHS GS: Reported groundspeed of the aircraft in knots.
-* Mode S quawk error: Indicator of incorrect use or assignment of squawk 1000
 
 ## Available tag functions
 * Assign mode S squawk: assigns code 1000 to eligible aircraft with mode S transponder
 * Auto assign squawk: intended to be used instead of the default ES (F9) function, assigns code 1000 if eligible, otherwise assigns a squawk according the implemented code scheme
 * Open SQUAWK assign popup: improved options compared to the default ES functions, including the above assign mode S option and a specific VFR code assignment
 
+## Available plugin commands
+The available plugin commands can be review by using the command ".help ccams".
+
 ## Available plugin settings
 The following settings can be added to the Plugins.txt file to customise the plugins behaviour:
 * Add "CCAMS:codeVFR:[your default VFR code]" to define the code used when assigning a VFR code (by the specific option in the SQUAWK assign popup (if not defined, 7000 is used))
 * Add "CCAMS:acceptFPLformatICAO:0" to suppress the assignment of squawk 1000 to aircraft using an ICAO format flight plan
 * Add "CCAMS:acceptFPLformatFAA:0" to suppress the assignment of squawk 1000 to aircraft using an FAA format flight plan
-* Add "CCAMS:AutoAssign:0" to suppress the automatic assignment of squawk 1000 to eligible aircraft above FL 245
+* Add "CCAMS:AutoAssign:1" to activate the automatic assignment of squawk 1000 to eligible aircraft
 
 ## EuroScope set up
 * Load up the plugin
