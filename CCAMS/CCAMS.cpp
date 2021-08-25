@@ -137,6 +137,7 @@ bool CCAMS::OnCompileCommand(const char* command)
 
 bool CCAMS::Help(const char* Command)
 {
+	string sCommand(Command);
 	if (_stricmp(Command, ".help") == 0)
 	{
 		DisplayUserMessage("HELP", "HELP", ".HELP CCAMS | Centralised code assignment and management system Help", true, true, true, true, false);
@@ -152,6 +153,21 @@ bool CCAMS::Help(const char* Command)
 	else if (_stricmp(Command, ".ccams reset") == 0)
 	{
 		this->ProcessedFlightPlans.clear();
+	}
+	else if (_stricmp(sCommand.substr(0, 7).c_str(), ".ccams ") == 0 && sCommand.size() > 7)
+	{
+		string callsign = sCommand.substr(7, sCommand.size() - 7);
+
+		for (CFlightPlan FlightPlan = FlightPlanSelectFirst();
+			FlightPlan.IsValid();
+			FlightPlan = FlightPlanSelectNext(FlightPlan))
+		{
+			if (_stricmp(callsign.c_str(), FlightPlan.GetCallsign()) == 0)
+			{
+				string DisplayMsg = string{ FlightPlan.GetCallsign() } + ": Tracking Controller Len '" + to_string(strlen(FlightPlan.GetTrackingControllerCallsign())) + "', CoordNextC '" + string{ FlightPlan.GetCoordinatedNextController() } + "', Minutes to entry " + to_string(FlightPlan.GetSectorEntryMinutes()) + ", TrackingMe: " + to_string(FlightPlan.GetTrackingControllerIsMe());
+				DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+			}
+		}
 	}
 #endif
 	return false;
@@ -413,7 +429,7 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	if (isADEPvicinity(FlightPlan))
 		return;
 
-	// disregard simulated flight plans
+	// disregard simulated flight plans (out of the controllers range)
 	if (FlightPlan.GetSimulated())
 		return;
 
@@ -462,7 +478,7 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 		return;
 	}
 
-	auto assr = FlightPlan.GetControllerAssignedData().GetSquawk();
+	//auto assr = FlightPlan.GetControllerAssignedData().GetSquawk();
 	//auto pssr = RadarTarget.GetPosition().GetSquawk();
 
 	if (isEligibleSquawkModeS(FlightPlan))
