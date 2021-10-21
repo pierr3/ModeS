@@ -643,10 +643,15 @@ bool CCAMS::isEligibleSquawkModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan
 		(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || (!isADEPvicinity(FlightPlan) && isApModeS(ControllerMyself().GetCallsign())));
 }
 
-bool CCAMS::hasValidSquawkAssigned(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
+bool CCAMS::hasValidSquawkAssigned(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 {
 	const char* assr = FlightPlan.GetControllerAssignedData().GetSquawk();
-		//RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk();
+	const char* pssr = FlightPlan.GetCorrelatedRadarTarget().GetPosition().GetSquawk();
+	//RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk();
+#ifdef _DEBUG
+	string DisplayMsg = string{ FlightPlan.GetCallsign() } + " has ASSIGNED code '" + assr + "' and SET code '" + pssr + "'";
+	DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
 
 	if (strlen(assr) != 4)
 		return false;
@@ -667,7 +672,12 @@ bool CCAMS::hasValidSquawkAssigned(const EuroScopePlugIn::CFlightPlan& FlightPla
 		if (RadarTarget.GetCallsign() == FlightPlanSelectASEL().GetCallsign())
 			continue;
 
+		// this code is also assigned to another aircraft
 		if (strcmp(assr, RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk()) == 0)
+			return false;
+
+		// this code is already used by another aircraft
+		if (strcmp(assr, RadarTarget.GetPosition().GetSquawk()) == 0)
 			return false;
 	}
 	return true;
