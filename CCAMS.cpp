@@ -412,7 +412,8 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 {
 	string DisplayMsg;
 
-	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController())
+	// check controller class validity and restrict to APP/CTR/FSS controller types
+	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController() || (ControllerMyself().GetFacility() > 1 && ControllerMyself().GetFacility() < 5))
 		return;
 
 #ifndef _DEBUG
@@ -444,6 +445,7 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	if (!FlightPlan.GetTrackingControllerIsMe())
 	{
 		// the current controller is not tracking the flight plan
+
 		if (strlen(FlightPlan.GetTrackingControllerCallsign()) > 0)
 		{
 			// another controller is currently tracking the flight
@@ -471,7 +473,7 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 
 	// if the function has not been ended, the flight is subject to automatic squawk assignment
 
-	if (hasValidSquawkAssigned(FlightPlan))
+	if (hasValidSquawk(FlightPlan))
 	{
 		// this flight has already assigned a valid unique code, add this flight to the processed flight plans for performance
 		ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
@@ -485,8 +487,7 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	{
 		//FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 #ifdef _DEBUG
-		DisplayMsg = "Code 1000 would be automatically assigned to " + string{ FlightPlan.GetCallsign() };
-		//DisplayMsg = "Code 1000 automatically assigned to " + string { FlightPlan.GetCallsign() };
+		DisplayMsg = "Squawk Code Auto Assignment (1000): " + string{ FlightPlan.GetCallsign() };
 		DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
 	}
@@ -495,7 +496,7 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 		//PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
 		//	FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), isADEPvicinity(FlightPlan), CCAMS::GetConnectionType())));
 #ifdef _DEBUG
-		DisplayMsg = "A unique code would be automatically assigned to " + string{ FlightPlan.GetCallsign() };
+		DisplayMsg = "Squawk Code Auto Assignment (unique): " + string{ FlightPlan.GetCallsign() };
 		DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
 	}
@@ -643,24 +644,31 @@ bool CCAMS::isEligibleSquawkModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan
 		(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || (!isADEPvicinity(FlightPlan) && isApModeS(ControllerMyself().GetCallsign())));
 }
 
-bool CCAMS::hasValidSquawkAssigned(const EuroScopePlugIn::CFlightPlan& FlightPlan)
+bool CCAMS::hasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 {
 	const char* assr = FlightPlan.GetControllerAssignedData().GetSquawk();
 	const char* pssr = FlightPlan.GetCorrelatedRadarTarget().GetPosition().GetSquawk();
-	//RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk();
 #ifdef _DEBUG
 	string DisplayMsg = string{ FlightPlan.GetCallsign() } + " has ASSIGNED code '" + assr + "' and SET code '" + pssr + "'";
 	DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
 
-	if (strlen(assr) != 4)
-		return false;
-	else if (strcmp(assr, this->squawkVFR) == 0 && strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
+	if ((strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0 && (strcmp(assr, this->squawkVFR) == 0 || strcmp(pssr, this->squawkVFR) == 0))
+		|| (isEligibleSquawkModeS(FlightPlan) && (strcmp(assr, ::mode_s_code) == 0 || strcmp(pssr, ::mode_s_code) == 0)))
+	{
 		return true;
-	else if (strcmp(assr, ::mode_s_code) == 0 && isEligibleSquawkModeS(FlightPlan))
-		return true;
-	else if (atoi(assr) % 100 == 0)
+	}
+	else if (strlen(assr) == 4)
+	{
+		// assigned squawk is not valid
+		if (!regex_search(assr, std::regex("[0-7]{4}")) || atoi(assr) % 100 == 0)
+			return false;
+	}
+	else if (!regex_search(pssr, std::regex("[0-7]{4}")) || atoi(pssr) % 100 == 0)
+	{
+		// no squawk is assigned, but currently used code is not valid
 		return false;
+	}
 
 	// searching for duplicate assignments
 	for (EuroScopePlugIn::CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
@@ -673,13 +681,17 @@ bool CCAMS::hasValidSquawkAssigned(const EuroScopePlugIn::CFlightPlan& FlightPla
 			continue;
 
 		// this code is also assigned to another aircraft
-		if (strcmp(assr, RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk()) == 0)
+		if (strcmp(assr, RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk()) == 0 || strcmp(pssr, RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk()) == 0)
 			return false;
 
 		// this code is already used by another aircraft
-		if (strcmp(assr, RadarTarget.GetPosition().GetSquawk()) == 0)
+		if (strcmp(assr, RadarTarget.GetPosition().GetSquawk()) == 0 || strcmp(pssr, RadarTarget.GetPosition().GetSquawk()) == 0)
 			return false;
 	}
+	// no duplicate with assigend or used codes has been found
+	// even if the assigned squawk is still empty, the currently used code can be accepted and no new codes needs to be issued
+	//if (strlen(assr) != 4)
+	//	FlightPlan.GetControllerAssignedData().SetSquawk(pssr);
 	return true;
 }
 

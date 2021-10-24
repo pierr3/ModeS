@@ -8,7 +8,6 @@
 #include <map>
 #include <cstdio>
 #include <EuroScopePlugIn.h>
-//#include "ModeSCodes.h"
 #include "Helpers.h"
 
 using namespace std;
@@ -70,7 +69,7 @@ private:
 	bool isEHS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
 	bool isADEPvicinity(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
 	bool isEligibleSquawkModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
-	bool hasValidSquawkAssigned(const EuroScopePlugIn::CFlightPlan& FlightPlan);
+	bool hasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan);
 
 	std::map<const char*, std::future<std::string>> PendingSquawks;
 	std::vector<const char*> collectUsedCodes(const EuroScopePlugIn::CFlightPlan& FlightPlan);
