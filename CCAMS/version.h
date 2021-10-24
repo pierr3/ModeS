@@ -5,11 +5,11 @@
 struct PluginData
 {
 	const char * PLUGIN_NAME	{ "CCAMS" };
-	const char * PLUGIN_VERSION { "1.7.4" };
+	const char * PLUGIN_VERSION { "1.7.1" };
 	const char * PLUGIN_AUTHOR	{ "Pierre Ferran, Oliver Grützmann, Jonas Kuster" };
 	const char * PLUGIN_LICENSE { "GPL v3" };
 	const char * UPDATE_URL		{ "https://raw.githubusercontent.com/kusterjs/CCAMS/master/CCAMS/ver.txt" };
-	const int VERSION_CODE		{ 970 };
+	const int VERSION_CODE		{ 971 };
 };
 
 struct ItemCodes
@@ -40,7 +40,7 @@ struct DefaultCodes
 	const std::vector<std::string> EQUIPEMENT_CODES { "H", "L", "E", "G", "W", "Q", "S" };
 	const std::vector<std::string> EQUIPEMENT_CODES_ICAO { "E", "H", "I", "L", "S" };
 	const std::vector<std::string> EQUIPEMENT_CODES_EHS { "E", "H", "L", "S" };
-	const std::vector<std::string> ICAO_MODES { "EB", "EL", "ET", "ED", "LF", "LH", "LR", "LZ", "EH", "LK", "LO", "LIM", "LIR", "EP", "LD", "LSZR", "LSZB", "LSZG", "LSGC", "LSZH", "LSGG" };
+	const std::vector<std::string> ICAO_MODES { "EB", "ED", "EH", "EL", "EP", "ET", "LD", "LF", "LH", "LI", "LK", "LO", "LR", "LSZR", "LSZB", "LSZG", "LSGC", "LSZH", "LSGG", "LZ" };
 };
 
 static const char * mode_s_code { "1000" };
