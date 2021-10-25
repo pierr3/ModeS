@@ -119,7 +119,7 @@ bool CCAMS::OnCompileCommand(const char* command)
 		transform(pluginCommand.begin(), pluginCommand.end(), pluginCommand.begin(), ::tolower);
 
 #ifdef _DEBUG
-		if (pluginCommand == "ehslist")
+		if (_stricmp(pluginCommand.c_str(),"ehslist") == 0)
 		{
 			this->FpListEHS.ShowFpList(true);
 			return true;
@@ -147,6 +147,10 @@ bool CCAMS::Help(const char* Command)
 	{
 		// Display HELP
 		DisplayUserMessage("HELP", this->pluginData.PLUGIN_NAME, ".CCAMS EHSLIST | Displays the flight plan list with EHS values of the currently selected aircraft.", true, true, true, true, false);
+#ifdef _DEBUG
+		DisplayUserMessage("HELP", this->pluginData.PLUGIN_NAME, ".CCAMS RESET | Clears the list of flight plans which have been determined no longer applicable for automatic code assignment.", true, true, true, true, false);
+		DisplayUserMessage("HELP", this->pluginData.PLUGIN_NAME, ".CCAMS [CALL SIGN] | Displays tracking and controller information for a specific flight (to support debugging of automatic code assignment).", true, true, true, true, false);
+#endif
 		return true;
 	}
 #ifdef _DEBUG
