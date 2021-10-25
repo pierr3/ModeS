@@ -48,6 +48,7 @@ private:
 	CFlightPlanList FpListEHS;
 	const PluginData pluginData;
 	const char* squawkVFR;
+	bool pluginVersionRestricted;
 	bool acceptEquipmentICAO;
 	bool acceptEquipmentFAA;
 	bool autoAssignMSCC;

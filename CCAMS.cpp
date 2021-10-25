@@ -47,6 +47,7 @@ CCAMS::CCAMS(PluginData pd, const DefaultCodes&& dc) :
 	this->acceptEquipmentICAO = true;
 	this->acceptEquipmentFAA = true;
 	this->autoAssignMSCC = true;
+	this->pluginVersionRestricted = true;
 #ifdef _DEBUG
 	this->autoAssign = true;
 #else
@@ -91,6 +92,10 @@ CCAMS::CCAMS(PluginData pd, const DefaultCodes&& dc) :
 			if (strcmp(cstrSetting, "0") == 0)
 			{
 				this->autoAssign = false;
+			}
+			else if (strcmp(cstrSetting, "1") == 0)
+			{
+				this->autoAssign = true;
 			}
 		}
 	}
@@ -148,15 +153,35 @@ bool CCAMS::Help(const char* Command)
 		// Display HELP
 		DisplayUserMessage("HELP", this->pluginData.PLUGIN_NAME, ".CCAMS EHSLIST | Displays the flight plan list with EHS values of the currently selected aircraft.", true, true, true, true, false);
 #ifdef _DEBUG
+		DisplayUserMessage("HELP", this->pluginData.PLUGIN_NAME, ".CCAMS AUTO | Activates or deactivates automatic code assignment.", true, true, true, true, false);
 		DisplayUserMessage("HELP", this->pluginData.PLUGIN_NAME, ".CCAMS RESET | Clears the list of flight plans which have been determined no longer applicable for automatic code assignment.", true, true, true, true, false);
 		DisplayUserMessage("HELP", this->pluginData.PLUGIN_NAME, ".CCAMS [CALL SIGN] | Displays tracking and controller information for a specific flight (to support debugging of automatic code assignment).", true, true, true, true, false);
 #endif
+		return true;
+	}
+	else if (_stricmp(Command, ".ccams auto") == 0)
+	{
+		if (this->pluginVersionRestricted)
+		{
+			DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Error", "Your plugin version is not up-to-date and the automatic code assignment therefore not available.", true, true, false, false, false);
+		}
+		else if (this->autoAssign)
+		{
+			this->autoAssign = false;
+			SaveDataToSettings("AutoAssign", "Automatic assignment of squawk codes", "0");
+		}
+		else
+		{
+			this->autoAssign = true;
+			SaveDataToSettings("AutoAssign", "Automatic assignment of squawk codes", "1");
+		}
 		return true;
 	}
 #ifdef _DEBUG
 	else if (_stricmp(Command, ".ccams reset") == 0)
 	{
 		this->ProcessedFlightPlans.clear();
+		return true;
 	}
 	else if (_stricmp(sCommand.substr(0, 7).c_str(), ".ccams ") == 0 && sCommand.size() > 7)
 	{
@@ -170,6 +195,7 @@ bool CCAMS::Help(const char* Command)
 			{
 				string DisplayMsg = string{ FlightPlan.GetCallsign() } + ": Tracking Controller Len '" + to_string(strlen(FlightPlan.GetTrackingControllerCallsign())) + "', CoordNextC '" + string{ FlightPlan.GetCoordinatedNextController() } + "', Minutes to entry " + to_string(FlightPlan.GetSectorEntryMinutes()) + ", TrackingMe: " + to_string(FlightPlan.GetTrackingControllerIsMe());
 				DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+				return true;
 			}
 		}
 	}
@@ -430,16 +456,18 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	if (IsFlightPlanProcessed(FlightPlan))
 		return;
 
+	// check for exclusion arguments from automatic squawk assignment
+	// 1 .disregard simulated flight plans (out of the controllers range)
+	// 2. disregard flight with flight rule VFR
+	// 3. this flight has already assigned a valid unique code
+	if (FlightPlan.GetSimulated() || strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0 || hasValidSquawk(FlightPlan))
+	{
+		ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
+		return;
+	}
+
 	// disregard if the flight is assumed in the vicinity of the departure airport
 	if (isADEPvicinity(FlightPlan))
-		return;
-
-	// disregard simulated flight plans (out of the controllers range)
-	if (FlightPlan.GetSimulated())
-		return;
-
-	// disregard flight with flight rule VFR
-	if (strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
 		return;
 
 #ifdef _DEBUG
@@ -469,7 +497,7 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 		{
 #ifdef _DEBUG
 			// The current controller is not tracking the flight, but automatic squawk assignment is applicable
-			DisplayMsg = "The non-tracked flight " + string{ FlightPlan.GetCallsign() } + " IS eligible for automatic squawk assingment. Tracking Controller Len: '" + to_string(strlen(FlightPlan.GetTrackingControllerCallsign())) + "', CoordNextC: '" + string{ FlightPlan.GetCoordinatedNextController() } + "', Minutes to entry: " + to_string(FlightPlan.GetSectorEntryMinutes());
+			DisplayMsg = "The non-tracked flight " + string{ FlightPlan.GetCallsign() } + " IS eligible for automatic squawk assignment. Minutes to entry: " + to_string(FlightPlan.GetSectorEntryMinutes());
 			DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
 		}
@@ -477,30 +505,23 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 
 	// if the function has not been ended, the flight is subject to automatic squawk assignment
 
-	if (hasValidSquawk(FlightPlan))
-	{
-		// this flight has already assigned a valid unique code, add this flight to the processed flight plans for performance
-		ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
-		return;
-	}
-
 	//auto assr = FlightPlan.GetControllerAssignedData().GetSquawk();
 	//auto pssr = RadarTarget.GetPosition().GetSquawk();
 
 	if (isEligibleSquawkModeS(FlightPlan))
 	{
-		//FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
+		FlightPlan.GetControllerAssignedData().SetSquawk(::mode_s_code);
 #ifdef _DEBUG
-		DisplayMsg = "Squawk Code Auto Assignment (1000): " + string{ FlightPlan.GetCallsign() };
+		DisplayMsg = "AUTO ASSIGN Squawk Code 1000: " + string{ FlightPlan.GetCallsign() };
 		DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
 	}
 	else
 	{
-		//PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
-		//	FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), isADEPvicinity(FlightPlan), CCAMS::GetConnectionType())));
+		PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
+			FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), isADEPvicinity(FlightPlan), CCAMS::GetConnectionType())));
 #ifdef _DEBUG
-		DisplayMsg = "Squawk Code Auto Assignment (unique): " + string{ FlightPlan.GetCallsign() };
+		DisplayMsg = "AUTO ASSIGN unique Squawk Code: " + string{ FlightPlan.GetCallsign() };
 		DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
 	}
@@ -551,6 +572,8 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 			int new_v = stoi(match[3].str(), nullptr, 0);
 			if (new_v > pluginData.VERSION_CODE)
 				throw error{ "Your " + string { this->pluginData.PLUGIN_NAME } + " plugin (version " + pluginData.PLUGIN_VERSION + ") is outdated. Please change to the latest version.\n\nVisit it\n\nhttps://github.com/kusterjs/CCAMS/releases" };
+			else
+				this->pluginVersionRestricted = false;
 		}
 		else
 			throw error{ string { this->pluginData.PLUGIN_NAME }  + " plugin couldn't parse the server data" };
@@ -652,10 +675,6 @@ bool CCAMS::hasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 {
 	const char* assr = FlightPlan.GetControllerAssignedData().GetSquawk();
 	const char* pssr = FlightPlan.GetCorrelatedRadarTarget().GetPosition().GetSquawk();
-#ifdef _DEBUG
-	string DisplayMsg = string{ FlightPlan.GetCallsign() } + " has ASSIGNED code '" + assr + "' and SET code '" + pssr + "'";
-	DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-#endif
 
 	if ((strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0 && (strcmp(assr, this->squawkVFR) == 0 || strcmp(pssr, this->squawkVFR) == 0))
 		|| (isEligibleSquawkModeS(FlightPlan) && (strcmp(assr, ::mode_s_code) == 0 || strcmp(pssr, ::mode_s_code) == 0)))
@@ -693,6 +712,10 @@ bool CCAMS::hasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 			return false;
 	}
 	// no duplicate with assigend or used codes has been found
+#ifdef _DEBUG
+	string DisplayMsg = string{ FlightPlan.GetCallsign() } + ", no duplicates found, ASSIGNED " + assr + ", SET code " + pssr;
+	DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
 	// even if the assigned squawk is still empty, the currently used code can be accepted and no new codes needs to be issued
 	//if (strlen(assr) != 4)
 	//	FlightPlan.GetControllerAssignedData().SetSquawk(pssr);
