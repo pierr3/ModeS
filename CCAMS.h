@@ -40,7 +40,7 @@ public:
 
 	void OnTimer(int Counter);
 
-	bool Help(const char* Command);
+	bool PluginCommands(const char* Command);
 
 private:
 	future<string> fUpdateString;
