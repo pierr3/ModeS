@@ -127,8 +127,8 @@ bool CCAMS::OnCompileCommand(const char* command)
 	{
 		// Display HELP
 		DisplayUserMessage("HELP", this->pluginData.PLUGIN_NAME, ".CCAMS EHSLIST | Displays the flight plan list with EHS values of the currently selected aircraft.", true, true, true, true, false);
-#ifdef _DEBUG
 		DisplayUserMessage("HELP", this->pluginData.PLUGIN_NAME, ".CCAMS AUTO | Activates or deactivates automatic code assignment.", true, true, true, true, false);
+#ifdef _DEBUG
 		DisplayUserMessage("HELP", this->pluginData.PLUGIN_NAME, ".CCAMS RESET | Clears the list of flight plans which have been determined no longer applicable for automatic code assignment.", true, true, true, true, false);
 		DisplayUserMessage("HELP", this->pluginData.PLUGIN_NAME, ".CCAMS [CALL SIGN] | Displays tracking and controller information for a specific flight (to support debugging of automatic code assignment).", true, true, true, true, false);
 #endif
@@ -136,12 +136,7 @@ bool CCAMS::OnCompileCommand(const char* command)
 	}
 	else if (regex_match(command, matches, regex("\\.ccams\\s+(\\w+)", regex::icase)))
 	{
-		string pluginCommand = matches[1];
-		DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", pluginCommand.c_str(), true, true, true, true, false);
-		//transform(pluginCommand.begin(), pluginCommand.end(), pluginCommand.begin(), ::tolower);
 		return PluginCommands(matches[1].str().c_str());
-
-		//return false;
 	}
 
 	return false;
@@ -165,11 +160,13 @@ bool CCAMS::PluginCommands(const char* Command)
 		{
 			this->autoAssign = false;
 			SaveDataToSettings("AutoAssign", "Automatic assignment of squawk codes", "0");
+			DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Setting changed", "Automatic code assignment disabled", true, true, false, false, false);
 		}
 		else
 		{
 			this->autoAssign = true;
 			SaveDataToSettings("AutoAssign", "Automatic assignment of squawk codes", "1");
+			DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Setting changed", "Automatic code assignment enabled", true, true, false, false, false);
 		}
 		return true;
 	}
