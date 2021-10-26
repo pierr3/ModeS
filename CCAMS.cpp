@@ -17,18 +17,15 @@ CCAMS::CCAMS(PluginData pd, const DefaultCodes&& dc) :
 	DisplayUserMessage(pd.PLUGIN_NAME, "Initialisation", DisplayMsg.c_str(), true, false, false, false, false);
 
 	RegisterTagItemType("Transponder Type", ItemCodes::TAG_ITEM_ISMODES);
-#ifdef _DEBUG
 	RegisterTagItemType("EHS Heading", ItemCodes::TAG_ITEM_EHS_HDG);
 	RegisterTagItemType("EHS Roll Angle", ItemCodes::TAG_ITEM_EHS_ROLL);
 	RegisterTagItemType("EHS GS", ItemCodes::TAG_ITEM_EHS_GS);
-#endif
 	RegisterTagItemType("Mode S squawk error", ItemCodes::TAG_ITEM_ERROR_MODES_USE);
 	RegisterTagItemType("Assigned squawk", ItemCodes::TAG_ITEM_SQUAWK);
 
 	RegisterTagItemFunction("Auto assign squawk", ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_AUTO);
 	RegisterTagItemFunction("Open SQUAWK assign popup", ItemCodes::TAG_FUNC_SQUAWK_POPUP);
 
-#ifdef _DEBUG
 	this->FpListEHS = RegisterFpList("Mode S EHS");
 	if (this->FpListEHS.GetColumnNumber() == 0)
 	{
@@ -37,7 +34,6 @@ CCAMS::CCAMS(PluginData pd, const DefaultCodes&& dc) :
 		this->FpListEHS.AddColumnDefinition("Roll", 5, true, this->pluginData.PLUGIN_NAME, ItemCodes::TAG_ITEM_EHS_ROLL, NULL, NULL, NULL, NULL);
 		this->FpListEHS.AddColumnDefinition("GS", 4, true, this->pluginData.PLUGIN_NAME, ItemCodes::TAG_ITEM_EHS_GS, NULL, NULL, NULL, NULL);
 	}
-#endif
 
 	// Start new thread to get the version file from the server
 	fUpdateString = async(LoadUpdateString, pd);
@@ -101,11 +97,11 @@ CCAMS::CCAMS(PluginData pd, const DefaultCodes&& dc) :
 	}
 	catch (std::runtime_error const& e)
 	{
-		DisplayUserMessage(pd.PLUGIN_NAME, "Error", e.what(), true, true, false, false, false);
+		DisplayUserMessage(pd.PLUGIN_NAME, "Plugin Error", (string("Error: ") + e.what()).c_str(), true, true, true, true, true);
 	}
 	catch (...)
 	{
-		DisplayUserMessage(pd.PLUGIN_NAME, "Error", std::to_string(GetLastError()).c_str(), true, true, false, false, false);
+		DisplayUserMessage(pd.PLUGIN_NAME, "Plugin Error", ("Unexpected error: " + std::to_string(GetLastError())).c_str(), true, true, true, true, true);
 	}
 
 }
