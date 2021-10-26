@@ -51,7 +51,6 @@ private:
 	bool pluginVersionRestricted;
 	bool acceptEquipmentICAO;
 	bool acceptEquipmentFAA;
-	bool autoAssignMSCC;
 	bool autoAssign;
 	int APTcodeMaxGS;
 	int APTcodeMaxDist;

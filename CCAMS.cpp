@@ -42,7 +42,6 @@ CCAMS::CCAMS(PluginData pd, const DefaultCodes&& dc) :
 	this->squawkVFR = "7000";
 	this->acceptEquipmentICAO = true;
 	this->acceptEquipmentFAA = true;
-	this->autoAssignMSCC = true;
 	this->pluginVersionRestricted = true;
 #ifdef _DEBUG
 	this->autoAssign = true;
