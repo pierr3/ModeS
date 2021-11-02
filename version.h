@@ -5,11 +5,11 @@
 struct PluginData
 {
 	const char * PLUGIN_NAME	{ "CCAMS" };
-	const char * PLUGIN_VERSION { "1.7.6" };
+	const char * PLUGIN_VERSION { "1.7.7" };
 	const char * PLUGIN_AUTHOR	{ "Pierre Ferran, Oliver Grützmann, Jonas Kuster" };
 	const char * PLUGIN_LICENSE { "GPL v3" };
 	const char * UPDATE_URL		{ "https://raw.githubusercontent.com/kusterjs/CCAMS/master/CCAMS/ver.txt" };
-	const int VERSION_CODE		{ 976 };
+	const int VERSION_CODE		{ 977 };
 };
 
 struct ItemCodes
