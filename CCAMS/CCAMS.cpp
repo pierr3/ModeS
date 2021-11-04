@@ -549,7 +549,9 @@ void CCAMS::AssignPendingSquawks()
 			std::string squawk = it->second.get();
 			//if (squawk is an error number)
 			string DisplayMsg = "The received squawk code is " + squawk;
+#ifdef _DEBUG
 			DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
 			if (!FlightPlanSelect(it->first).GetControllerAssignedData().SetSquawk(squawk.c_str()))
 			{
 				string DisplayMsg{ "Your request for a squawk from the centralised code server failed. Check your plugin version, try again or revert to the ES built-in functionalities for assigning a squawk (F9).\n\nFor troubleshooting, report code " + squawk };
