@@ -177,14 +177,14 @@ bool CCAMS::PluginCommands(const char* Command)
 	}
 	else
 	{
-		for (CFlightPlan FlightPlan = FlightPlanSelectFirst();
-			FlightPlan.IsValid();
+		for (CFlightPlan FlightPlan = FlightPlanSelectFirst(); FlightPlan.IsValid();
 			FlightPlan = FlightPlanSelectNext(FlightPlan))
 		{
 			if (_stricmp(Command, FlightPlan.GetCallsign()) == 0)
 			{
 				string DisplayMsg = string{ FlightPlan.GetCallsign() } + ": Tracking Controller Len '" + to_string(strlen(FlightPlan.GetTrackingControllerCallsign())) + "', CoordNextC '" + string{ FlightPlan.GetCoordinatedNextController() } + "', Minutes to entry " + to_string(FlightPlan.GetSectorEntryMinutes()) + ", TrackingMe: " + to_string(FlightPlan.GetTrackingControllerIsMe());
 				DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+				AssignAutoSquawk(FlightPlan);
 				return true;
 			}
 		}
@@ -414,14 +414,18 @@ void CCAMS::OnTimer(int Counter)
 	{
 		AssignPendingSquawks();
 
-		if (!(Counter % 5) && this->autoAssign)
+		if (!(Counter % 10) && this->autoAssign)
 		{
-			for (CRadarTarget RadarTarget = RadarTargetSelectFirst();
-				RadarTarget.IsValid();
+#ifdef _DEBUG
+			//string DisplayMsg = string{ FlightPlan.GetCallsign() } + " has NOT a valid squawk code (ASSIGNED '" + assr + "', SET " + pssr + ")";
+			//DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", "Performing periodical automatic squawk code assignment", true, false, false, false, false);
+#endif
+
+			for (CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
 				RadarTarget = RadarTargetSelectNext(RadarTarget))
 			{
-				if (!RadarTarget.GetPosition().IsFPTrackPosition())
-					continue;
+				//if (!RadarTarget.GetPosition().IsFPTrackPosition())
+				//	continue;
 
 				AssignAutoSquawk(RadarTarget.GetCorrelatedFlightPlan());
 			}
@@ -551,8 +555,20 @@ void CCAMS::AssignPendingSquawks()
 #endif
 			if (!FlightPlanSelect(it->first).GetControllerAssignedData().SetSquawk(squawk.c_str()))
 			{
-				string DisplayMsg{ "Your request for a squawk from the centralised code server failed. Check your plugin version, try again or revert to the ES built-in functionalities for assigning a squawk (F9).\n\nFor troubleshooting, report code " + squawk };
-				DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Error", DisplayMsg.c_str(), true, true, false, false, false);
+				if (squawk == "E404")
+				{
+					DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Error 404", "The internet connection cannot be initiated", true, true, false, false, false);
+				}
+				else if (squawk == "E406")
+				{
+					DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Error 406", "No answer received from the CCAMS server", true, true, false, false, false);
+				}
+				else
+				{
+					string DisplayMsg{ "Your request for a squawk from the centralised code server failed. Check your plugin version, try again or revert to the ES built-in functionalities for assigning a squawk (F9)." };
+					DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Error", DisplayMsg.c_str(), true, true, false, false, false);
+					DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Error", ("For troubleshooting, report code " + squawk).c_str(), true, true, false, false, false);
+				}
 			}
 			must_delete = true;
 		}
@@ -715,7 +731,7 @@ bool CCAMS::hasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 	}
 
 	// searching for duplicate assignments
-	for (EuroScopePlugIn::CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
+	for (CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
 		RadarTarget = RadarTargetSelectNext(RadarTarget))
 	{
 		if (!RadarTarget.IsValid())
@@ -785,10 +801,10 @@ bool CCAMS::hasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 	return true;
 }
 
-std::vector<const char*> CCAMS::collectUsedCodes(const EuroScopePlugIn::CFlightPlan& FlightPlan)
+std::vector<const char*> CCAMS::collectUsedCodes(const CFlightPlan& FlightPlan)
 {
 	vector<const char*> usedCodes;
-	for (EuroScopePlugIn::CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
+	for (CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
 		RadarTarget = RadarTargetSelectNext(RadarTarget))
 	{
 		if (!RadarTarget.IsValid())
