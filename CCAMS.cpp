@@ -182,8 +182,21 @@ bool CCAMS::PluginCommands(const char* Command)
 		{
 			if (_stricmp(Command, FlightPlan.GetCallsign()) == 0)
 			{
-				string DisplayMsg = string{ FlightPlan.GetCallsign() } + ": Tracking Controller Len '" + to_string(strlen(FlightPlan.GetTrackingControllerCallsign())) + "', CoordNextC '" + string{ FlightPlan.GetCoordinatedNextController() } + "', Minutes to entry " + to_string(FlightPlan.GetSectorEntryMinutes()) + ", TrackingMe: " + to_string(FlightPlan.GetTrackingControllerIsMe());
+				string DisplayMsg = string{ FlightPlan.GetCallsign() } + ": Tracking Controller Len '" + to_string(strlen(FlightPlan.GetTrackingControllerCallsign())) + "', Minutes to entry " + to_string(FlightPlan.GetSectorEntryMinutes()) + ", TrackingMe: " + to_string(FlightPlan.GetTrackingControllerIsMe());
 				DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+				CFlightPlanPositionPredictions Pos = FlightPlan.GetPositionPredictions();
+				int min = 0;
+				while (min < min(Pos.GetPointsNumber(), 15))
+				{
+					if (_stricmp(FlightPlan.GetPositionPredictions().GetControllerId(min),"--") != 0)
+						break;
+
+					min++;
+				}
+					
+				DisplayMsg = string{ FlightPlan.GetCallsign() } + ": Next Controller '" + FlightPlan.GetPositionPredictions().GetControllerId(min) + "' in " + to_string(min) + " Minutes ";
+				DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+
 				AssignAutoSquawk(FlightPlan);
 				return true;
 			}
@@ -488,17 +501,29 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	{
 		// the current controller is not tracking the flight plan
 
+		CFlightPlanPositionPredictions Pos = FlightPlan.GetPositionPredictions();
+		int min = 0;
+		while (min < min(Pos.GetPointsNumber(), 15))
+		{
+			if (_stricmp(FlightPlan.GetPositionPredictions().GetControllerId(min), "--") != 0)
+				break;
+
+			min++;
+		}
+
 		if (strlen(FlightPlan.GetTrackingControllerCallsign()) > 0)
 		{
 			// another controller is currently tracking the flight
 			return;
 		}
 		//else if ((strlen(FlightPlan.GetCoordinatedNextController()) > 0 && FlightPlan.GetCoordinatedNextController() != ControllerMyself().GetCallsign()))
-		//{
-		//	// the current controller is not the next controller of this flight
-		//	return;
-		//}
-		else if (FlightPlan.GetSectorEntryMinutes() > 15 || FlightPlan.GetSectorEntryMinutes() < 0)
+		else if (_stricmp(ControllerMyself().GetPositionId(), FlightPlan.GetPositionPredictions().GetControllerId(min)) != 0)
+		{
+			// the current controller is not the next controller of this flight
+			return;
+		}
+		//else if (FlightPlan.GetSectorEntryMinutes() > 15 || FlightPlan.GetSectorEntryMinutes() < 0)
+		else if (FlightPlan.GetSectorEntryMinutes() > 15)
 		{
 			// the flight is still too far away from the current controllers sector or has already passed its sector
 			return;
