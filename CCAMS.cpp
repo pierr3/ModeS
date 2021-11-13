@@ -321,11 +321,14 @@ void CCAMS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 {
 	if (FlightPlan.GetTrackingControllerIsMe())
 	{
+		if (this->autoAssign)
+		{
 #ifdef _DEBUG
-		string DisplayMsg = string{ FlightPlan.GetCallsign() } + " is processed for automatic squawk assignment (due to flight plan update and controller is tracking)";
-		DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, true, false, false, false);
+			string DisplayMsg = string{ FlightPlan.GetCallsign() } + " is processed for automatic squawk assignment (due to flight plan update and controller is tracking)";
+			DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, true, false, false, false);
 #endif
-		AssignAutoSquawk(FlightPlan);
+			AssignAutoSquawk(FlightPlan);
+		}
 	}
 	else
 	{
