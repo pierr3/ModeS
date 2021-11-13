@@ -220,7 +220,7 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 	}
 	else if (ItemCode == TAG_ITEM_TYPE_SQUAWK && FlightPlan.GetTrackingControllerIsMe())
 	{
-		AssignAutoSquawk(FlightPlan);
+		//AssignAutoSquawk(FlightPlan);
 	}
 	else
 	{
@@ -319,9 +319,18 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 
 void CCAMS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 {
-	if (!FlightPlan.GetTrackingControllerIsMe())
-		ProcessedFlightPlans.erase(remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()),
-								   ProcessedFlightPlans.end());
+	if (FlightPlan.GetTrackingControllerIsMe())
+	{
+#ifdef _DEBUG
+		string DisplayMsg = string{ FlightPlan.GetCallsign() } + " is processed for automatic squawk assignment (due to flight plan update and controller is tracking)";
+		DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, true, false, false, false);
+#endif
+		AssignAutoSquawk(FlightPlan);
+	}
+	else
+	{
+		ProcessedFlightPlans.erase(remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()), ProcessedFlightPlans.end());
+	}
 }
 
 void CCAMS::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
@@ -329,9 +338,7 @@ void CCAMS::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
 	ProcessedFlightPlans.erase(remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()),
 							   ProcessedFlightPlans.end());
 
-#ifdef _DEBUG
 	this->FpListEHS.RemoveFpFromTheList(FlightPlan);
-#endif
 }
 
 void CCAMS::OnRefreshFpListContent(CFlightPlanList AcList)
@@ -457,12 +464,6 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController() || (ControllerMyself().GetFacility() > 1 && ControllerMyself().GetFacility() < 5))
 		return;
 
-#ifndef _DEBUG
-	if (RadarTarget.GetPosition().GetFlightLevel() < 24500)
-	if (FlightPlan.GetCorrelatedRadarTarget().GetPosition().GetFlightLevel() < 10000)
-			return;
-#endif // _DEBUG
-
 	// Check if FlightPlan is already processed
 	if (IsFlightPlanProcessed(FlightPlan))
 		return;
@@ -473,6 +474,12 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	// 3. this flight has already assigned a valid unique code
 	if (FlightPlan.GetSimulated() || strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
 	{
+		ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
+		return;
+	}
+	else if (FlightPlan.GetSectorEntryMinutes() < 0)
+	{
+		// the flight will never enter the sector of the current controller
 		ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
 		return;
 	}
@@ -489,8 +496,8 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 #endif
 	}
 
-	// disregard if the flight is assumed in the vicinity of the departure airport
-	if (isADEPvicinity(FlightPlan))
+	// disregard if the flight is assumed in the vicinity of the departure or arrival airport
+	if (isADEPvicinity(FlightPlan) || FlightPlan.GetDistanceToDestination() < this->APTcodeMaxDist)
 		return;
 
 #ifdef _DEBUG
@@ -502,14 +509,41 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 		// the current controller is not tracking the flight plan
 
 		CFlightPlanPositionPredictions Pos = FlightPlan.GetPositionPredictions();
-		int min = 0;
-		while (min < min(Pos.GetPointsNumber(), 15))
-		{
-			if (_stricmp(FlightPlan.GetPositionPredictions().GetControllerId(min), "--") != 0)
-				break;
+		int min;
 
-			min++;
+		for (min = 0; min < Pos.GetPointsNumber(); min++)
+		{
+			if (min <= 15 && _stricmp(FlightPlan.GetPositionPredictions().GetControllerId(min), "--") != 0)
+			{
+				break;
+			}
 		}
+
+
+		//int nextController = 0;
+		//const char* NextControllerId = "--";
+		//bool WillEnterSector = false;
+		//for (int min = 0; min < Pos.GetPointsNumber(); min++)
+		//{
+		//	if (min <= 15 && _stricmp(NextControllerId, "--") == 0 && _stricmp(FlightPlan.GetPositionPredictions().GetControllerId(min), "--") != 0)
+		//	{
+		//		NextControllerId = FlightPlan.GetPositionPredictions().GetControllerId(min);
+		//		//nextController = min;
+		//	}
+
+		//	if (_stricmp(ControllerMyself().GetPositionId(), FlightPlan.GetPositionPredictions().GetControllerId(min)) == 0)
+		//	{
+		//		// if the current controller is predicted at any point of the route, the loop is stopped
+		//		// the value min will then be the time for this flight to enter the sector of the current controller
+		//		break;
+		//	}
+		//}
+		//while (min < min(Pos.GetPointsNumber(), 15))
+		//{
+		//		break;
+
+		//	min++;
+		//}
 
 		if (strlen(FlightPlan.GetTrackingControllerCallsign()) > 0)
 		{
@@ -525,7 +559,7 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 		//else if (FlightPlan.GetSectorEntryMinutes() > 15 || FlightPlan.GetSectorEntryMinutes() < 0)
 		else if (FlightPlan.GetSectorEntryMinutes() > 15)
 		{
-			// the flight is still too far away from the current controllers sector or has already passed its sector
+			// the flight is still too far away from the current controllers sector
 			return;
 		}
 		else
@@ -560,10 +594,8 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 		DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
 	}
-#ifdef _DEBUG
-	ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
-#endif
 
+	ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
 }
 
 void CCAMS::AssignPendingSquawks()
@@ -592,7 +624,7 @@ void CCAMS::AssignPendingSquawks()
 				{
 					string DisplayMsg{ "Your request for a squawk from the centralised code server failed. Check your plugin version, try again or revert to the ES built-in functionalities for assigning a squawk (F9)." };
 					DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Error", DisplayMsg.c_str(), true, true, false, false, false);
-					DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Error", ("For troubleshooting, report code " + squawk).c_str(), true, true, false, false, false);
+					DisplayUserMessage(this->pluginData.PLUGIN_NAME, "Error", ("For troubleshooting, report code '" + squawk + "'").c_str(), true, true, false, false, false);
 				}
 			}
 			must_delete = true;
