@@ -58,5 +58,8 @@
     <Text Include="ver.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="config.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

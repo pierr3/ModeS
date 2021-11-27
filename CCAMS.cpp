@@ -7,6 +7,8 @@ CCAMS::CCAMS(const EquipmentCodes&& ec, const SquawkCodes&& sc) : CPlugIn(EuroSc
 	MY_PLUGIN_DEVELOPER,
 	MY_PLUGIN_COPYRIGHT),
 	EquipmentCodesFAA(ec.FAA),
+	EquipmentCodesICAO(ec.ICAO_MODE_S),
+	EquipmentCodesICAOEHS(ec.ICAO_EHS),
 	ModeSAirports(MODE_S_AIRPORTS),
 	squawkModeS(sc.MODE_S),
 	squawkVFR(sc.VFR)
@@ -394,6 +396,13 @@ void CCAMS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RE
 			{
 				PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
 					FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), isADEPvicinity(FlightPlan), CCAMS::GetConnectionType())));
+#ifdef _DEBUG
+				if (CCAMS::GetConnectionType() > 2)
+				{
+					string DisplayMsg{ "A request for a simulated aircraft has been detected: " + string { FlightPlan.GetCallsign() } };
+					DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+				}
+#endif
 			}
 		}
 		catch (std::runtime_error const& e)
@@ -664,16 +673,18 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 	{
 		string message = fmessage.get();
 		smatch match;
-		if (regex_match(message, match, regex("^([A-Z,]+)[|]([A-Z,]+)[|](\\d+)$", regex::icase)))
+		if (regex_match(message, match, regex("^(\\d+)[|]([A-Z,]+)[|]([A-Z,]+)$", regex::icase)))
 		{
-			EquipmentCodesFAA = std::move(split(match[1].str(), ','));
-			ModeSAirports = std::move(split(match[2].str(), ','));
-
-			int new_v = stoi(match[3].str(), nullptr, 0);
+			int new_v = stoi(match[1].str(), nullptr, 0);
 			if (new_v > MY_PLUGIN_VERSIONCODE)
 				throw error{ "Your " + string { MY_PLUGIN_NAME } + " plugin (version " + MY_PLUGIN_VERSION + ") is outdated. Please change to the latest version.\n\nVisit https://github.com/kusterjs/CCAMS/releases" };
 			else
 				pluginVersionRestricted = false;
+
+			//ModeSAirports = move(split(match[2].str(), ','));
+			ModeSAirports = match[2].str();
+			EquipmentCodesFAA = match[3].str();
+			EquipmentCodesFAA.erase(remove(EquipmentCodesFAA.begin(), EquipmentCodesFAA.end(), ','), EquipmentCodesFAA.end());
 		}
 		else
 			throw error{ string { MY_PLUGIN_NAME }  + " plugin couldn't parse the server data" };
@@ -700,38 +711,40 @@ inline bool CCAMS::IsFlightPlanProcessed(CFlightPlan & FlightPlan)
 	return false;
 }
 
-bool CCAMS::isAcModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
+bool CCAMS::isAcModeS(const CFlightPlan& FlightPlan) const
 {
-	//check for ICAO suffix
-	if (acceptEquipmentICAO)
-	{
-		std::string actype = FlightPlan.GetFlightPlanData().GetAircraftInfo();
-		std::regex icao_format("(.{2,4})\\/([LMHJ])-(.*)\\/(.*)", std::regex::icase);
-		std::smatch acdata;
-		if (std::regex_match(actype, acdata, icao_format) && acdata.size() == 5)
-		{
-			for (const auto& code : EquipmentCodesICAO)
-				if (strncmp(acdata[4].str().c_str(), code.c_str(), 1))
-					return true;
-		}
-	}
+	////check for ICAO suffix
+	//if (acceptEquipmentICAO)
+	//{
+	//	std::string actype = FlightPlan.GetFlightPlanData().GetAircraftInfo();
+	//	std::regex icao_format("(.{2,4})\\/([LMHJ])-(.*)\\/(.*)", std::regex::icase);
+	//	std::smatch acdata;
+	//	if (std::regex_match(actype, acdata, icao_format) && acdata.size() == 5)
+	//	{
+	//		for (auto& code : EquipmentCodesICAO)
+	//			if (strstr(acdata[4].str().c_str(), code.c_str()) != nullptr)
+	//			if (strncmp(acdata[4].str().c_str(), code.c_str(), 1))
+	//				return true;
+	//	}
+	//}
 
-	//check for FAA suffix
-	if (acceptEquipmentFAA)
-	{
-		std::string equipement_suffix{ FlightPlan.GetFlightPlanData().GetCapibilities() };
-		if (equipement_suffix == "?")
-			return false;
+	////check for FAA suffix
+	//if (acceptEquipmentFAA)
+	//{
+	//	std::string equipement_suffix{ FlightPlan.GetFlightPlanData().GetCapibilities() };
+	//	if (equipement_suffix == "?")
+	//		return false;
 
-		for (auto& code : EquipmentCodesFAA)
-			if (equipement_suffix == code)
-				return true;
-	}
+	//	for (auto& code : EquipmentCodesFAA)
+	//		if (equipement_suffix == code)
+	//			return true;
+	//}
 
-	return false;
+	//return false;
+	return hasEquipment(FlightPlan, acceptEquipmentFAA, acceptEquipmentICAO, EquipmentCodesICAO);
 }
 
-bool CCAMS::isADEPvicinity(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
+bool CCAMS::isADEPvicinity(const CFlightPlan& FlightPlan) const
 {
 	if (FlightPlan.GetCorrelatedRadarTarget().GetGS() < APTcodeMaxGS &&
 		FlightPlan.GetDistanceFromOrigin() < APTcodeMaxDist)
@@ -739,37 +752,70 @@ bool CCAMS::isADEPvicinity(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
 	return false;
 }
 
-bool CCAMS::isApModeS(const std::string& icao) const
+bool CCAMS::isApModeS(const string& icao) const
 {
-	for (auto& zone : ModeSAirports)
-		if (zone.compare(0, zone.length(), icao, 0, zone.length()) == 0)
-			return true;
+	if (regex_match(icao, ModeSAirports))
+		return true;
+	//for (auto& zone : ModeSAirports)
+	//	if (zone.compare(0, zone.length(), icao, 0, zone.length()) == 0)
+	//		return true;
 	return false;
 }
 
-bool CCAMS::isEHS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
+bool CCAMS::isEHS(const CFlightPlan& FlightPlan) const
+{
+	////check for ICAO suffix
+	//std::string actype = FlightPlan.GetFlightPlanData().GetAircraftInfo();
+	//std::regex icao_format("(.{2,4})\\/([LMHJ])-(.*)\\/(.*)", std::regex::icase);
+	//std::smatch acdata;
+	//if (std::regex_match(actype, acdata, icao_format) && acdata.size() == 5)
+	//{
+	//	for (const auto& code : EquipmentCodesICAOEHS)
+	//		if (strncmp(acdata[4].str().c_str(), code.c_str(), 1))
+	//			return true;
+	//}
+
+	////check for FAA suffix
+	//if (acceptEquipmentFAA)
+	//{
+	//	std::string equipement_suffix{ FlightPlan.GetFlightPlanData().GetCapibilities() };
+	//	if (equipement_suffix == "?")
+	//		return false;
+
+	//	for (auto& code : EquipmentCodesFAA)
+	//		if (equipement_suffix == code)
+	//			return true;
+	//}
+
+	//return false;
+	return hasEquipment(FlightPlan, acceptEquipmentFAA, true, EquipmentCodesICAOEHS);
+}
+
+bool CCAMS::hasEquipment(const CFlightPlan& FlightPlan, bool acceptEquipmentFAA, bool acceptEquipmentICAO, string CodesICAO) const
 {
 	//check for ICAO suffix
-	std::string actype = FlightPlan.GetFlightPlanData().GetAircraftInfo();
-	std::regex icao_format("(.{2,4})\\/([LMHJ])-(.*)\\/(.*)", std::regex::icase);
-	std::smatch acdata;
-	if (std::regex_match(actype, acdata, icao_format) && acdata.size() == 5)
+	if (acceptEquipmentICAO)
 	{
-		for (const auto& code : EquipmentCodesICAOEHS)
-			if (strncmp(acdata[4].str().c_str(), code.c_str(), 1))
-				return true;
+		//const char* actype = FlightPlan.GetFlightPlanData().GetAircraftInfo();
+		//std::regex icao_format("(.{2,4})\\/([LMHJ])-(.*)\\/(.*)", std::regex::icase);
+		cmatch acdata;
+		if (regex_match(FlightPlan.GetFlightPlanData().GetAircraftInfo(), acdata, regex("(\\w{2,4})\\/([LMHJ])-(\\w+)\\/(\\w*?[" + CodesICAO + "]\\w*)", std::regex::icase)))
+			return true;
 	}
 
 	//check for FAA suffix
 	if (acceptEquipmentFAA)
 	{
-		std::string equipement_suffix{ FlightPlan.GetFlightPlanData().GetCapibilities() };
-		if (equipement_suffix == "?")
-			return false;
+		//string equipement_suffix{ FlightPlan.GetFlightPlanData().GetCapibilities() };
+		if (EquipmentCodesFAA.find(FlightPlan.GetFlightPlanData().GetCapibilities()) != string::npos)
+			return true;
 
-		for (auto& code : EquipmentCodesFAA)
-			if (equipement_suffix == code)
-				return true;
+		//if (equipement_suffix == "?")
+		//	return false;
+
+		//for (auto& code : EquipmentCodesFAA)
+		//	if (equipement_suffix == code)
+		//		return true;
 	}
 
 	return false;

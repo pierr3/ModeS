@@ -18,7 +18,6 @@ string LoadUpdateString();
 
 //std::string LoadWebSquawk(std::string origin, std::string callsign, std::vector<const char*> usedCodes);
 string LoadWebSquawk(EuroScopePlugIn::CFlightPlan FP, EuroScopePlugIn::CController ATCO, vector<const char*> usedCodes, bool vicinityADEP, int ConnectionType);
-//CCAMS* Plugin;
 
 
 inline std::vector<std::string> split(const std::string & s, char delim)

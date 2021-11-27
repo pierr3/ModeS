@@ -14,18 +14,12 @@ using namespace std;
 using namespace EuroScopePlugIn;
 
 #define MY_PLUGIN_NAME			"CCAMS"
-#define MY_PLUGIN_VERSION		"1.7.8"
-#define MY_PLUGIN_VERSIONCODE	978
-#define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/master/CCAMS/ver.txt"
+#define MY_PLUGIN_VERSION		"1.7.9rc1"
+#define MY_PLUGIN_VERSIONCODE	179
+#define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/1.8/config.txt"
 #define MY_PLUGIN_DEVELOPER		"Jonas Kuster, Pierre Ferran, Oliver Grützmann"
 #define MY_PLUGIN_COPYRIGHT		"GPL v3"
 //#define MY_PLUGIN_VIEW      "Standard ES radar screen"
-
-//struct VersionCheck
-//{
-//	const char* UPDATE_URL{ "https://raw.githubusercontent.com/kusterjs/CCAMS/master/CCAMS/ver.txt" };
-//	const int VERSION_CODE{ 977 };
-//};
 
 struct ItemCodes
 {
@@ -53,9 +47,9 @@ struct ItemCodes
 
 struct EquipmentCodes
 {
-	const std::vector<std::string> FAA{ "H", "L", "E", "G", "W", "Q", "S" };
-	const std::vector<std::string> ICAO_MODE_S{ "E", "H", "I", "L", "S" };
-	const std::vector<std::string> ICAO_EHS{ "E", "H", "L", "S" };
+	string FAA{ "HLEGWQS" };
+	string ICAO_MODE_S{ "EHILS" };
+	string ICAO_EHS{ "EHLS" };
 };
 
 struct SquawkCodes
@@ -64,8 +58,8 @@ struct SquawkCodes
 	const char* VFR{ "7000" };
 };
 
-static const std::vector<std::string> MODE_S_AIRPORTS{ "EB", "ED", "EH", "EL", "EP", "ET", "LD", "LF", "LH", "LI", "LK", "LO", "LR", "LSZR", "LSZB", "LSZG", "LSGC", "LSZH", "LSGG", "LZ" };
-
+//static const std::vector<std::string> MODE_S_AIRPORTS{ "EB", "ED", "EH", "EL", "EP", "ET", "LD", "LF", "LH", "LI", "LK", "LO", "LR", "LSZR", "LSZB", "LSZG", "LSGC", "LSZH", "LSGG", "LZ" };
+static const regex MODE_S_AIRPORTS("^((E[BDHLPT]|L[DFHIKORZ])[A-Z]{2}|LS(G[CG]|Z[BGHR]))", regex::icase);
 
 
 class CCAMS :
@@ -76,7 +70,7 @@ public:
 	virtual ~CCAMS();
 
 	bool OnCompileCommand(const char* command);
-	void OnGetTagItem(CFlightPlan FlightPlan, EuroScopePlugIn::CRadarTarget RadarTarget,
+	void OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget,
 					  int ItemCode,
 					  int TagData,
 					  char sItemString[16],
@@ -97,16 +91,15 @@ public:
 
 	bool PluginCommands(const char* Command);
 
-	bool isADEPvicinity(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
-
-protected:
-
-
 private:
 	future<string> fUpdateString;
 	vector<string> ProcessedFlightPlans;
+	//vector<string> ModeSAirports;
+	regex ModeSAirports;
 	CFlightPlanList FpListEHS;
-	//const PluginData pluginData;
+	string EquipmentCodesFAA;
+	string EquipmentCodesICAO;
+	string EquipmentCodesICAOEHS;
 	const char* squawkModeS;
 	const char* squawkVFR;
 	bool pluginVersionRestricted;
@@ -115,26 +108,19 @@ private:
 	bool autoAssign;
 	int APTcodeMaxGS;
 	int APTcodeMaxDist;
-	//std::vector<std::string> EQUIPMENT_CODES;
-	//std::vector<std::string> EQUIPMENT_CODES_ICAO;
-	//std::vector<std::string> EQUIPMENT_CODES_EHS;
-	//std::vector<std::string> ICAO_MODES;
-	std::vector<std::string> EquipmentCodesFAA;
-	std::vector<std::string> EquipmentCodesICAO;
-	std::vector<std::string> EquipmentCodesICAOEHS;
-	std::vector<std::string> ModeSAirports;
 
-	//void AutoAssignMSCC();
 	void AssignAutoSquawk(CFlightPlan& FlightPlan);
 	void AssignPendingSquawks();
 	void DoInitialLoad(future<string> & message);
 	bool IsFlightPlanProcessed(CFlightPlan & FlightPlan);
-	bool isAcModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
-	bool isApModeS(const std::string& icao) const;
-	bool isEHS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
-	bool isEligibleSquawkModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const;
-	bool hasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan);
+	bool isAcModeS(const CFlightPlan& FlightPlan) const;
+	bool isApModeS(const string& icao) const;
+	bool isEHS(const CFlightPlan& FlightPlan) const;
+	bool hasEquipment(const CFlightPlan& FlightPlan, bool acceptEquipmentFAA, bool acceptEquipmentICAO, string CodesICAO) const;
+	bool isADEPvicinity(const CFlightPlan& FlightPlan) const;
+	bool isEligibleSquawkModeS(const CFlightPlan& FlightPlan) const;
+	bool hasValidSquawk(const CFlightPlan& FlightPlan);
 
-	std::map<const char*, std::future<std::string>> PendingSquawks;
-	std::vector<const char*> collectUsedCodes(const EuroScopePlugIn::CFlightPlan& FlightPlan);
+	map<const char*, future<string>> PendingSquawks;
+	vector<const char*> collectUsedCodes(const CFlightPlan& FlightPlan);
 };
