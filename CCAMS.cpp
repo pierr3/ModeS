@@ -673,7 +673,11 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 	{
 		string message = fmessage.get();
 		smatch match;
-		if (regex_match(message, match, regex("^(\\d+)[|]([A-Z,]+)[|]([A-Z,]+)$", regex::icase)))
+#ifdef _DEBUG
+		string DisplayMsg = "Update string downloaded: " + message;
+		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
+		if (regex_match(message, match, regex("^(\\d+)[:]([^:]+)[:]([A-Z,]+)$", regex::icase)))
 		{
 			int new_v = stoi(match[1].str(), nullptr, 0);
 			if (new_v > MY_PLUGIN_VERSIONCODE)
