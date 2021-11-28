@@ -1,50 +1,88 @@
-This project has been upgraded to include additional functions and is intending to replace earlier versions maintained by Oliver Gruetzmann [ogruetzmann/ModeS](https://github.com/ogruetzmann/ModeS) and Pierre Ferran [pierr3/ModeS](https://github.com/pierr3/ModeS).
-Find the latest version in the section [Releases](https://github.com/kusterjs/CCAMS/releases) (see right menu).
-
 # CCAMS (Centralised code assignment and management system) plugin
 
-This plugin was designed to support controllers of the VATSIM network when assigning a squawk to aircraft, also especially when the local prescribed squawk ranges are exhausted. The web-based part of the application is acting as the central interface to manage all squawk assignments and will also find alternative, non-used squawks outside the preferential range. Local ops/tech staff may define and fine tune the rule setting for the squawk assignment to comply with regional and local squawk ranges and schemes. This collaboration is done by issue reporting on github.
-This plugin includes Mode S functionalities as introduced previously by Oliver Gruetzmann and Pierre Ferran. It is fully capabale to correctly differentiate between FAA and ICAO flight plan format. Additionally, plugin settings are available to customise the plugin behaviour and limit certain functionalities to comply with the vACCs local needs and requirements.
+This plugin was designed to offer controllers of the VATSIM network an enhanced possibility for assigning transponder codes (squawks) in a coordinated and consistent manner, including enhanced Mode S functionalities.
+Find the latest version in the section [Releases](https://github.com/kusterjs/CCAMS/releases) (see right menu).
 
-This plugin provides as the core functionality:
-* Manual code assignment options for all aircraft on ground (improved popup menu, tag functions)
-* Automatic assignment of squawk 1000 for capable aircraft flying without assigned squawk or with non-discrete codes (ending with 00)
-* Tag items representing Mode S EHS (Enhanced Surveillance) data
+## Issue
+Increasing traffic volumes and limited functionalities of the controller clients cause:
+* shortage and exhausted local transponder code ranges
+* duplicate use of transponder codes
+* inconsistent use and assignment of code 1000
 
-## Available tag items
-* Assigned squawk: the assigned squawk, including color indication for non-set squawks and incorrect use or assignment of squawk 1000
-* Mode S quawk error: Indicator of incorrect use or assignment of squawk 1000
-* Transponder type: Show wether the aircraft is mode S or not
+## Solution
+A client-server solution is used to:
+* manage all requests for transponder codes at a central interface
+* keep a single list of reserved codes
+* using additional information that is not available to controller clients
+* ensure consistency also among different software releases of the plugin
+The plugin sends requests to the server acting as the central interface to manage all transponder code assignments. It will evaluate any request received via the plugin based on the configuration of FIR and airport code ranges. You can review the current configuration status on https://ccams.kilojuliett.ch/.
+
+### What parameters are considered?
+In order to determine the most appropriate transponder code for a specific flight, the server will use information from the plugin sent including:
+* the controller call sign
+* the controller connection type
+* origin
+* destination
+* flight rule
+The server will identify the next available transponder code based on the airport (1st priority) and FIR (2nd priority) transponder code list, excluding:
+* any non-discrete (ending with 00) codes
+* any code already used by a pilot on the network
+* any code already used and detected by a plugin user
+* any code assigned to an aircraft and detected by a plugin user
+If the aiport and FIR transponder codes are all exhausted, or if no matching entry in any of these lists can be found, a random transponder code outside the preferential range will be used.
+
+## EuroScope installation
+* Load the plugin
+* Navigate to the EuroScope general settings
+** Add ```1000``` to your (comma separated) list of "VFR squawks" (to suppress duplicate indications for squawk 1000)
+** Set the string for "S-mode transponders" to ```HLEGWQS```
+** Remove the string of the field "Squawk code for S-mode transponders" (to ensure squawk 1000 is only assigned by the plugin logic)
+* Update your tag and list definitions and replace the EuroScope default tag items and functions by the ones of the plugin
+
+## Functionalities
+This plugin provides capabilities/functionalities to:
+* interpret both the FAA and ICAO flight plan format
+* assign transponder codes manually
+* assign transponder codes automatically for all airborne aircraft
+* customise its behaviour
+* limit certain functionalities
+* monitor (simulated) Mode S EHS (Enhanced Surveillance) data
+
+### Tag items
+* Assigned squawk: the assigned transponder code, includes colour indication for:
+** disagreement between assigned and set transponder code (information colour)
+** incorrect use or assignment of transponder code 1000 (redundant colour)
+* Mode S quawk error: Indicator of incorrect use or incorrect assignment of transponder code 1000. If such an incorrect use is detected, the field will display "MSSQ" in information colour.
+* Transponder type: displays "S" for Mode S equipped aircraft, otherwise "A"
 * EHS Heading: Reported magnetic heading of the aircraft
 * EHS Roll Angle: Reported roll angle (L for LEFT and R for RIGHT + value in degrees)
 * EHS GS: Reported groundspeed of the aircraft in knots.
 
-## Available tag functions
-* Assign mode S squawk: assigns code 1000 to eligible aircraft with mode S transponder
-* Auto assign squawk: intended to be used instead of the default ES (F9) function, assigns code 1000 if eligible, otherwise assigns a squawk according the implemented code scheme
-* Open SQUAWK assign popup: improved options compared to the default ES functions, including the above assign mode S option and a specific VFR code assignment
+### Tag functions
+* Auto assign squawk: primary function of the plugin, assigns an appropriate transponder code considering all available data (controller data, flight plan data, server configuration)
+* Open SQUAWK assign popup: replacement for the EuroScope default tag function, with additional options:
+** Discrete: Assigns a discrete transponder code based on the server configuration, ignoring Mode S capabilities
+** VFR: Assigns an applicable VFR transponder code, based on the plugin settings and the server configuration
 
-## Available plugin commands
-The available plugin commands can be review by using the command ".help ccams".
+### Lists
+* Mode S EHS: 
 
-## Available plugin settings
-The following settings can be added to the Plugins.txt file to customise the plugins behaviour:
-* Add "CCAMS:codeVFR:[your default VFR code]" to define the code used when assigning a VFR code (by the specific option in the SQUAWK assign popup (if not defined, 7000 is used))
-* Add "CCAMS:acceptFPLformatICAO:0" to suppress the assignment of squawk 1000 to aircraft using an ICAO format flight plan
-* Add "CCAMS:acceptFPLformatFAA:0" to suppress the assignment of squawk 1000 to aircraft using an FAA format flight plan
-* Add "CCAMS:AutoAssign:1" to activate the automatic assignment of squawk 1000 to eligible aircraft
+### Commands
+Use ".help ccams" to get a list of all available plugin commands.
 
-## EuroScope set up
-* Load up the plugin
-* Set your mode S string to ```HLEGWQS```
-* Optionally: Remove the Squawk code for S-mode transponders (to ensure squawk 1000 is only assigned by the plugin logic)
-* Add ```1000``` to your VFR squawk list (to prevent duplicates indications for squawk 1000)
-* Select the "CCAMS / Open SQUAWK assign popup" function to replace the default one in your list and tag definitions
+### Plugin settings
+The following settings can be added to the Plugins.txt file to customise the plugin behaviour:
+* Add "CCAMS:codeVFR:[your default VFR code]" to define the code used when assigning a VFR code (if not defined, 7000 is used)
+* Add "CCAMS:acceptFPLformatICAO:0" to ignore flight plans with the equipment code specified according ICAO format
+* Add "CCAMS:acceptFPLformatFAA:0" to ignore flight plans with the equipment code specified according FAA format
+* Add "CCAMS:AutoAssign:0" to deactivate the automatic transponder code assignment of airborne aircraft
 
-## Add a country to the mode S list
 
-If you would like to add a region or set of airports to the list of Mode S capable ones, create an [issue](https://github.com/kusterjs/CCAMS/issues) on this GitHub with your request. You can see all the currently enabled areas in the file [ver.txt](https://raw.githubusercontent.com/kusterjs/CCAMS/master/CCAMS/ver.txt).
+## Changes / Improvements / Reports
+Local ops/tech staff may create an [issue](https://github.com/kusterjs/CCAMS/issues) on this GitHub to request a configuration change, to ensure compliance with regional and local transponder code ranges and schemes.
+The current server configuration is available on https://ccams.kilojuliett.ch/.
+All airports starting with one of the following combination of letters are considered Mode S capable:
+```EB,ED,EH,EL,EP,ET,LD,LF,LH,LI,LK,LO,LR,LSZR,LSZB,LSZG,LSGC,LSZH,LSGG,LZ```
 
-## Server data
-The current data used by the web-based part of the application can be observed on https://ccams.kilojuliett.ch/.
-For any change, please create an [issue](https://github.com/kusterjs/CCAMS/issues) on this GitHub.
+## Credits
+This plugin includes Mode S functionalities as introduced by the ModeS by Pierre Ferran [pierr3/ModeS](https://github.com/pierr3/ModeS). It's intending to replace any version of the ModeS plugin, also later versions maintained by Oliver Gruetzmann [ogruetzmann/ModeS](https://github.com/ogruetzmann/ModeS).
