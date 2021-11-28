@@ -34,9 +34,9 @@ If the aiport and FIR transponder codes are all exhausted, or if no matching ent
 ## EuroScope installation
 * Load the plugin
 * Navigate to the EuroScope general settings
-** Add ```1000``` to your (comma separated) list of "VFR squawks" (to suppress duplicate indications for squawk 1000)
-** Set the string for "S-mode transponders" to ```HLEGWQS```
-** Remove the string of the field "Squawk code for S-mode transponders" (to ensure squawk 1000 is only assigned by the plugin logic)
+	* Add ```1000``` to your (comma separated) list of "VFR squawks" (to suppress duplicate indications for squawk 1000)
+	* Set the string for "S-mode transponders" to ```HLEGWQS```
+	* Remove the string of the field "Squawk code for S-mode transponders" (to ensure squawk 1000 is only assigned by the plugin logic)
 * Update your tag and list definitions and replace the EuroScope default tag items and functions by the ones of the plugin
 
 ## Functionalities
@@ -50,8 +50,8 @@ This plugin provides capabilities/functionalities to:
 
 ### Tag items
 * Assigned squawk: the assigned transponder code, includes colour indication for:
-** disagreement between assigned and set transponder code (information colour)
-** incorrect use or assignment of transponder code 1000 (redundant colour)
+	* disagreement between assigned and set transponder code (information colour)
+	* incorrect use or assignment of transponder code 1000 (redundant colour)
 * Mode S quawk error: Indicator of incorrect use or incorrect assignment of transponder code 1000. If such an incorrect use is detected, the field will display "MSSQ" in information colour.
 * Transponder type: displays "S" for Mode S equipped aircraft, otherwise "A"
 * EHS Heading: Reported magnetic heading of the aircraft
@@ -61,8 +61,8 @@ This plugin provides capabilities/functionalities to:
 ### Tag functions
 * Auto assign squawk: primary function of the plugin, assigns an appropriate transponder code considering all available data (controller data, flight plan data, server configuration)
 * Open SQUAWK assign popup: replacement for the EuroScope default tag function, with additional options:
-** Discrete: Assigns a discrete transponder code based on the server configuration, ignoring Mode S capabilities
-** VFR: Assigns an applicable VFR transponder code, based on the plugin settings and the server configuration
+	* Discrete: Assigns a discrete transponder code based on the server configuration, ignoring Mode S capabilities
+	* VFR: Assigns an applicable VFR transponder code, based on the plugin settings and the server configuration
 
 ### Lists
 * Mode S EHS: 
