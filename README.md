@@ -75,9 +75,13 @@ Use ```.help ccams``` to get a list of all available plugin commands.
 
 ### Plugin settings
 The following settings can be added to the Plugins.txt file using the format ```CCAMS:[setting name]:[setting value]``` to customise the plugin behaviour:
+
 ```codeVFR```: your default code to be assigned to VFR aircraft (if not defined, ```7000``` is used)
+
 ```acceptFPLformatICAO```: setting ```0``` to ignore flight plans with the equipment code specified according ICAO format
+
 ```acceptFPLformatFAA```: setting ```0``` to ignore flight plans with the equipment code specified according FAA format
+
 ```AutoAssign```: setting ```0``` to deactivate the automatic transponder code assignment of airborne aircraft
 
 
