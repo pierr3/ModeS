@@ -686,7 +686,7 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 				pluginVersionRestricted = false;
 
 			//ModeSAirports = move(split(match[2].str(), ','));
-			ModeSAirports = match[2].str();
+			ModeSAirports = regex(match[2].str(), regex::icase);
 			EquipmentCodesFAA = match[3].str();
 			EquipmentCodesFAA.erase(remove(EquipmentCodesFAA.begin(), EquipmentCodesFAA.end(), ','), EquipmentCodesFAA.end());
 		}
@@ -945,14 +945,14 @@ std::vector<const char*> CCAMS::collectUsedCodes(const CFlightPlan& FlightPlan)
 	for (CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
 		RadarTarget = RadarTargetSelectNext(RadarTarget))
 	{
-		if (!RadarTarget.IsValid())
-		{
-#ifdef _DEBUG
-			string DisplayMsg{ "Invalid radar target found" };
-			DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-#endif
-			continue;
-		}
+//		if (!RadarTarget.IsValid())
+//		{
+//#ifdef _DEBUG
+//			string DisplayMsg{ "Invalid radar target found" };
+//			DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+//#endif
+//			continue;
+//		}
 
 		if (RadarTarget.GetCallsign() == FlightPlanSelectASEL().GetCallsign())
 		{
