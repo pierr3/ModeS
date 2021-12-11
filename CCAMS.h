@@ -14,10 +14,9 @@ using namespace std;
 using namespace EuroScopePlugIn;
 
 #define MY_PLUGIN_NAME			"CCAMS"
-#define MY_PLUGIN_VERSION		"1.7.9rc2"
-#define MY_PLUGIN_VERSIONCODE	179
-//#define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/master/config.txt"
-#define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/1.8/config.txt"
+#define MY_PLUGIN_VERSION		"2.0.0"
+#define MY_PLUGIN_VERSIONCODE	11
+#define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/master/config.txt"
 #define MY_PLUGIN_DEVELOPER		"Jonas Kuster, Pierre Ferran, Oliver Grützmann"
 #define MY_PLUGIN_COPYRIGHT		"GPL v3"
 //#define MY_PLUGIN_VIEW      "Standard ES radar screen"
@@ -60,7 +59,7 @@ struct SquawkCodes
 };
 
 //static const std::vector<std::string> MODE_S_AIRPORTS{ "EB", "ED", "EH", "EL", "EP", "ET", "LD", "LF", "LH", "LI", "LK", "LO", "LR", "LSZR", "LSZB", "LSZG", "LSGC", "LSZH", "LSGG", "LZ" };
-static const regex MODE_S_AIRPORTS("^((E[BDHLPT]|L[DFHIKORZ])[A-Z]{2}|LS(G[CG]|Z[BGHR]))", regex::icase);
+static const regex MODE_S_AIRPORTS("^((E([BDHLT]|P(?!CE|DA|DE|IR|KS|LK|LY|MB|MI|MM|OK|PR|PW|SN|TM))|L[DFHIKORZ])[A-Z]{2}|LS(G[CG]|Z[BGHR]))", regex::icase);
 
 
 class CCAMS :

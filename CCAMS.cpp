@@ -49,7 +49,7 @@ CCAMS::CCAMS(const EquipmentCodes&& ec, const SquawkCodes&& sc) : CPlugIn(EuroSc
 #ifdef _DEBUG
 	autoAssign = true;
 #else
-	autoAssign = false;
+	autoAssign = true;
 #endif
 	APTcodeMaxGS = 50;
 	APTcodeMaxDist = 3;
@@ -254,7 +254,7 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 				}
 				else
 				{
-					sprintf_s(sItemString, 16, "%c%i°", rollb < 0 ? 'R' : 'L', abs(rollb));
+					sprintf_s(sItemString, 16, "%c%i°", rollb > 0 ? 'R' : 'L', abs(rollb));
 				}
 	#ifdef _DEBUG
 				string DisplayMsg{ to_string(abs(rollb)) };
@@ -593,11 +593,11 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 		}
 		else
 		{
-//#ifdef _DEBUG
+#ifdef _DEBUG
 			// The current controller is not tracking the flight, but automatic squawk assignment is applicable
 			DisplayMsg = string{ FlightPlan.GetCallsign() } + " IS eligible for automatic squawk assignment. ASSIGNED '" + assr + "', SET " + pssr + ", Sector entry in " + to_string(FlightPlan.GetSectorEntryMinutes()) + " MIN";
 			DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-//#endif
+#endif
 		}
 	}
 
@@ -609,10 +609,10 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	if (isEligibleSquawkModeS(FlightPlan))
 	{
 		FlightPlan.GetControllerAssignedData().SetSquawk(squawkModeS);
-//#ifdef _DEBUG
+#ifdef _DEBUG
 		DisplayMsg = string{ FlightPlan.GetCallsign() } + ", code 1000 AUTO assigned";
 		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-//#endif
+#endif
 	}
 	else
 	{
@@ -635,10 +635,10 @@ void CCAMS::AssignPendingSquawks()
 		if (it->second.valid() && it->second.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 			std::string squawk = it->second.get();
 			//if (squawk is an error number)
-//#ifdef _DEBUG
+#ifdef _DEBUG
 			string DisplayMsg = string{ it->first } + ", code " + squawk + " assigned";
 			DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-//#endif
+#endif
 			if (!FlightPlanSelect(it->first).GetControllerAssignedData().SetSquawk(squawk.c_str()))
 			{
 				if (squawk == "E404")
@@ -679,6 +679,9 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 #endif
 		if (regex_match(message, match, regex("^(\\d+)[:]([^:]+)[:]([A-Z,]+)$", regex::icase)))
 		{
+#ifdef _DEBUG
+			//return;
+#endif
 			int new_v = stoi(match[1].str(), nullptr, 0);
 			if (new_v > MY_PLUGIN_VERSIONCODE)
 				throw error{ "Your " + string { MY_PLUGIN_NAME } + " plugin (version " + MY_PLUGIN_VERSION + ") is outdated. Please change to the latest version.\n\nVisit https://github.com/kusterjs/CCAMS/releases" };
@@ -688,7 +691,7 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 			//ModeSAirports = move(split(match[2].str(), ','));
 			ModeSAirports = regex(match[2].str(), regex::icase);
 			EquipmentCodesFAA = match[3].str();
-			EquipmentCodesFAA.erase(remove(EquipmentCodesFAA.begin(), EquipmentCodesFAA.end(), ','), EquipmentCodesFAA.end());
+			//EquipmentCodesFAA.erase(remove(EquipmentCodesFAA.begin(), EquipmentCodesFAA.end(), ','), EquipmentCodesFAA.end());
 		}
 		else
 			throw error{ string { MY_PLUGIN_NAME }  + " plugin couldn't parse the server data" };
@@ -717,34 +720,6 @@ inline bool CCAMS::IsFlightPlanProcessed(CFlightPlan & FlightPlan)
 
 bool CCAMS::isAcModeS(const CFlightPlan& FlightPlan) const
 {
-	////check for ICAO suffix
-	//if (acceptEquipmentICAO)
-	//{
-	//	std::string actype = FlightPlan.GetFlightPlanData().GetAircraftInfo();
-	//	std::regex icao_format("(.{2,4})\\/([LMHJ])-(.*)\\/(.*)", std::regex::icase);
-	//	std::smatch acdata;
-	//	if (std::regex_match(actype, acdata, icao_format) && acdata.size() == 5)
-	//	{
-	//		for (auto& code : EquipmentCodesICAO)
-	//			if (strstr(acdata[4].str().c_str(), code.c_str()) != nullptr)
-	//			if (strncmp(acdata[4].str().c_str(), code.c_str(), 1))
-	//				return true;
-	//	}
-	//}
-
-	////check for FAA suffix
-	//if (acceptEquipmentFAA)
-	//{
-	//	std::string equipement_suffix{ FlightPlan.GetFlightPlanData().GetCapibilities() };
-	//	if (equipement_suffix == "?")
-	//		return false;
-
-	//	for (auto& code : EquipmentCodesFAA)
-	//		if (equipement_suffix == code)
-	//			return true;
-	//}
-
-	//return false;
 	return hasEquipment(FlightPlan, acceptEquipmentFAA, acceptEquipmentICAO, EquipmentCodesICAO);
 }
 
@@ -760,38 +735,12 @@ bool CCAMS::isApModeS(const string& icao) const
 {
 	if (regex_match(icao, ModeSAirports))
 		return true;
-	//for (auto& zone : ModeSAirports)
-	//	if (zone.compare(0, zone.length(), icao, 0, zone.length()) == 0)
-	//		return true;
+
 	return false;
 }
 
 bool CCAMS::isEHS(const CFlightPlan& FlightPlan) const
 {
-	////check for ICAO suffix
-	//std::string actype = FlightPlan.GetFlightPlanData().GetAircraftInfo();
-	//std::regex icao_format("(.{2,4})\\/([LMHJ])-(.*)\\/(.*)", std::regex::icase);
-	//std::smatch acdata;
-	//if (std::regex_match(actype, acdata, icao_format) && acdata.size() == 5)
-	//{
-	//	for (const auto& code : EquipmentCodesICAOEHS)
-	//		if (strncmp(acdata[4].str().c_str(), code.c_str(), 1))
-	//			return true;
-	//}
-
-	////check for FAA suffix
-	//if (acceptEquipmentFAA)
-	//{
-	//	std::string equipement_suffix{ FlightPlan.GetFlightPlanData().GetCapibilities() };
-	//	if (equipement_suffix == "?")
-	//		return false;
-
-	//	for (auto& code : EquipmentCodesFAA)
-	//		if (equipement_suffix == code)
-	//			return true;
-	//}
-
-	//return false;
 	return hasEquipment(FlightPlan, acceptEquipmentFAA, true, EquipmentCodesICAOEHS);
 }
 
@@ -800,8 +749,6 @@ bool CCAMS::hasEquipment(const CFlightPlan& FlightPlan, bool acceptEquipmentFAA,
 	//check for ICAO suffix
 	if (acceptEquipmentICAO)
 	{
-		//const char* actype = FlightPlan.GetFlightPlanData().GetAircraftInfo();
-		//std::regex icao_format("(.{2,4})\\/([LMHJ])-(.*)\\/(.*)", std::regex::icase);
 		cmatch acdata;
 		if (regex_match(FlightPlan.GetFlightPlanData().GetAircraftInfo(), acdata, regex("(\\w{2,4})\\/([LMHJ])-(\\w+)\\/(\\w*?[" + CodesICAO + "]\\w*)", std::regex::icase)))
 			return true;
@@ -810,16 +757,8 @@ bool CCAMS::hasEquipment(const CFlightPlan& FlightPlan, bool acceptEquipmentFAA,
 	//check for FAA suffix
 	if (acceptEquipmentFAA)
 	{
-		//string equipement_suffix{ FlightPlan.GetFlightPlanData().GetCapibilities() };
 		if (EquipmentCodesFAA.find(FlightPlan.GetFlightPlanData().GetCapibilities()) != string::npos)
 			return true;
-
-		//if (equipement_suffix == "?")
-		//	return false;
-
-		//for (auto& code : EquipmentCodesFAA)
-		//	if (equipement_suffix == code)
-		//		return true;
 	}
 
 	return false;
@@ -827,8 +766,6 @@ bool CCAMS::hasEquipment(const CFlightPlan& FlightPlan, bool acceptEquipmentFAA,
 
 bool CCAMS::isEligibleSquawkModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
 {
-	//return isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()) &&
-	//	(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || !isADEPvicinity(FlightPlan));
 	return isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()) &&
 		(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || (!isADEPvicinity(FlightPlan) && isApModeS(ControllerMyself().GetCallsign())));
 }
@@ -910,26 +847,6 @@ bool CCAMS::hasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 
 			}
 		}
-
-//		// this code is also assigned to another aircraft
-//		if (strcmp(assr, RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk()) == 0 || strcmp(pssr, RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk()) == 0)
-//		{
-//#ifdef _DEBUG
-//			DisplayMsg = string{ FlightPlan.GetCallsign() } + ", code '" + RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk() + "' is already ASSIGNED to " + RadarTarget.GetCallsign();
-//			//DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-//#endif
-//			return false;
-//		}
-//
-//		// this code is already used by another aircraft
-//		if (strcmp(assr, RadarTarget.GetPosition().GetSquawk()) == 0 || strcmp(pssr, RadarTarget.GetPosition().GetSquawk()) == 0)
-//		{
-//#ifdef _DEBUG
-//			DisplayMsg = "Code " + string{ RadarTarget.GetPosition().GetSquawk() } + " is already SET by " + RadarTarget.GetCallsign();
-//			//DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-//#endif
-//			return false;
-//		}
 	}
 	// no duplicate with assigend or used codes has been found
 #ifdef _DEBUG
@@ -945,15 +862,6 @@ std::vector<const char*> CCAMS::collectUsedCodes(const CFlightPlan& FlightPlan)
 	for (CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
 		RadarTarget = RadarTargetSelectNext(RadarTarget))
 	{
-//		if (!RadarTarget.IsValid())
-//		{
-//#ifdef _DEBUG
-//			string DisplayMsg{ "Invalid radar target found" };
-//			DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-//#endif
-//			continue;
-//		}
-
 		if (RadarTarget.GetCallsign() == FlightPlanSelectASEL().GetCallsign())
 		{
 #ifdef _DEBUG

@@ -34,6 +34,9 @@ The server will identify the next available transponder code based on the airpor
 * any code assigned to an aircraft and detected by a plugin user
 If the aiport and FIR transponder codes are all exhausted, or if no matching entry in any of these lists can be found, a random transponder code outside the preferential range will be used.
 
+### Sweatbox and local FSD Server
+Requests of simulated aircraft (sweatbox session, or from your local FSD server) are flagged and will be handled separately by the server. This offers the same experience while not connecting to the live VATSIM network (although an internet connection is required for the communication to the CCAMS server). The plugin can therefore be used for training session on sweatbox without restrictions. The CCAMS server will make sure that requests from live and simulated traffic will not interfere with each other.
+
 ## EuroScope installation
 * Load the plugin
 * Navigate to the EuroScope general settings
@@ -50,6 +53,7 @@ This plugin provides capabilities/functionalities to:
 * customise its behaviour
 * limit certain functionalities
 * monitor (simulated) Mode S EHS (Enhanced Surveillance) data
+* detect simulated aircraft (sweatbox)
 
 ### Tag items
 * Assigned squawk: the assigned transponder code, includes colour indication for:
@@ -71,15 +75,18 @@ This plugin provides capabilities/functionalities to:
 * Mode S EHS: Displays a list to display Mode S EHS (Enhanced Surveillance) data of the currently selected aircraft
 
 ### Commands
-Use ```.help ccams``` to get a list of all available plugin commands.
+```.help ccams``` `provides a list of all available plugin commands
+```.ccams ehslist``` displays the Mode S EHS list
+```.ccams auto``` enables/disables automatic transponder code assignment for airborne aircraft
 
 ### Plugin settings
-The following settings can be added to the Plugins.txt file using the format ```CCAMS:[setting name]:[setting value]``` to customise the plugin behaviour:
-* ```codeVFR```: your default code to be assigned to VFR aircraft (if not defined, ```7000``` is used)
-* ```acceptFPLformatICAO```: setting ```0``` to ignore flight plans with the equipment code specified according ICAO format
-* ```acceptFPLformatFAA```: setting ```0``` to ignore flight plans with the equipment code specified according FAA format
-* ```AutoAssign```: setting ```0``` to deactivate the automatic transponder code assignment of airborne aircraft
+The Plug-in settings file (check the file location via EuroScope > other settings > Settings files setup) can be used to change some of the plugins default settings. Use the format ```CCAMS:[setting name]:[setting value]```.
+* ```codeVFR```: your generic code to be assigned to VFR aircraft (default ```7000```)
+* ```acceptFPLformatICAO```: to allow/ignore Mode S capabilities of flight plans with the equipment code specified according ICAO format (default ```1```)
+* ```acceptFPLformatFAA```: to allow/ignore Mode S capabilities of flight plans with the equipment code specified according FAA format (default ```1```)
+* ```AutoAssign```: to enable/disable the automatic transponder code assignment of airborne aircraft (default setting ```1```)
 
+If you operate in a region not equipped for transponder code ```1000``` or just do not wish to assign any transponder code ```1000```, set both ```acceptFPLformatICAO``` and ```acceptFPLformatFAA``` to ```0```. This will result in the plugin using discrete transponder codes only.
 
 ## Changes / Improvements / Reports
 Local ops/tech staff may create an [issue](https://github.com/kusterjs/CCAMS/issues) on this GitHub to request a configuration change, to ensure compliance with regional and local transponder code ranges and schemes.
