@@ -217,10 +217,6 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 		else
 			strcpy_s(sItemString, 16, "A");
 	}
-	else if (ItemCode == TAG_ITEM_TYPE_SQUAWK && FlightPlan.GetTrackingControllerIsMe())
-	{
-		//AssignAutoSquawk(FlightPlan);
-	}
 	else
 	{
 		if (!RadarTarget.IsValid())
@@ -320,7 +316,7 @@ void CCAMS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 {
 	if (FlightPlan.GetTrackingControllerIsMe())
 	{
-		if (autoAssign)
+		if (autoAssign && !pluginVersionRestricted)
 		{
 #ifdef _DEBUG
 			string DisplayMsg = string{ FlightPlan.GetCallsign() } + " is processed for automatic squawk assignment (due to flight plan update and controller is tracking)";
@@ -463,19 +459,11 @@ void CCAMS::OnTimer(int Counter)
 	{
 		AssignPendingSquawks();
 
-		if (!(Counter % 10) && autoAssign)
+		if (!(Counter % 10) && autoAssign && !pluginVersionRestricted)
 		{
-#ifdef _DEBUG
-			//string DisplayMsg = string{ FlightPlan.GetCallsign() } + " has NOT a valid squawk code (ASSIGNED '" + assr + "', SET " + pssr + ")";
-			//DisplayUserMessage(MY_PLUGIN_NAME, "Debug", "Performing periodical automatic squawk code assignment", true, false, false, false, false);
-#endif
-
 			for (CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
 				RadarTarget = RadarTargetSelectNext(RadarTarget))
 			{
-				//if (!RadarTarget.GetPosition().IsFPTrackPosition())
-				//	continue;
-
 				AssignAutoSquawk(RadarTarget.GetCorrelatedFlightPlan());
 			}
 
@@ -548,44 +536,16 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 			}
 		}
 
-
-		//int nextController = 0;
-		//const char* NextControllerId = "--";
-		//bool WillEnterSector = false;
-		//for (int min = 0; min < Pos.GetPointsNumber(); min++)
-		//{
-		//	if (min <= 15 && _stricmp(NextControllerId, "--") == 0 && _stricmp(FlightPlan.GetPositionPredictions().GetControllerId(min), "--") != 0)
-		//	{
-		//		NextControllerId = FlightPlan.GetPositionPredictions().GetControllerId(min);
-		//		//nextController = min;
-		//	}
-
-		//	if (_stricmp(ControllerMyself().GetPositionId(), FlightPlan.GetPositionPredictions().GetControllerId(min)) == 0)
-		//	{
-		//		// if the current controller is predicted at any point of the route, the loop is stopped
-		//		// the value min will then be the time for this flight to enter the sector of the current controller
-		//		break;
-		//	}
-		//}
-		//while (min < min(Pos.GetPointsNumber(), 15))
-		//{
-		//		break;
-
-		//	min++;
-		//}
-
 		if (strlen(FlightPlan.GetTrackingControllerCallsign()) > 0)
 		{
 			// another controller is currently tracking the flight
 			return;
 		}
-		//else if ((strlen(FlightPlan.GetCoordinatedNextController()) > 0 && FlightPlan.GetCoordinatedNextController() != ControllerMyself().GetCallsign()))
 		else if (_stricmp(ControllerMyself().GetPositionId(), FlightPlan.GetPositionPredictions().GetControllerId(min)) != 0)
 		{
 			// the current controller is not the next controller of this flight
 			return;
 		}
-		//else if (FlightPlan.GetSectorEntryMinutes() > 15 || FlightPlan.GetSectorEntryMinutes() < 0)
 		else if (FlightPlan.GetSectorEntryMinutes() > 15)
 		{
 			// the flight is still too far away from the current controllers sector
@@ -602,9 +562,6 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	}
 
 	// if the function has not been ended, the flight is subject to automatic squawk assignment
-
-	//auto assr = FlightPlan.GetControllerAssignedData().GetSquawk();
-	//auto pssr = RadarTarget.GetPosition().GetSquawk();
 
 	if (isEligibleSquawkModeS(FlightPlan))
 	{
@@ -688,10 +645,8 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 			else
 				pluginVersionRestricted = false;
 
-			//ModeSAirports = move(split(match[2].str(), ','));
 			ModeSAirports = regex(match[2].str(), regex::icase);
 			EquipmentCodesFAA = match[3].str();
-			//EquipmentCodesFAA.erase(remove(EquipmentCodesFAA.begin(), EquipmentCodesFAA.end(), ','), EquipmentCodesFAA.end());
 		}
 		else
 			throw error{ string { MY_PLUGIN_NAME }  + " plugin couldn't parse the server data" };
@@ -714,7 +669,6 @@ inline bool CCAMS::IsFlightPlanProcessed(CFlightPlan & FlightPlan)
 		if (pfp.compare(callsign) == 0)
 			return true;
 
-	//ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
 	return false;
 }
 
@@ -809,9 +763,6 @@ bool CCAMS::hasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 	for (CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
 		RadarTarget = RadarTargetSelectNext(RadarTarget))
 	{
-		if (!RadarTarget.IsValid())
-			continue;
-
 		if (strcmp(RadarTarget.GetCallsign(),FlightPlan.GetCallsign()) == 0)
 			continue;
 
@@ -826,7 +777,6 @@ bool CCAMS::hasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 #endif
 				return false;
 			}
-
 		}
 		else
 		{
@@ -838,13 +788,11 @@ bool CCAMS::hasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 				//DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
 				return false;
-
 			}
 			else
 			{
 				// as an option, if no code has been assigned and the currently used one has not been identified as a dpublicate, it could be set as the assigned code
 				//FlightPlan.GetControllerAssignedData().SetSquawk(pssr);
-
 			}
 		}
 	}

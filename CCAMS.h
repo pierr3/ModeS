@@ -58,7 +58,6 @@ struct SquawkCodes
 	const char* VFR{ "7000" };
 };
 
-//static const std::vector<std::string> MODE_S_AIRPORTS{ "EB", "ED", "EH", "EL", "EP", "ET", "LD", "LF", "LH", "LI", "LK", "LO", "LR", "LSZR", "LSZB", "LSZG", "LSGC", "LSZH", "LSGG", "LZ" };
 static const regex MODE_S_AIRPORTS("^((E([BDHLT]|P(?!CE|DA|DE|IR|KS|LK|LY|MB|MI|MM|OK|PR|PW|SN|TM))|L[DFHIKORZ])[A-Z]{2}|LS(G[CG]|Z[BGHR]))", regex::icase);
 
 
@@ -94,7 +93,6 @@ public:
 private:
 	future<string> fUpdateString;
 	vector<string> ProcessedFlightPlans;
-	//vector<string> ModeSAirports;
 	regex ModeSAirports;
 	CFlightPlanList FpListEHS;
 	string EquipmentCodesFAA;
