@@ -14,9 +14,10 @@ using namespace std;
 using namespace EuroScopePlugIn;
 
 #define MY_PLUGIN_NAME			"CCAMS"
-#define MY_PLUGIN_VERSION		"2.0.0"
+#define MY_PLUGIN_VERSION		"2.0.0 RC1"
 #define MY_PLUGIN_VERSIONCODE	11
-#define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/master/config.txt"
+//#define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/master/config.txt"
+#define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/1.8/config.txt"
 #define MY_PLUGIN_DEVELOPER		"Jonas Kuster, Pierre Ferran, Oliver Grützmann"
 #define MY_PLUGIN_COPYRIGHT		"GPL v3"
 //#define MY_PLUGIN_VIEW      "Standard ES radar screen"

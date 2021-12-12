@@ -641,7 +641,7 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 #endif
 			int new_v = stoi(match[1].str(), nullptr, 0);
 			if (new_v > MY_PLUGIN_VERSIONCODE)
-				throw error{ "Your " + string { MY_PLUGIN_NAME } + " plugin (version " + MY_PLUGIN_VERSION + ") is outdated. Please change to the latest version.\n\nVisit https://github.com/kusterjs/CCAMS/releases" };
+				throw error{ "Your " + string { MY_PLUGIN_NAME } + " plugin (version " + MY_PLUGIN_VERSION + ") is outdated and the automatic code assignment therefore not available. Please change to the latest version.\n\nVisit https://github.com/kusterjs/CCAMS/releases" };
 			else
 				pluginVersionRestricted = false;
 
@@ -649,7 +649,9 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 			EquipmentCodesFAA = match[3].str();
 		}
 		else
-			throw error{ string { MY_PLUGIN_NAME }  + " plugin couldn't parse the server data" };
+		{
+			throw error{ string { MY_PLUGIN_NAME }  + " plugin couldn't parse the server configuration and version data. Automatic code assignment therefore not available." };
+		}
 	}
 	catch (modesexception & e)
 	{
