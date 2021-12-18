@@ -55,10 +55,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ver.txt">
+    <Text Include="config.txt">
       <Filter>Resource Files</Filter>
     </Text>
-    <Text Include="config.txt">
+    <Text Include="CCAMS\ver.txt">
       <Filter>Resource Files</Filter>
     </Text>
   </ItemGroup>

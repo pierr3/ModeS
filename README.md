@@ -49,7 +49,7 @@ Requests of simulated aircraft (sweatbox session, or from your local FSD server)
 This plugin provides capabilities/functionalities to:
 * interpret both the FAA and ICAO flight plan format
 * assign transponder codes manually
-* assign transponder codes automatically for all airborne aircraft
+* assign transponder codes automatically for all IFR airborne aircraft
 * customise its behaviour
 * limit certain functionalities
 * monitor (simulated) Mode S EHS (Enhanced Surveillance) data
@@ -77,14 +77,14 @@ This plugin provides capabilities/functionalities to:
 ### Commands
 ```.help ccams``` `provides a list of all available plugin commands
 ```.ccams ehslist``` displays the Mode S EHS list
-```.ccams auto``` enables/disables automatic transponder code assignment for airborne aircraft
+```.ccams auto``` enables/disables automatic transponder code assignment for IFR airborne aircraft
 
 ### Plugin settings
 The Plug-in settings file (check the file location via EuroScope > other settings > Settings files setup) can be used to change some of the plugins default settings. Use the format ```CCAMS:[setting name]:[setting value]```.
 * ```codeVFR```: your generic code to be assigned to VFR aircraft (default ```7000```)
 * ```acceptFPLformatICAO```: to allow/ignore Mode S capabilities of flight plans with the equipment code specified according ICAO format (default ```1```)
 * ```acceptFPLformatFAA```: to allow/ignore Mode S capabilities of flight plans with the equipment code specified according FAA format (default ```1```)
-* ```AutoAssign```: to enable/disable the automatic transponder code assignment of airborne aircraft (default setting ```1```)
+* ```AutoAssign```: to enable/disable the automatic transponder code assignment of IFR airborne aircraft (default setting ```1```)
 
 If you operate in a region not equipped for transponder code ```1000``` or just do not wish to assign any transponder code ```1000```, set both ```acceptFPLformatICAO``` and ```acceptFPLformatFAA``` to ```0```. This will result in the plugin using discrete transponder codes only.
 
@@ -94,7 +94,7 @@ Local ops/tech staff may create an [issue](https://github.com/kusterjs/CCAMS/iss
 The current server configuration is available on https://ccams.kilojuliett.ch/.
 
 All airports starting with one of the following combination of letters are considered Mode S capable:
-```EB,ED,EH,EL,EP,ET,LD,LF,LH,LI,LK,LO,LR,LSZR,LSZB,LSZG,LSGC,LSZH,LSGG,LZ```
+```EB,ED,EH,EL,EP,ET,LD,LF,LH,LI,LK,LO,LR,LSZR,LSZB,LSZG,LSGC,LSZH,LSGG,LZ```, excluding ```EPCE,EPDA,EPDE,EPIR,EPKS,EPLK,EPLY,EPMB,EPMI,EPMM,EPOK,EPPR,EPPW,EPSN,EPTM```
 
 ## Credits
 This plugin includes Mode S functionalities as introduced by the ModeS by Pierre Ferran [pierr3/ModeS](https://github.com/pierr3/ModeS). It's intending to replace any version of the ModeS plugin, also later versions maintained by Oliver Gruetzmann [ogruetzmann/ModeS](https://github.com/ogruetzmann/ModeS).

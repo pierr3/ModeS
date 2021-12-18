@@ -181,8 +181,8 @@
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="CCAMS\ver.txt" />
     <Text Include="config.txt" />
-    <Text Include="ver.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />

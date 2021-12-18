@@ -513,8 +513,8 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 #endif
 	}
 
-	// disregard if the flight is assumed in the vicinity of the departure or arrival airport
-	if (isADEPvicinity(FlightPlan) || FlightPlan.GetDistanceToDestination() < APTcodeMaxDist)
+	// disregard if the flight is assumed in the vicinity of the departure or arrival airport, or no ADES/ADEP filed yet (= flight plan missing)
+	if (isADEPvicinity(FlightPlan) || FlightPlan.GetDistanceToDestination() < APTcodeMaxDist || strlen(FlightPlan.GetFlightPlanData().GetOrigin()) < 4 || strlen(FlightPlan.GetFlightPlanData().GetDestination()) < 4)
 		return;
 
 #ifdef _DEBUG
@@ -684,6 +684,7 @@ bool CCAMS::isADEPvicinity(const CFlightPlan& FlightPlan) const
 	if (FlightPlan.GetCorrelatedRadarTarget().GetGS() < APTcodeMaxGS &&
 		FlightPlan.GetDistanceFromOrigin() < APTcodeMaxDist)
 		return true;
+
 	return false;
 }
 
