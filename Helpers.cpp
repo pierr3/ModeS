@@ -1,23 +1,23 @@
 #include "stdafx.h"
 #include "Helpers.h"
 
-string LoadUpdateString(PluginData p)
+string LoadUpdateString()
 {
-	const std::string AGENT { "EuroScope CCAMS/" + std::string { p.PLUGIN_VERSION } };
+	const string AGENT { "EuroScope CCAMS/" + string { MY_PLUGIN_VERSION } };
 	HINTERNET connect = InternetOpen(AGENT.c_str(), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if (!connect) {
-		throw error { std::string {"Connection failed to verify the plugin version. Error: " + std::to_string(GetLastError()) } };
+		throw error { string {"Connection failed to verify the plugin version. Error: " + to_string(GetLastError()) } };
 	}
 
-	HINTERNET OpenAddress = InternetOpenUrl(connect, p.UPDATE_URL, NULL, 0, INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD, 0);
+	HINTERNET OpenAddress = InternetOpenUrl(connect, MY_PLUGIN_UPDATE_URL, NULL, 0, INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD, 0);
 	if (!OpenAddress) {
 		InternetCloseHandle(connect);
-		throw error { std::string { "Failed to load plugin version verification file. Error: " + std::to_string(GetLastError()) } };
+		throw error { string { "Failed to load plugin version verification file. Error: " + to_string(GetLastError()) } };
 	}
 
 	char DataReceived[256];
 	DWORD NumberOfBytesRead { 0 };
-	std::string answer;
+	string answer;
 	while (InternetReadFile(OpenAddress, DataReceived, 256, &NumberOfBytesRead) && NumberOfBytesRead)
 		answer.append(DataReceived, NumberOfBytesRead);
 
@@ -28,12 +28,12 @@ string LoadUpdateString(PluginData p)
 
 string LoadWebSquawk(EuroScopePlugIn::CFlightPlan FP, EuroScopePlugIn::CController ATCO, vector<const char*> usedCodes, bool vicinityADEP, int ConnectionType)
 {
-	PluginData p;
-	const std::string AGENT{ "EuroScope CCAMS/" + std::string { p.PLUGIN_VERSION } };
+	//PluginData p;
+	const string AGENT{ "EuroScope CCAMS/" + string { MY_PLUGIN_VERSION } };
 	HINTERNET connect = InternetOpen(AGENT.c_str(), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if (!connect) {
 #ifdef _DEBUG
-		//throw error { std::string { "Failed reach the CCAMS server. Error: " + std::to_string(GetLastError()) } };
+		//throw error { string { "Failed reach the CCAMS server. Error: " + to_string(GetLastError()) } };
 #endif
 		return string{ "E404" };
 	}
@@ -88,7 +88,7 @@ string LoadWebSquawk(EuroScopePlugIn::CFlightPlan FP, EuroScopePlugIn::CControll
 	if (!OpenAddress) {
 		InternetCloseHandle(connect);
 #ifdef _DEBUG
-		//throw error{ std::string { "Failed reach the CCAMS server. Error: " + std::to_string(GetLastError()) } };
+		//throw error{ string { "Failed reach the CCAMS server. Error: " + to_string(GetLastError()) } };
 #endif
 
 		return string{ "E406" };
@@ -96,7 +96,7 @@ string LoadWebSquawk(EuroScopePlugIn::CFlightPlan FP, EuroScopePlugIn::CControll
 
 	char DataReceived[256];
 	DWORD NumberOfBytesRead{ 0 };
-	std::string answer;
+	string answer;
 	while (InternetReadFile(OpenAddress, DataReceived, 256, &NumberOfBytesRead) && NumberOfBytesRead)
 		answer.append(DataReceived, NumberOfBytesRead);
 
