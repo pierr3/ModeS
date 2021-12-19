@@ -80,7 +80,9 @@ This plugin provides capabilities/functionalities to:
 
 ### Commands
 ```.help ccams``` provides a list of all available plugin commands
+
 ```.ccams ehslist``` displays the Mode S EHS list
+
 ```.ccams auto``` enables/disables automatic transponder code assignment for IFR airborne aircraft
 
 ### Plugin settings
