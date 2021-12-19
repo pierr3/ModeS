@@ -513,8 +513,12 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 #endif
 	}
 
-	// disregard if the flight is assumed in the vicinity of the departure or arrival airport, or no ADES/ADEP filed yet (= flight plan missing)
-	if (isADEPvicinity(FlightPlan) || FlightPlan.GetDistanceToDestination() < APTcodeMaxDist || strlen(FlightPlan.GetFlightPlanData().GetOrigin()) < 4 || strlen(FlightPlan.GetFlightPlanData().GetDestination()) < 4)
+	// disregard if no flight plan received (= no ADES/ADEP), or low speed (considered not flying yet)
+	if (strlen(FlightPlan.GetFlightPlanData().GetOrigin()) < 4 || strlen(FlightPlan.GetFlightPlanData().GetDestination()) < 4 || FlightPlan.GetCorrelatedRadarTarget().GetGS() < APTcodeMaxGS)
+		return;
+
+	// disregard if the flight is assumed in the vicinity of the departure or arrival airport
+	if (isADEPvicinity(FlightPlan) || FlightPlan.GetDistanceToDestination() < APTcodeMaxDist)
 		return;
 
 #ifdef _DEBUG
