@@ -79,11 +79,9 @@ This plugin provides capabilities/functionalities to:
 * Mode S EHS: Displays a list to display Mode S EHS (Enhanced Surveillance) data of the currently selected aircraft
 
 ### Commands
-```.help ccams``` provides a list of all available plugin commands
-
-```.ccams ehslist``` displays the Mode S EHS list
-
-```.ccams auto``` enables/disables automatic transponder code assignment for IFR airborne aircraft
+* ```.help ccams``` provides a list of all available plugin commands
+* ```.ccams ehslist``` displays the Mode S EHS list
+* ```.ccams auto``` enables/disables automatic transponder code assignment for IFR airborne aircraft
 
 ### Plugin settings
 The Plug-in settings file (check the file location via EuroScope > other settings > Settings files setup) can be used to change some of the plugins default settings. Use the format ```CCAMS:[setting name]:[setting value]```.
