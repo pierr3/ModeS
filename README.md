@@ -49,7 +49,11 @@ Requests of simulated aircraft (sweatbox session, or from your local FSD server)
 This plugin provides capabilities/functionalities to:
 * interpret both the FAA and ICAO flight plan format
 * assign transponder codes manually
-* assign transponder codes automatically for all IFR airborne aircraft
+* assign transponder codes automatically, if
+	* flight plan rule is IFR
+	* traffic is airborne
+	* traffic is not in the vicinity of the arrival or departure airport
+	* the controller is logged in as APP, CTR or FSS
 * customise its behaviour
 * limit certain functionalities
 * monitor (simulated) Mode S EHS (Enhanced Surveillance) data
