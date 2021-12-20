@@ -17,7 +17,7 @@ A client-server solution is used to:
 * using additional information that is not available to controller clients
 * ensure consistency also among different software releases of the plugin
 
-The plugin sends requests to the server acting as the central interface to manage all transponder code assignments. It will evaluate any request received via the plugin based on the configuration of FIR and airport code ranges. You can review the current configuration status on (https://ccams.kilojuliett.ch/){:target="_blank"}.
+The plugin sends requests to the server acting as the central interface to manage all transponder code assignments. It will evaluate any request received via the plugin based on the configuration of FIR and airport code ranges. You can review the current configuration status on [https://ccams.kilojuliett.ch/](https://ccams.kilojuliett.ch/){:target="_blank"}.
 
 ### What parameters are considered?
 In order to determine the most appropriate transponder code for a specific flight, the server will use information from the plugin sent including:
@@ -81,14 +81,14 @@ This plugin provides capabilities/functionalities to:
 ### Commands
 * ```.help ccams``` provides a list of all available plugin commands
 * ```.ccams ehslist``` displays the Mode S EHS list
-* ```.ccams auto``` enables/disables automatic transponder code assignment for IFR airborne aircraft
+* ```.ccams auto``` enables/disables automatic transponder code assignment
 
 ### Plugin settings
 The Plug-in settings file (check the file location via EuroScope > other settings > Settings files setup) can be used to change some of the plugins default settings. Use the format ```CCAMS:[setting name]:[setting value]```.
 * ```codeVFR```: your generic code to be assigned to VFR aircraft (default ```7000```)
 * ```acceptFPLformatICAO```: to allow/ignore Mode S capabilities of flight plans with the equipment code specified according ICAO format (default ```1```)
 * ```acceptFPLformatFAA```: to allow/ignore Mode S capabilities of flight plans with the equipment code specified according FAA format (default ```1```)
-* ```AutoAssign```: to enable/disable the automatic transponder code assignment of IFR airborne aircraft (default setting ```1```)
+* ```AutoAssign```: to enable/disable the automatic transponder code assignment (default setting ```1```)
 
 If you operate in a region not equipped for transponder code ```1000``` or just do not wish to assign any transponder code ```1000```, set both ```acceptFPLformatICAO``` and ```acceptFPLformatFAA``` to ```0```. This will result in the plugin using discrete transponder codes only.
 
