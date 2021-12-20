@@ -17,7 +17,7 @@ A client-server solution is used to:
 * using additional information that is not available to controller clients
 * ensure consistency also among different software releases of the plugin
 
-The plugin sends requests to the server acting as the central interface to manage all transponder code assignments. It will evaluate any request received via the plugin based on the configuration of FIR and airport code ranges. You can review the current configuration status on (https://ccams.kilojuliett.ch/){:target="_blank"}.
+The plugin sends requests to the server acting as the central interface to manage all transponder code assignments. It will evaluate any request received via the plugin based on the configuration of FIR and airport code ranges. You can review the current configuration status on https://ccams.kilojuliett.ch/.
 
 ### What parameters are considered?
 In order to determine the most appropriate transponder code for a specific flight, the server will use information from the plugin sent including:
@@ -93,9 +93,9 @@ The Plug-in settings file (check the file location via EuroScope > other setting
 If you operate in a region not equipped for transponder code ```1000``` or just do not wish to assign any transponder code ```1000```, set both ```acceptFPLformatICAO``` and ```acceptFPLformatFAA``` to ```0```. This will result in the plugin using discrete transponder codes only.
 
 ## Changes / Improvements / Reports
-Local ops/tech staff may create an [issue](https://github.com/kusterjs/CCAMS/issues){:target="_blank"} on this GitHub to request a configuration change, to ensure compliance with regional and local transponder code ranges and schemes.
+Local ops/tech staff may create an [issue](https://github.com/kusterjs/CCAMS/issues) on this GitHub to request a configuration change, to ensure compliance with regional and local transponder code ranges and schemes.
 
-The current server configuration is available on (https://ccams.kilojuliett.ch/){:target="_blank"}.
+The current server configuration is available on https://ccams.kilojuliett.ch/.
 
 All airports starting with one of the following combination of letters are considered Mode S capable:
 ```EB,ED,EH,EL,EP,ET,LD,LF,LH,LI,LK,LO,LR,LSZR,LSZB,LSZG,LSGC,LSZH,LSGG,LZ```, excluding ```EPCE,EPDA,EPDE,EPIR,EPKS,EPLK,EPLY,EPMB,EPMI,EPMM,EPOK,EPPR,EPPW,EPSN,EPTM```
