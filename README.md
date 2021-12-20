@@ -17,7 +17,7 @@ A client-server solution is used to:
 * using additional information that is not available to controller clients
 * ensure consistency also among different software releases of the plugin
 
-The plugin sends requests to the server acting as the central interface to manage all transponder code assignments. It will evaluate any request received via the plugin based on the configuration of FIR and airport code ranges. You can review the current configuration status on [https://ccams.kilojuliett.ch/](https://ccams.kilojuliett.ch/){:target="_blank"}.
+The plugin sends requests to the server acting as the central interface to manage all transponder code assignments. It will evaluate any request received via the plugin based on the configuration of FIR and airport code ranges. You can review the current configuration status on [https://ccams.kilojuliett.ch/](https://ccams.kilojuliett.ch/){target="_blank"}.
 
 ### What parameters are considered?
 In order to determine the most appropriate transponder code for a specific flight, the server will use information from the plugin sent including:
