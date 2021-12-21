@@ -60,7 +60,7 @@ CCAMS::CCAMS(const EquipmentCodes&& ec, const SquawkCodes&& sc) : CPlugIn(EuroSc
 		const char* cstrSetting = GetDataFromSettings("codeVFR");
 		if (cstrSetting != NULL)
 		{
-			if (regex_search(cstrSetting, std::regex("[0-7]{4}")))
+			if (regex_match(cstrSetting, std::regex("[0-7]{4}")))
 			{
 				squawkVFR = cstrSetting;
 			}
@@ -132,7 +132,7 @@ bool CCAMS::OnCompileCommand(const char* command)
 #endif
 		return true;
 	}
-	else if (regex_match(command, matches, regex("\\.ccams\\s+(\\w+)", regex::icase)))
+	else if (regex_search(command, matches, regex("^\\.ccams\\s+(\\w+)", regex::icase)))
 	{
 		return PluginCommands(matches[1].str().c_str());
 	}
@@ -638,19 +638,17 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 		string DisplayMsg = "Update string downloaded: " + message;
 		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
-		if (regex_match(message, match, regex("^(\\d+)[:]([^:]+)[:]([A-Z,]+)$", regex::icase)))
+		if (regex_match(message, match, regex("(\\d+)[:]([^:]+)[:]([A-Z,]+)", regex::icase)))
 		{
-#ifdef _DEBUG
-			//return;
-#endif
 			int new_v = stoi(match[1].str(), nullptr, 0);
 			if (new_v > MY_PLUGIN_VERSIONCODE)
 				throw error{ "Your " + string { MY_PLUGIN_NAME } + " plugin (version " + MY_PLUGIN_VERSION + ") is outdated and the automatic code assignment therefore not available. Please change to the latest version.\n\nVisit https://github.com/kusterjs/CCAMS/releases" };
 			else
 				pluginVersionRestricted = false;
-
+#ifndef _DEBUG
 			ModeSAirports = regex(match[2].str(), regex::icase);
 			EquipmentCodesFAA = match[3].str();
+#endif // !_DEBUG
 		}
 		else
 		{
@@ -694,7 +692,7 @@ bool CCAMS::isADEPvicinity(const CFlightPlan& FlightPlan) const
 
 bool CCAMS::isApModeS(const string& icao) const
 {
-	if (regex_match(icao, ModeSAirports))
+	if (regex_search(icao, ModeSAirports))
 		return true;
 
 	return false;
@@ -727,6 +725,8 @@ bool CCAMS::hasEquipment(const CFlightPlan& FlightPlan, bool acceptEquipmentFAA,
 
 bool CCAMS::isEligibleSquawkModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
 {
+	//return isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()) &&
+	//	(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || !isADEPvicinity(FlightPlan));
 	return isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()) &&
 		(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || (!isADEPvicinity(FlightPlan) && isApModeS(ControllerMyself().GetCallsign())));
 }
@@ -737,6 +737,12 @@ bool CCAMS::hasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 	const char* pssr = FlightPlan.GetCorrelatedRadarTarget().GetPosition().GetSquawk();
 	string DisplayMsg;
 
+#if _DEBUG
+	DisplayMsg = string("Controller " + (string)ControllerMyself().GetCallsign() + ", Is mode S: " + (isApModeS(ControllerMyself().GetCallsign()) ? "True" : "False"));
+	DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif // _DEBUG
+
+
 	if ((strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0 && (strcmp(assr, squawkVFR) == 0 || strcmp(pssr, squawkVFR) == 0))
 		|| (isEligibleSquawkModeS(FlightPlan) && (strcmp(assr, squawkModeS) == 0 || strcmp(pssr, squawkModeS) == 0)))
 	{
@@ -745,7 +751,7 @@ bool CCAMS::hasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 	else if (strlen(assr) == 4)
 	{
 		// assigned squawk is not valid
-		if (!regex_search(assr, std::regex("[0-7]{4}")) || atoi(assr) % 100 == 0)
+		if (!regex_match(assr, std::regex("[0-7]{4}")) || atoi(assr) % 100 == 0)
 		{
 #ifdef _DEBUG
 			DisplayMsg = "ASSIGNED code " + string{ assr } + " is not valid for " + FlightPlan.GetCallsign();
@@ -754,7 +760,7 @@ bool CCAMS::hasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 			return false;
 		}
 	}
-	else if (!regex_search(pssr, std::regex("[0-7]{4}")) || atoi(pssr) % 100 == 0)
+	else if (!regex_match(pssr, std::regex("[0-7]{4}")) || atoi(pssr) % 100 == 0)
 	{
 		// no squawk is assigned, but currently used code is not valid
 		{
