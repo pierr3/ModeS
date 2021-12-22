@@ -63,7 +63,7 @@ struct SquawkCodes
 	const char* VFR{ "7000" };
 };
 
-static const regex MODE_S_AIRPORTS("^((E([BDHLT]|P(?!CE|DA|DE|IR|KS|LK|LY|MB|MI|MM|OK|PR|PW|SN|TM))|L[DFHIKORZ])[A-Z]{2}|LS(A|G[CG]|Z[BGHR]))", regex::icase);
+static const regex MODE_S_AIRPORTS("^((E([BDHLT]|P(?!CE|DA|DE|IR|KS|LK|LY|MB|MI|MM|OK|PR|PW|SN|TM)|URM)|L[DFHIKORZ])[A-Z]{2}|LS(A|G[CG]|Z[BGHR]))", regex::icase);
 
 
 class CCAMS :
