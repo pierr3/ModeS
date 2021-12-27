@@ -15,11 +15,11 @@ using namespace EuroScopePlugIn;
 
 #define MY_PLUGIN_NAME			"CCAMS"
 #ifdef _DEBUG
-#define MY_PLUGIN_VERSION		"2.0.0 DEV"
+#define MY_PLUGIN_VERSION		"2.0.1 DEV"
 #else
-#define MY_PLUGIN_VERSION		"2.0.0"
+#define MY_PLUGIN_VERSION		"2.0.1"
 #endif
-#define MY_PLUGIN_VERSIONCODE	11
+#define MY_PLUGIN_VERSIONCODE	12
 #define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/master/config.txt"
 //#define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/1.8/config.txt"
 #define MY_PLUGIN_DEVELOPER		"Jonas Kuster, Pierre Ferran, Oliver Grützmann"
@@ -63,7 +63,7 @@ struct SquawkCodes
 	const char* VFR{ "7000" };
 };
 
-static const regex MODE_S_AIRPORTS("^((E([BDHLT]|P(?!CE|DA|DE|IR|KS|LK|LY|MB|MI|MM|OK|PR|PW|SN|TM))|L[DFHIKORZ])[A-Z]{2}|LS(G[CG]|Z[BGHR]))", regex::icase);
+static const regex MODE_S_AIRPORTS("^((E([BDHLT]|P(?!CE|DA|DE|IR|KS|LK|LY|MB|MI|MM|OK|PR|PW|SN|TM)|URM)|L[DFHIKORZ])[A-Z]{2}|LS(A|G[CG]|Z[BGHR]))", regex::icase);
 
 
 class CCAMS :
