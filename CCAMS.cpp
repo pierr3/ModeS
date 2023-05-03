@@ -494,6 +494,10 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	const char* assr = FlightPlan.GetControllerAssignedData().GetSquawk();
 	const char* pssr = FlightPlan.GetCorrelatedRadarTarget().GetPosition().GetSquawk();
 
+	// check flag variables
+	if (!autoAssign || pluginVersionRestricted)
+		return;
+
 	// check controller class validity and qualification, restrict to APP/CTR/FSS controller types and respect a minimum connection duration (time)
 	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController() || ControllerMyself().GetRating() < 2 || (ControllerMyself().GetFacility() > 1 && ControllerMyself().GetFacility() < 5) || ConnectionStatus < 10)
 		return;
