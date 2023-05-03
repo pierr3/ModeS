@@ -432,9 +432,9 @@ void CCAMS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RE
 			if (PendingSquawks.find(FlightPlan.GetCallsign()) == PendingSquawks.end())
 			{
 				PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
-					FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), IsADEPvicinity(FlightPlan), CCAMS::GetConnectionType())));
+					FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), IsADEPvicinity(FlightPlan), GetConnectionType())));
 #ifdef _DEBUG
-				if (CCAMS::GetConnectionType() > 2)
+				if (GetConnectionType() > 2)
 				{
 					string DisplayMsg{ "A request for a simulated aircraft has been detected: " + string { FlightPlan.GetCallsign() } };
 					DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
@@ -479,6 +479,14 @@ void CCAMS::OnTimer(int Counter)
 
 		}
 	}
+
+//#ifdef _DEBUG
+//	if (!(Counter % 6))
+//	{
+//		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", string{ "Connection Type: " + to_string(GetConnectionType())}.c_str(), true, false, false, false, false);
+//	}
+//#endif // _DEBUG
+
 }
 
 void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
@@ -611,7 +619,7 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	else
 	{
 		PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
-			FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), IsADEPvicinity(FlightPlan), CCAMS::GetConnectionType())));
+			FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), IsADEPvicinity(FlightPlan), GetConnectionType())));
 #ifdef _DEBUG
 		log << FlightPlan.GetCallsign() << ":FP processed:unique code AUTO assigned:";
 		writeLogFile(log);
