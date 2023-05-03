@@ -347,7 +347,7 @@ void CCAMS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 #endif
 	if (FlightPlan.GetTrackingControllerIsMe())
 	{
-		if (autoAssign && pluginVersionCheck)
+		if (autoAssign && pluginVersionCheck && ConnectionStatus > 10)
 		{
 #ifdef _DEBUG
 			string DisplayMsg = string{ FlightPlan.GetCallsign() } + " is processed for automatic squawk assignment (due to flight plan update and controller is tracking)";
@@ -474,7 +474,7 @@ void CCAMS::OnTimer(int Counter)
 	{
 		AssignPendingSquawks();
 
-		if (!(Counter % 10) && autoAssign && pluginVersionCheck)
+		if (!(Counter % 10) && autoAssign && pluginVersionCheck && ConnectionStatus > 10)
 		{
 			for (CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
 				RadarTarget = RadarTargetSelectNext(RadarTarget))
@@ -494,12 +494,8 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	const char* assr = FlightPlan.GetControllerAssignedData().GetSquawk();
 	const char* pssr = FlightPlan.GetCorrelatedRadarTarget().GetPosition().GetSquawk();
 
-	// check flag variables
-	if (!autoAssign || !pluginVersionCheck)
-		return;
-
 	// check controller class validity and qualification, restrict to APP/CTR/FSS controller types and respect a minimum connection duration (time)
-	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController() || ControllerMyself().GetRating() < 2 || (ControllerMyself().GetFacility() > 1 && ControllerMyself().GetFacility() < 5) || ConnectionStatus < 10)
+	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController() || ControllerMyself().GetRating() < 2 || (ControllerMyself().GetFacility() > 1 && ControllerMyself().GetFacility() < 5))
 		return;
 
 	// Check if FlightPlan is already processed
