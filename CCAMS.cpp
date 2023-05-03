@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "CCAMS.h"
+#include <fstream>
 
 CCAMS::CCAMS(const EquipmentCodes&& ec, const SquawkCodes&& sc) : CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 	MY_PLUGIN_NAME,
@@ -174,6 +175,20 @@ bool CCAMS::PluginCommands(const char* Command)
 		ProcessedFlightPlans.clear();
 		return true;
 	}
+	else if (_stricmp(Command, "list") == 0)
+	{
+		string DisplayMsg;
+		for (auto& pfp : ProcessedFlightPlans)
+		{
+			if (DisplayMsg.length() == 0)
+				DisplayMsg = "Processed Flight Plans: " + pfp;
+			else
+				DisplayMsg += ", " + pfp;
+		}
+		
+		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+		return true;
+	}
 	else
 	{
 		for (CFlightPlan FlightPlan = FlightPlanSelectFirst(); FlightPlan.IsValid();
@@ -181,22 +196,33 @@ bool CCAMS::PluginCommands(const char* Command)
 		{
 			if (_stricmp(Command, FlightPlan.GetCallsign()) == 0)
 			{
-				string DisplayMsg = string{ FlightPlan.GetCallsign() } + ": Tracking Controller Len '" + to_string(strlen(FlightPlan.GetTrackingControllerCallsign())) + "', Minutes to entry " + to_string(FlightPlan.GetSectorEntryMinutes()) + ", TrackingMe: " + to_string(FlightPlan.GetTrackingControllerIsMe());
-				DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-				CFlightPlanPositionPredictions Pos = FlightPlan.GetPositionPredictions();
-				int min = 0;
-				while (min < min(Pos.GetPointsNumber(), 15))
-				{
-					if (_stricmp(FlightPlan.GetPositionPredictions().GetControllerId(min),"--") != 0)
-						break;
-
-					min++;
-				}
-					
-				DisplayMsg = string{ FlightPlan.GetCallsign() } + ": Next Controller '" + FlightPlan.GetPositionPredictions().GetControllerId(min) + "' in " + to_string(min) + " Minutes ";
+				string DisplayMsg = "Status " + string{FlightPlan.GetCallsign()} + ": " + (FlightPlan.GetSimulated() ? "simulated" : "not sim") + 
+					", FP Type '" + FlightPlan.GetFlightPlanData().GetPlanType() + "', " + to_string(FlightPlan.GetSectorEntryMinutes()) + 
+					" Minutes to Sector Entry, " + (HasValidSquawk(FlightPlan) ? "has valid squawk" : "has NO valid squawk");
 				DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 
-				AssignAutoSquawk(FlightPlan);
+				if (!ControllerMyself().IsValid() || !ControllerMyself().IsController() || (ControllerMyself().GetFacility() > 1 && ControllerMyself().GetFacility() < 5))
+					DisplayUserMessage(MY_PLUGIN_NAME, "Debug", "This controller is not allowed to automatically assign squawks", true, false, false, false, false);
+
+				if (IsFlightPlanProcessed(FlightPlan))
+					DisplayUserMessage(MY_PLUGIN_NAME, "Debug", "This flight plan has already been processed", true, false, false, false, false);
+
+				//string DisplayMsg = string{ FlightPlan.GetCallsign() } + ": Tracking Controller Len '" + to_string(strlen(FlightPlan.GetTrackingControllerCallsign())) + "', Minutes to entry " + to_string(FlightPlan.GetSectorEntryMinutes()) + ", TrackingMe: " + to_string(FlightPlan.GetTrackingControllerIsMe());
+				//DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+				//CFlightPlanPositionPredictions Pos = FlightPlan.GetPositionPredictions();
+				//int min = 0;
+				//while (min < min(Pos.GetPointsNumber(), 15))
+				//{
+				//	if (_stricmp(FlightPlan.GetPositionPredictions().GetControllerId(min),"--") != 0)
+				//		break;
+
+				//	min++;
+				//}
+				//	
+				//DisplayMsg = string{ FlightPlan.GetCallsign() } + ": Next Controller '" + FlightPlan.GetPositionPredictions().GetControllerId(min) + "' in " + to_string(min) + " Minutes ";
+				//DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+
+				//AssignAutoSquawk(FlightPlan);
 				return true;
 			}
 		}
@@ -212,7 +238,7 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 
 	if (ItemCode == ItemCodes::TAG_ITEM_ISMODES)
 	{
-		if (isAcModeS(FlightPlan))
+		if (IsAcModeS(FlightPlan))
 			strcpy_s(sItemString, 16, "S");
 		else
 			strcpy_s(sItemString, 16, "A");
@@ -224,7 +250,7 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 
 		if (ItemCode == ItemCodes::TAG_ITEM_EHS_HDG)
 		{
-			if (isEHS(FlightPlan))
+			if (IsEHS(FlightPlan))
 			{
 				//strncpy(sItemString, to_string(RadarTarget.GetPosition().GetReportedHeading()).c_str(), 16);
 				sprintf_s(sItemString, 16, "%03i°", RadarTarget.GetPosition().GetReportedHeading() % 360);
@@ -240,7 +266,7 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 		}
 		else if (ItemCode == ItemCodes::TAG_ITEM_EHS_ROLL)
 		{
-			if (isEHS(FlightPlan))
+			if (IsEHS(FlightPlan))
 			{
 				auto rollb = RadarTarget.GetPosition().GetReportedBank();
 
@@ -264,7 +290,7 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 		}
 		else if (ItemCode == ItemCodes::TAG_ITEM_EHS_GS)
 		{
-			if (isEHS(FlightPlan) && FlightPlan.GetCorrelatedRadarTarget().IsValid())
+			if (IsEHS(FlightPlan) && FlightPlan.GetCorrelatedRadarTarget().IsValid())
 			{
 				snprintf(sItemString, 16, "%03i", RadarTarget.GetPosition().GetReportedGS());
 	#ifdef _DEBUG
@@ -280,7 +306,7 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 
 		else if (ItemCode == ItemCodes::TAG_ITEM_ERROR_MODES_USE)
 		{
-			if (isEligibleSquawkModeS(FlightPlan)) return;
+			if (IsEligibleSquawkModeS(FlightPlan)) return;
 
 			auto assr = RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk();
 			auto pssr = RadarTarget.GetPosition().GetSquawk();
@@ -296,7 +322,7 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 			auto assr = RadarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetSquawk();
 			auto pssr = RadarTarget.GetPosition().GetSquawk();
 
-			if (!isEligibleSquawkModeS(FlightPlan) && (strcmp(assr, squawkModeS) == 0 || (strcmp(pssr, squawkModeS) == 0 && strlen(assr) == 0)))
+			if (!IsEligibleSquawkModeS(FlightPlan) && (strcmp(assr, squawkModeS) == 0 || (strcmp(pssr, squawkModeS) == 0 && strlen(assr) == 0)))
 			{
 				// mode S code assigned, but not eligible
 				*pColorCode = EuroScopePlugIn::TAG_COLOR_REDUNDANT;
@@ -314,6 +340,10 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 
 void CCAMS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 {
+	string DisplayMsg;
+#ifdef _DEBUG
+	stringstream log;
+#endif
 	if (FlightPlan.GetTrackingControllerIsMe())
 	{
 		if (autoAssign && !pluginVersionRestricted)
@@ -328,6 +358,12 @@ void CCAMS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	else
 	{
 		ProcessedFlightPlans.erase(remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()), ProcessedFlightPlans.end());
+#ifdef _DEBUG
+		log << FlightPlan.GetCallsign() << ":FP removed from processed list:not tracked by " << ControllerMyself().GetCallsign();
+		writeLogFile(log);
+		DisplayMsg = string{ FlightPlan.GetCallsign() } + " removed from processed list because " + ControllerMyself().GetCallsign() + " does not track it";
+		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
 	}
 }
 
@@ -368,62 +404,35 @@ void CCAMS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RE
 	if (!FlightPlan.GetTrackingControllerIsMe() && strlen(FlightPlan.GetTrackingControllerCallsign())>0)
 		return;
 
-	if (FunctionId == ItemCodes::TAG_FUNC_SQUAWK_POPUP)
+	switch (FunctionId)
 	{
+	case ItemCodes::TAG_FUNC_SQUAWK_POPUP:
 		OpenPopupList(Area, "Squawk", 1);
 		AddPopupListElement("Auto assign", "", ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_AUTO);
 		AddPopupListElement("Manual set", "", ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_MANUAL);
 		AddPopupListElement("Discrete", "", ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_DISCRETE);
 		AddPopupListElement("VFR", "", ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_VFR);
-	}
-	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_MANUAL)
-	{
+		break;
+	case ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_MANUAL:
 		OpenPopupEdit(Area, ItemCodes::TAG_FUNC_ASSIGN_SQUAWK, "");
-	}
-	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK)
-	{
+		break;
+	case ItemCodes::TAG_FUNC_ASSIGN_SQUAWK:
 		FlightPlan.GetControllerAssignedData().SetSquawk(sItemString);
-	}
-	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_DISCRETE)
-	{
-		try
-		{
-			if (PendingSquawks.find(FlightPlan.GetCallsign()) == PendingSquawks.end())
-			{
-				PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
-					FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), isADEPvicinity(FlightPlan), CCAMS::GetConnectionType())));
-#ifdef _DEBUG
-				if (CCAMS::GetConnectionType() > 2)
-				{
-					string DisplayMsg{ "A request for a simulated aircraft has been detected: " + string { FlightPlan.GetCallsign() } };
-					DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-				}
-#endif
-			}
-		}
-		catch (std::runtime_error const& e)
-		{
-			DisplayUserMessage(MY_PLUGIN_NAME, "Error", e.what(), true, true, false, false, false);
-		}
-		catch (...)
-		{
-			DisplayUserMessage(MY_PLUGIN_NAME, "Error", std::to_string(GetLastError()).c_str(), true, true, false, false, false);
-		}
-	}
-	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_AUTO)
-	{
-		if (isEligibleSquawkModeS(FlightPlan))
+		break;
+	case ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_AUTO:
+		if (IsEligibleSquawkModeS(FlightPlan))
 		{
 			FlightPlan.GetControllerAssignedData().SetSquawk(squawkModeS);
 			return;
 		}
-
+		// continue with discrete assignment if Mode S squawk is not applicable
+	case ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_DISCRETE:
 		try
 		{
 			if (PendingSquawks.find(FlightPlan.GetCallsign()) == PendingSquawks.end())
 			{
 				PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
-					FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), isADEPvicinity(FlightPlan), CCAMS::GetConnectionType())));
+					FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), IsADEPvicinity(FlightPlan), CCAMS::GetConnectionType())));
 #ifdef _DEBUG
 				if (CCAMS::GetConnectionType() > 2)
 				{
@@ -441,11 +450,12 @@ void CCAMS::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RE
 		{
 			DisplayUserMessage(MY_PLUGIN_NAME, "Error", std::to_string(GetLastError()).c_str(), true, true, false, false, false);
 		}
-
-	}
-	else if (FunctionId == ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_VFR)
-	{
+		break;
+	case ItemCodes::TAG_FUNC_ASSIGN_SQUAWK_VFR:
 		FlightPlan.GetControllerAssignedData().SetSquawk(squawkVFR);
+		break;
+	default:
+		break;
 	}
 }
 
@@ -474,6 +484,9 @@ void CCAMS::OnTimer(int Counter)
 void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 {
 	string DisplayMsg;
+#ifdef _DEBUG
+	stringstream log;
+#endif
 	const char* assr = FlightPlan.GetControllerAssignedData().GetSquawk();
 	const char* pssr = FlightPlan.GetCorrelatedRadarTarget().GetPosition().GetSquawk();
 
@@ -492,24 +505,42 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	if (FlightPlan.GetSimulated() || strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0)
 	{
 		ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
+#ifdef _DEBUG
+		log << FlightPlan.GetCallsign() << ":FP processed:Simulated/FP Type";
+		writeLogFile(log);
+		DisplayMsg = string{ FlightPlan.GetCallsign() } + " processed due to Simulation Flag / Flight Plan Type";
+		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
 		return;
 	}
-	else if (FlightPlan.GetSectorEntryMinutes() < 0)
+	else if (FlightPlan.GetFlightPlanData().IsReceived() && FlightPlan.GetSectorEntryMinutes() < 0)
 	{
 		// the flight will never enter the sector of the current controller
 		ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
+#ifdef _DEBUG
+		log << FlightPlan.GetCallsign() << ":FP processed:Sector Entry Time:" << FlightPlan.GetSectorEntryMinutes();
+		writeLogFile(log);
+		DisplayMsg = string{ FlightPlan.GetCallsign() } + " processed because it will not enter the controllers sector";
+		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
 		return;
 	}
-	else if (hasValidSquawk(FlightPlan))
+	else if (HasValidSquawk(FlightPlan))
 	{
 		ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
+#ifdef _DEBUG
+		log << FlightPlan.GetCallsign() << ":FP processed:has already a valid squawk:" << assr << ":" << pssr;
+		writeLogFile(log);
+		DisplayMsg = string{ FlightPlan.GetCallsign() } + " processed because it has already a valid squawk (ASSIGNED '" + assr + "', SET " + pssr + ")";
+		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
 		return;
 	}
 	else
 	{
 #ifdef _DEBUG
 		DisplayMsg = string{ FlightPlan.GetCallsign() } + " has NOT a valid squawk code (ASSIGNED '" + assr + "', SET " + pssr + ")";
-		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+		//DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
 	}
 
@@ -518,7 +549,7 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 		return;
 
 	// disregard if the flight is assumed in the vicinity of the departure or arrival airport
-	if (isADEPvicinity(FlightPlan) || FlightPlan.GetDistanceToDestination() < APTcodeMaxDist)
+	if (IsADEPvicinity(FlightPlan) || FlightPlan.GetDistanceToDestination() < APTcodeMaxDist)
 		return;
 
 #ifdef _DEBUG
@@ -567,10 +598,12 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 
 	// if the function has not been ended, the flight is subject to automatic squawk assignment
 
-	if (isEligibleSquawkModeS(FlightPlan))
+	if (IsEligibleSquawkModeS(FlightPlan))
 	{
 		FlightPlan.GetControllerAssignedData().SetSquawk(squawkModeS);
 #ifdef _DEBUG
+		log << FlightPlan.GetCallsign() << ":FP processed:Mode S code AUTO assigned";
+		writeLogFile(log);
 		DisplayMsg = string{ FlightPlan.GetCallsign() } + ", code 1000 AUTO assigned";
 		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
@@ -578,8 +611,10 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	else
 	{
 		PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
-			FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), isADEPvicinity(FlightPlan), CCAMS::GetConnectionType())));
+			FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), IsADEPvicinity(FlightPlan), CCAMS::GetConnectionType())));
 #ifdef _DEBUG
+		log << FlightPlan.GetCallsign() << ":FP processed:unique code AUTO assigned:";
+		writeLogFile(log);
 		DisplayMsg = string{ FlightPlan.GetCallsign() } + ", unique code AUTO assigned";
 		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
@@ -648,7 +683,7 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 #ifndef _DEBUG
 			ModeSAirports = regex(match[2].str(), regex::icase);
 			EquipmentCodesFAA = match[3].str();
-#endif // !_DEBUG
+#endif // _DEBUG
 		}
 		else
 		{
@@ -666,7 +701,7 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 	fmessage = future<string>();
 }
 
-inline bool CCAMS::IsFlightPlanProcessed(CFlightPlan & FlightPlan)
+inline bool CCAMS::IsFlightPlanProcessed(CFlightPlan& FlightPlan)
 {
 	string callsign { FlightPlan.GetCallsign() };
 	for (auto &pfp : ProcessedFlightPlans)
@@ -676,21 +711,41 @@ inline bool CCAMS::IsFlightPlanProcessed(CFlightPlan & FlightPlan)
 	return false;
 }
 
-bool CCAMS::isAcModeS(const CFlightPlan& FlightPlan) const
+bool CCAMS::IsAcModeS(const CFlightPlan& FlightPlan) const
 {
-	return hasEquipment(FlightPlan, acceptEquipmentFAA, acceptEquipmentICAO, EquipmentCodesICAO);
+	return HasEquipment(FlightPlan, acceptEquipmentFAA, acceptEquipmentICAO, EquipmentCodesICAO);
 }
 
-bool CCAMS::isADEPvicinity(const CFlightPlan& FlightPlan) const
+double CCAMS::GetDistanceFromOrigin(const CFlightPlan& FlightPlan) const
+{
+	if (FlightPlan.GetExtractedRoute().GetPointsNumber() > 1)
+		return FlightPlan.GetFPTrackPosition().GetPosition().DistanceTo(FlightPlan.GetExtractedRoute().GetPointPosition(0));
+
+	for (EuroScopePlugIn::CSectorElement SectorElement = SectorFileElementSelectFirst(SECTOR_ELEMENT_AIRPORT); SectorElement.IsValid();
+		SectorElement = SectorFileElementSelectNext(SectorElement, SECTOR_ELEMENT_AIRPORT))
+	{
+		if (strncmp(SectorElement.GetName(), FlightPlan.GetFlightPlanData().GetOrigin(), 4) == 0)
+		{
+			CPosition AirportPosition;
+			if (SectorElement.GetPosition(&AirportPosition, 0))
+				return FlightPlan.GetFPTrackPosition().GetPosition().DistanceTo(AirportPosition);
+
+			break;
+		}
+	}
+	return 0;
+}
+
+bool CCAMS::IsADEPvicinity(const CFlightPlan& FlightPlan) const
 {
 	if (FlightPlan.GetCorrelatedRadarTarget().GetGS() < APTcodeMaxGS &&
-		FlightPlan.GetDistanceFromOrigin() < APTcodeMaxDist)
+		GetDistanceFromOrigin(FlightPlan) < APTcodeMaxDist)
 		return true;
 
 	return false;
 }
 
-bool CCAMS::isApModeS(const string& icao) const
+bool CCAMS::IsApModeS(const string& icao) const
 {
 	if (regex_search(icao, ModeSAirports))
 		return true;
@@ -698,12 +753,12 @@ bool CCAMS::isApModeS(const string& icao) const
 	return false;
 }
 
-bool CCAMS::isEHS(const CFlightPlan& FlightPlan) const
+bool CCAMS::IsEHS(const CFlightPlan& FlightPlan) const
 {
-	return hasEquipment(FlightPlan, acceptEquipmentFAA, true, EquipmentCodesICAOEHS);
+	return HasEquipment(FlightPlan, acceptEquipmentFAA, true, EquipmentCodesICAOEHS);
 }
 
-bool CCAMS::hasEquipment(const CFlightPlan& FlightPlan, bool acceptEquipmentFAA, bool acceptEquipmentICAO, string CodesICAO) const
+bool CCAMS::HasEquipment(const CFlightPlan& FlightPlan, bool acceptEquipmentFAA, bool acceptEquipmentICAO, string CodesICAO) const
 {
 	//check for ICAO suffix
 	if (acceptEquipmentICAO)
@@ -723,28 +778,28 @@ bool CCAMS::hasEquipment(const CFlightPlan& FlightPlan, bool acceptEquipmentFAA,
 	return false;
 }
 
-bool CCAMS::isEligibleSquawkModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
+bool CCAMS::IsEligibleSquawkModeS(const EuroScopePlugIn::CFlightPlan& FlightPlan) const
 {
 	//return isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()) &&
 	//	(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || !isADEPvicinity(FlightPlan));
-	return isAcModeS(FlightPlan) && isApModeS(FlightPlan.GetFlightPlanData().GetDestination()) &&
-		(isApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || (!isADEPvicinity(FlightPlan) && isApModeS(ControllerMyself().GetCallsign())));
+	return IsAcModeS(FlightPlan) && IsApModeS(FlightPlan.GetFlightPlanData().GetDestination()) &&
+		(IsApModeS(FlightPlan.GetFlightPlanData().GetOrigin()) || (!IsADEPvicinity(FlightPlan) && IsApModeS(ControllerMyself().GetCallsign())));
 }
 
-bool CCAMS::hasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan)
+bool CCAMS::HasValidSquawk(const EuroScopePlugIn::CFlightPlan& FlightPlan)
 {
 	const char* assr = FlightPlan.GetControllerAssignedData().GetSquawk();
 	const char* pssr = FlightPlan.GetCorrelatedRadarTarget().GetPosition().GetSquawk();
 	string DisplayMsg;
 
 #if _DEBUG
-	DisplayMsg = string("Controller " + (string)ControllerMyself().GetCallsign() + ", Is mode S: " + (isApModeS(ControllerMyself().GetCallsign()) ? "True" : "False"));
-	DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+	DisplayMsg = string("Controller " + (string)ControllerMyself().GetCallsign() + ", Is mode S: " + (IsApModeS(ControllerMyself().GetCallsign()) ? "True" : "False"));
+	//DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif // _DEBUG
 
 
 	if ((strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V") == 0 && (strcmp(assr, squawkVFR) == 0 || strcmp(pssr, squawkVFR) == 0))
-		|| (isEligibleSquawkModeS(FlightPlan) && (strcmp(assr, squawkModeS) == 0 || strcmp(pssr, squawkModeS) == 0)))
+		|| (IsEligibleSquawkModeS(FlightPlan) && (strcmp(assr, squawkModeS) == 0 || strcmp(pssr, squawkModeS) == 0)))
 	{
 		return true;
 	}
@@ -859,3 +914,24 @@ std::vector<const char*> CCAMS::collectUsedCodes(const CFlightPlan& FlightPlan)
 	return usedCodes;
 }
 
+#ifdef _DEBUG
+
+void CCAMS::writeLogFile(stringstream& sText)
+{
+	ofstream file;
+	time_t rawtime;
+	struct tm timeinfo;
+	char timestamp[256];
+
+	time(&rawtime);
+	localtime_s(&timeinfo, &rawtime);
+	strftime(timestamp, sizeof(timestamp), "%Y-%m-%d", &timeinfo);
+
+	file.open((MY_PLUGIN_NAME + string("_") + string(timestamp) + ".log").c_str(), ofstream::out | ofstream::app);
+
+	strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", &timeinfo);
+	file << timestamp << ":" << sText.str() << endl;
+	file.close();
+}
+
+#endif // _DEBUG

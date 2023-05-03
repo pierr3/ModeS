@@ -4,7 +4,6 @@
 #include <regex>
 #include <future>
 #include <thread>
-#include <exception>
 #include <map>
 #include <cstdio>
 #include <EuroScopePlugIn.h>
@@ -15,9 +14,9 @@ using namespace EuroScopePlugIn;
 
 #define MY_PLUGIN_NAME			"CCAMS"
 #ifdef _DEBUG
-#define MY_PLUGIN_VERSION		"2.0.1 DEV"
+#define MY_PLUGIN_VERSION		"2.0.9 DEV"
 #else
-#define MY_PLUGIN_VERSION		"2.0.1"
+#define MY_PLUGIN_VERSION		"2.1.0"
 #endif
 #define MY_PLUGIN_VERSIONCODE	12
 #define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/master/config.txt"
@@ -115,15 +114,21 @@ private:
 	void AssignAutoSquawk(CFlightPlan& FlightPlan);
 	void AssignPendingSquawks();
 	void DoInitialLoad(future<string> & message);
-	bool IsFlightPlanProcessed(CFlightPlan & FlightPlan);
-	bool isAcModeS(const CFlightPlan& FlightPlan) const;
-	bool isApModeS(const string& icao) const;
-	bool isEHS(const CFlightPlan& FlightPlan) const;
-	bool hasEquipment(const CFlightPlan& FlightPlan, bool acceptEquipmentFAA, bool acceptEquipmentICAO, string CodesICAO) const;
-	bool isADEPvicinity(const CFlightPlan& FlightPlan) const;
-	bool isEligibleSquawkModeS(const CFlightPlan& FlightPlan) const;
-	bool hasValidSquawk(const CFlightPlan& FlightPlan);
+	bool IsFlightPlanProcessed(CFlightPlan& FlightPlan);
+	bool IsAcModeS(const CFlightPlan& FlightPlan) const;
+	bool IsApModeS(const string& icao) const;
+	bool IsEHS(const CFlightPlan& FlightPlan) const;
+	bool HasEquipment(const CFlightPlan& FlightPlan, bool acceptEquipmentFAA, bool acceptEquipmentICAO, string CodesICAO) const;
+	double GetDistanceFromOrigin(const CFlightPlan & FlightPlan) const;
+	bool IsADEPvicinity(const CFlightPlan& FlightPlan) const;
+	bool IsEligibleSquawkModeS(const CFlightPlan& FlightPlan) const;
+	bool HasValidSquawk(const CFlightPlan& FlightPlan);
 
 	map<const char*, future<string>> PendingSquawks;
 	vector<const char*> collectUsedCodes(const CFlightPlan& FlightPlan);
+
+#ifdef _DEBUG
+	void writeLogFile(stringstream& sText);
+#endif // _DEBUG
+
 };
