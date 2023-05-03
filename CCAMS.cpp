@@ -45,9 +45,9 @@ CCAMS::CCAMS(const EquipmentCodes&& ec, const SquawkCodes&& sc) : CPlugIn(EuroSc
 
 	// Set default setting values
 	ConnectionStatus = 0;
+	pluginVersionCheck = false;
 	acceptEquipmentICAO = true;
 	acceptEquipmentFAA = true;
-	pluginVersionRestricted = true;
 #ifdef _DEBUG
 	autoAssign = true;
 #else
@@ -152,7 +152,7 @@ bool CCAMS::PluginCommands(const char* Command)
 	}
 	else if (_stricmp(Command, "auto") == 0)
 	{
-		if (pluginVersionRestricted)
+		if (!pluginVersionCheck)
 		{
 			DisplayUserMessage(MY_PLUGIN_NAME, "Error", "Your plugin version is not up-to-date and the automatic code assignment therefore not available.", true, true, false, false, false);
 		}
@@ -347,7 +347,7 @@ void CCAMS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 #endif
 	if (FlightPlan.GetTrackingControllerIsMe())
 	{
-		if (autoAssign && !pluginVersionRestricted)
+		if (autoAssign && pluginVersionCheck)
 		{
 #ifdef _DEBUG
 			string DisplayMsg = string{ FlightPlan.GetCallsign() } + " is processed for automatic squawk assignment (due to flight plan update and controller is tracking)";
@@ -474,7 +474,7 @@ void CCAMS::OnTimer(int Counter)
 	{
 		AssignPendingSquawks();
 
-		if (!(Counter % 10) && autoAssign && !pluginVersionRestricted)
+		if (!(Counter % 10) && autoAssign && pluginVersionCheck)
 		{
 			for (CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
 				RadarTarget = RadarTargetSelectNext(RadarTarget))
@@ -495,7 +495,7 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	const char* pssr = FlightPlan.GetCorrelatedRadarTarget().GetPosition().GetSquawk();
 
 	// check flag variables
-	if (!autoAssign || pluginVersionRestricted)
+	if (!autoAssign || !pluginVersionCheck)
 		return;
 
 	// check controller class validity and qualification, restrict to APP/CTR/FSS controller types and respect a minimum connection duration (time)
@@ -687,7 +687,7 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 			if (new_v > MY_PLUGIN_VERSIONCODE)
 				throw error{ "Your " + string { MY_PLUGIN_NAME } + " plugin (version " + MY_PLUGIN_VERSION + ") is outdated and the automatic code assignment therefore not available. Please change to the latest version.\n\nVisit https://github.com/kusterjs/CCAMS/releases" };
 			else
-				pluginVersionRestricted = false;
+				pluginVersionCheck = true;
 #ifndef _DEBUG
 			ModeSAirports = regex(match[2].str(), regex::icase);
 			EquipmentCodesFAA = match[3].str();

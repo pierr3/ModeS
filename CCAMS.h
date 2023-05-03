@@ -105,7 +105,7 @@ private:
 	const char* squawkModeS;
 	const char* squawkVFR;
 	int ConnectionStatus;
-	bool pluginVersionRestricted;
+	bool pluginVersionCheck;
 	bool acceptEquipmentICAO;
 	bool acceptEquipmentFAA;
 	bool autoAssign;
