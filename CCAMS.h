@@ -14,7 +14,7 @@ using namespace EuroScopePlugIn;
 
 #define MY_PLUGIN_NAME			"CCAMS"
 #ifdef _DEBUG
-#define MY_PLUGIN_VERSION		"2.2.1 DEV"
+#define MY_PLUGIN_VERSION		"2.2.3 DEV"
 #else
 #define MY_PLUGIN_VERSION		"2.5.0"
 #endif
@@ -104,6 +104,7 @@ private:
 	string EquipmentCodesICAOEHS;
 	const char* squawkModeS;
 	const char* squawkVFR;
+	int ConnectionStatus;
 	bool pluginVersionRestricted;
 	bool acceptEquipmentICAO;
 	bool acceptEquipmentFAA;

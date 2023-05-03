@@ -44,6 +44,7 @@ CCAMS::CCAMS(const EquipmentCodes&& ec, const SquawkCodes&& sc) : CPlugIn(EuroSc
 	fUpdateString = async(LoadUpdateString);
 
 	// Set default setting values
+	ConnectionStatus = 0;
 	acceptEquipmentICAO = true;
 	acceptEquipmentFAA = true;
 	pluginVersionRestricted = true;
@@ -464,6 +465,10 @@ void CCAMS::OnTimer(int Counter)
 	if (fUpdateString.valid() && fUpdateString.wait_for(0ms) == future_status::ready)
 		DoInitialLoad(fUpdateString);
 
+	if (GetConnectionType() > 0)
+		ConnectionStatus++;
+	else if (GetConnectionType() == 0)
+		ConnectionStatus = 0;
 
 	if (ControllerMyself().IsValid() && ControllerMyself().IsController())
 	{
@@ -476,17 +481,8 @@ void CCAMS::OnTimer(int Counter)
 			{
 				AssignAutoSquawk(RadarTarget.GetCorrelatedFlightPlan());
 			}
-
 		}
 	}
-
-//#ifdef _DEBUG
-//	if (!(Counter % 6))
-//	{
-//		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", string{ "Connection Type: " + to_string(GetConnectionType())}.c_str(), true, false, false, false, false);
-//	}
-//#endif // _DEBUG
-
 }
 
 void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
@@ -498,8 +494,8 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	const char* assr = FlightPlan.GetControllerAssignedData().GetSquawk();
 	const char* pssr = FlightPlan.GetCorrelatedRadarTarget().GetPosition().GetSquawk();
 
-	// check controller class validity and restrict to APP/CTR/FSS controller types
-	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController() || (ControllerMyself().GetFacility() > 1 && ControllerMyself().GetFacility() < 5))
+	// check controller class validity and qualification, restrict to APP/CTR/FSS controller types and respect a minimum connection duration (time)
+	if (!ControllerMyself().IsValid() || !ControllerMyself().IsController() || ControllerMyself().GetRating() < 2 || (ControllerMyself().GetFacility() > 1 && ControllerMyself().GetFacility() < 5) || ConnectionStatus < 10)
 		return;
 
 	// Check if FlightPlan is already processed
