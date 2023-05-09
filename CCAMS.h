@@ -14,9 +14,9 @@ using namespace EuroScopePlugIn;
 
 #define MY_PLUGIN_NAME			"CCAMS"
 #ifdef _DEBUG
-#define MY_PLUGIN_VERSION		"2.2.3 DEV"
+#define MY_PLUGIN_VERSION		"2.2.6 DEV"
 #else
-#define MY_PLUGIN_VERSION		"2.5.0"
+#define MY_PLUGIN_VERSION		"2.2.6"
 #endif
 #define MY_PLUGIN_VERSIONCODE	12
 #define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/master/config.txt"
@@ -115,6 +115,7 @@ private:
 	void AssignAutoSquawk(CFlightPlan& FlightPlan);
 	void AssignPendingSquawks();
 	void DoInitialLoad(future<string> & message);
+	void ReadSettings();
 	bool IsFlightPlanProcessed(CFlightPlan& FlightPlan);
 	bool IsAcModeS(const CFlightPlan& FlightPlan) const;
 	bool IsApModeS(const string& icao) const;

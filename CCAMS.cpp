@@ -56,58 +56,7 @@ CCAMS::CCAMS(const EquipmentCodes&& ec, const SquawkCodes&& sc) : CPlugIn(EuroSc
 	APTcodeMaxGS = 50;
 	APTcodeMaxDist = 3;
 	
-	// Overwrite setting values by plugin settings, if available
-	try
-	{
-		const char* cstrSetting = GetDataFromSettings("codeVFR");
-		if (cstrSetting != NULL)
-		{
-			if (regex_match(cstrSetting, std::regex("[0-7]{4}")))
-			{
-				squawkVFR = cstrSetting;
-			}
-		}
-
-		cstrSetting = GetDataFromSettings("acceptFPLformatICAO");
-		if (cstrSetting != NULL)
-		{
-			if (strcmp(cstrSetting, "0") == 0)
-			{
-				acceptEquipmentICAO = false;
-			}
-		}
-
-		cstrSetting = GetDataFromSettings("acceptFPLformatFAA");
-		if (cstrSetting != NULL)
-		{
-			if (strcmp(cstrSetting, "0") == 0)
-			{
-				acceptEquipmentFAA = false;
-			}
-		}
-
-		cstrSetting = GetDataFromSettings("AutoAssign");
-		if (cstrSetting != NULL)
-		{
-			if (strcmp(cstrSetting, "0") == 0)
-			{
-				autoAssign = false;
-			}
-			else if (strcmp(cstrSetting, "1") == 0)
-			{
-				autoAssign = true;
-			}
-		}
-	}
-	catch (std::runtime_error const& e)
-	{
-		DisplayUserMessage(MY_PLUGIN_NAME, "Plugin Error", (string("Error: ") + e.what()).c_str(), true, true, true, true, true);
-	}
-	catch (...)
-	{
-		DisplayUserMessage(MY_PLUGIN_NAME, "Plugin Error", ("Unexpected error: " + std::to_string(GetLastError())).c_str(), true, true, true, true, true);
-	}
-
+	ReadSettings();
 }
 
 CCAMS::~CCAMS()
@@ -128,6 +77,7 @@ bool CCAMS::OnCompileCommand(const char* command)
 		// Display HELP
 		DisplayUserMessage("HELP", MY_PLUGIN_NAME, ".CCAMS EHSLIST | Displays the flight plan list with EHS values of the currently selected aircraft.", true, true, true, true, false);
 		DisplayUserMessage("HELP", MY_PLUGIN_NAME, ".CCAMS AUTO | Activates or deactivates automatic code assignment.", true, true, true, true, false);
+		DisplayUserMessage("HELP", MY_PLUGIN_NAME, ".CCAMS RELOAD | Force load of local and remote settings.", true, true, true, true, false);
 #ifdef _DEBUG
 		DisplayUserMessage("HELP", MY_PLUGIN_NAME, ".CCAMS RESET | Clears the list of flight plans which have been determined no longer applicable for automatic code assignment.", true, true, true, true, false);
 		DisplayUserMessage("HELP", MY_PLUGIN_NAME, ".CCAMS [CALL SIGN] | Displays tracking and controller information for a specific flight (to support debugging of automatic code assignment).", true, true, true, true, false);
@@ -170,6 +120,12 @@ bool CCAMS::PluginCommands(const char* Command)
 		}
 		return true;
 	}
+	else if (_stricmp(Command, "reload") == 0)
+	{
+		fUpdateString = async(LoadUpdateString);
+		ReadSettings();
+		return true;
+	}
 #ifdef _DEBUG
 	else if (_stricmp(Command, "reset") == 0)
 	{
@@ -208,22 +164,6 @@ bool CCAMS::PluginCommands(const char* Command)
 				if (IsFlightPlanProcessed(FlightPlan))
 					DisplayUserMessage(MY_PLUGIN_NAME, "Debug", "This flight plan has already been processed", true, false, false, false, false);
 
-				//string DisplayMsg = string{ FlightPlan.GetCallsign() } + ": Tracking Controller Len '" + to_string(strlen(FlightPlan.GetTrackingControllerCallsign())) + "', Minutes to entry " + to_string(FlightPlan.GetSectorEntryMinutes()) + ", TrackingMe: " + to_string(FlightPlan.GetTrackingControllerIsMe());
-				//DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-				//CFlightPlanPositionPredictions Pos = FlightPlan.GetPositionPredictions();
-				//int min = 0;
-				//while (min < min(Pos.GetPointsNumber(), 15))
-				//{
-				//	if (_stricmp(FlightPlan.GetPositionPredictions().GetControllerId(min),"--") != 0)
-				//		break;
-
-				//	min++;
-				//}
-				//	
-				//DisplayMsg = string{ FlightPlan.GetCallsign() } + ": Next Controller '" + FlightPlan.GetPositionPredictions().GetControllerId(min) + "' in " + to_string(min) + " Minutes ";
-				//DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-
-				//AssignAutoSquawk(FlightPlan);
 				return true;
 			}
 		}
@@ -356,15 +296,18 @@ void CCAMS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 			AssignAutoSquawk(FlightPlan);
 		}
 	}
-	else
+	else if (std::find(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()) != ProcessedFlightPlans.end())
 	{
-		ProcessedFlightPlans.erase(remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()), ProcessedFlightPlans.end());
+		if (!(FlightPlan.GetFlightPlanData().IsReceived() && FlightPlan.GetSectorEntryMinutes() < 0) && !HasValidSquawk(FlightPlan))
+		{
+			ProcessedFlightPlans.erase(remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()), ProcessedFlightPlans.end());
 #ifdef _DEBUG
-		log << FlightPlan.GetCallsign() << ":FP removed from processed list:not tracked by " << ControllerMyself().GetCallsign();
-		writeLogFile(log);
-		DisplayMsg = string{ FlightPlan.GetCallsign() } + " removed from processed list because " + ControllerMyself().GetCallsign() + " does not track it";
-		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+			log << FlightPlan.GetCallsign() << ":FP removed from processed list:not tracked by " << ControllerMyself().GetCallsign();
+			writeLogFile(log);
+			DisplayMsg = string{ FlightPlan.GetCallsign() } + " removed from processed list because " + ControllerMyself().GetCallsign() + " does not track it";
+			DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
+		}
 	}
 }
 
@@ -467,8 +410,23 @@ void CCAMS::OnTimer(int Counter)
 
 	if (GetConnectionType() > 0)
 		ConnectionStatus++;
-	else if (GetConnectionType() == 0)
+	else if (GetConnectionType() != ConnectionStatus)
+	{
 		ConnectionStatus = 0;
+		if (ProcessedFlightPlans.size() > 0)
+		{
+			ProcessedFlightPlans.clear();
+#ifdef _DEBUG
+			DisplayUserMessage(MY_PLUGIN_NAME, "Debug", "Connection Status 0 detected, all processed flight plans are removed from the list", true, false, false, false, false);
+#endif
+		}
+	}
+
+#ifdef _DEBUG
+	if (ConnectionStatus == 10)
+		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", "Active connection establish, automatic squawk assignment enabled", true, false, false, false, false);
+#endif
+
 
 	if (ControllerMyself().IsValid() && ControllerMyself().IsController())
 	{
@@ -703,6 +661,61 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 		MessageBox(NULL, e.what(), MY_PLUGIN_NAME, MB_OK | MB_ICONERROR);
 	}
 	fmessage = future<string>();
+}
+
+void CCAMS::ReadSettings()
+{
+	// Overwrite setting values by plugin settings, if available
+	try
+	{
+		const char* cstrSetting = GetDataFromSettings("codeVFR");
+		if (cstrSetting != NULL)
+		{
+			if (regex_match(cstrSetting, std::regex("[0-7]{4}")))
+			{
+				squawkVFR = cstrSetting;
+			}
+		}
+
+		cstrSetting = GetDataFromSettings("acceptFPLformatICAO");
+		if (cstrSetting != NULL)
+		{
+			if (strcmp(cstrSetting, "0") == 0)
+			{
+				acceptEquipmentICAO = false;
+			}
+		}
+
+		cstrSetting = GetDataFromSettings("acceptFPLformatFAA");
+		if (cstrSetting != NULL)
+		{
+			if (strcmp(cstrSetting, "0") == 0)
+			{
+				acceptEquipmentFAA = false;
+			}
+		}
+
+		cstrSetting = GetDataFromSettings("AutoAssign");
+		if (cstrSetting != NULL)
+		{
+			if (strcmp(cstrSetting, "0") == 0)
+			{
+				autoAssign = false;
+			}
+			else if (strcmp(cstrSetting, "1") == 0)
+			{
+				autoAssign = true;
+			}
+		}
+	}
+	catch (std::runtime_error const& e)
+	{
+		DisplayUserMessage(MY_PLUGIN_NAME, "Plugin Error", (string("Error: ") + e.what()).c_str(), true, true, true, true, true);
+	}
+	catch (...)
+	{
+		DisplayUserMessage(MY_PLUGIN_NAME, "Plugin Error", ("Unexpected error: " + std::to_string(GetLastError())).c_str(), true, true, true, true, true);
+	}
 }
 
 inline bool CCAMS::IsFlightPlanProcessed(CFlightPlan& FlightPlan)
