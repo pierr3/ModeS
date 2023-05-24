@@ -311,19 +311,6 @@ void CCAMS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 			AssignAutoSquawk(FlightPlan);
 		}
 	}
-	/*else if (std::find(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()) != ProcessedFlightPlans.end())
-	{
-		if (!(FlightPlan.GetFlightPlanData().IsReceived() && FlightPlan.GetSectorEntryMinutes() < 0) && !HasValidSquawk(FlightPlan))
-		{
-			ProcessedFlightPlans.erase(remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()), ProcessedFlightPlans.end());
-#ifdef _DEBUG
-			log << FlightPlan.GetCallsign() << ":FP removed from processed list:not tracked by " << ControllerMyself().GetCallsign();
-			writeLogFile(log);
-			DisplayMsg = string{ FlightPlan.GetCallsign() } + " removed from processed list because " + ControllerMyself().GetCallsign() + " does not track it";
-			DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
-#endif
-		}
-	}*/
 }
 
 void CCAMS::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
