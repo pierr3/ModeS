@@ -25,7 +25,7 @@ In order to determine the most appropriate transponder code for a specific fligh
 * origin
 * destination
 * flight rule
-* position
+* aircraft position
 * the controller connection type
 
 The server will identify the next available transponder code based on the airport (1st priority) and FIR (2nd priority) transponder code list, excluding:
