@@ -14,11 +14,11 @@ using namespace EuroScopePlugIn;
 
 #define MY_PLUGIN_NAME			"CCAMS"
 #ifdef _DEBUG
-#define MY_PLUGIN_VERSION		"2.2.7 DEV"
+#define MY_PLUGIN_VERSION		"2.3.0 DEV"
 #else
-#define MY_PLUGIN_VERSION		"2.2.7"
+#define MY_PLUGIN_VERSION		"2.3.0"
 #endif
-#define MY_PLUGIN_VERSIONCODE	12
+#define MY_PLUGIN_VERSIONCODE	13
 #define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/master/config.txt"
 //#define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/1.8/config.txt"
 #define MY_PLUGIN_DEVELOPER		"Jonas Kuster, Pierre Ferran, Oliver Grützmann"
