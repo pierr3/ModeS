@@ -637,15 +637,14 @@ void CCAMS::DoInitialLoad(future<string> & fmessage)
 		string DisplayMsg = "Update string downloaded: " + message;
 		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
 #endif
-		if (regex_match(message, match, regex("(\\d+)[:](\\d+)[:]([^:]+)[:]([A-Z,]+)", regex::icase)))
+		if (regex_match(message, match, regex("(\\d+)[:](\\d+)[:]([A-Z,]+)[:]([^:]+)", regex::icase)))
 		{
-			int mnm_v = stoi(match[2].str(), nullptr, 0);
-			if (mnm_v > MY_PLUGIN_VERSIONCODE)
+			if (stoi(match[2].str(), nullptr, 0) > MY_PLUGIN_VERSIONCODE)
 				throw error{ "Your " + string { MY_PLUGIN_NAME } + " plugin (version " + MY_PLUGIN_VERSION + ") is outdated and the automatic code assignment therefore not available. Please change to the latest version.\n\nVisit https://github.com/kusterjs/CCAMS/releases" };
 			else
 				pluginVersionCheck = true;
 
-			if (stoi(match[1].str()) > mnm_v)
+			if (stoi(match[1].str(), nullptr, 0) > MY_PLUGIN_VERSIONCODE)
 			{
 				DisplayUserMessage(MY_PLUGIN_NAME, "Update", "An update for the CCAMS plugin is available. Please visit https://github.com/kusterjs/CCAMS/releases and download the latest version.", true, true, false, true, false);
 			}

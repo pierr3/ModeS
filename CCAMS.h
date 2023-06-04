@@ -18,7 +18,7 @@ using namespace EuroScopePlugIn;
 #else
 #define MY_PLUGIN_VERSION		"2.3.1"
 #endif
-#define MY_PLUGIN_VERSIONCODE	12
+#define MY_PLUGIN_VERSIONCODE	13
 #define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/master/config2.txt"
 //#define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/1.8/config.txt"
 #define MY_PLUGIN_DEVELOPER		"Jonas Kuster, Pierre Ferran, Oliver Grützmann"
