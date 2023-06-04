@@ -181,6 +181,7 @@
   <ItemGroup>
     <Text Include="CCAMS\ver.txt" />
     <Text Include="config.txt" />
+    <Text Include="config2.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
