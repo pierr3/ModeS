@@ -44,7 +44,7 @@
     <ClInclude Include="Helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Libs\EuroScopePlugIn.h">
+    <ClInclude Include="lib\EuroScopePlugIn.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
   </ItemGroup>
