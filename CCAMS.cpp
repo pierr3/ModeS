@@ -279,6 +279,14 @@ void CCAMS::OnGetTagItem(CFlightPlan FlightPlan, CRadarTarget RadarTarget, int I
 	}
 }
 
+void CCAMS::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
+{
+	ProcessedFlightPlans.erase(remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()),
+		ProcessedFlightPlans.end());
+
+	FpListEHS.RemoveFpFromTheList(FlightPlan);
+}
+
 void CCAMS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 {
 	string DisplayMsg;
@@ -313,13 +321,24 @@ void CCAMS::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	}
 }
 
-void CCAMS::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
+void CCAMS::OnFlightPlanFlightStripPushed(CFlightPlan FlightPlan, const char* sSenderController, const char* sTargetController)
 {
-	ProcessedFlightPlans.erase(remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()),
-							   ProcessedFlightPlans.end());
+#ifdef _DEBUG
+	stringstream log;
+#endif
+	if (strcmp(sTargetController, FlightPlan.GetCallsign()) == 0)
+	{
+		ProcessedFlightPlans.erase(remove(ProcessedFlightPlans.begin(), ProcessedFlightPlans.end(), FlightPlan.GetCallsign()), ProcessedFlightPlans.end());
+#ifdef _DEBUG
+		log << FlightPlan.GetCallsign() << ":FP removed from processed list:strip push received";
+		writeLogFile(log);
+		string DisplayMsg = string{ FlightPlan.GetCallsign() } + " removed from processed list because a strip push has been received";
+		DisplayUserMessage(MY_PLUGIN_NAME, "Debug", DisplayMsg.c_str(), true, false, false, false, false);
+#endif
+	}
 
-	FpListEHS.RemoveFpFromTheList(FlightPlan);
 }
+
 
 void CCAMS::OnRefreshFpListContent(CFlightPlanList AcList)
 {
@@ -585,6 +604,20 @@ void CCAMS::AssignAutoSquawk(CFlightPlan& FlightPlan)
 	}
 
 	ProcessedFlightPlans.push_back(FlightPlan.GetCallsign());
+}
+
+void CCAMS::AssignSquawk(CFlightPlan& FlightPlan)
+{
+	future<string> webSquawk = std::async(LoadWebSquawk, FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), IsADEPvicinity(FlightPlan), GetConnectionType());
+
+	if (webSquawk.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+	{
+		string squawk = webSquawk.get();
+		if (!FlightPlanSelect(FlightPlan.GetCallsign()).GetControllerAssignedData().SetSquawk(squawk.c_str()))
+		{
+			PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), webSquawk));
+		}
+	}
 }
 
 void CCAMS::AssignPendingSquawks()

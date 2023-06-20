@@ -14,11 +14,11 @@ using namespace EuroScopePlugIn;
 
 #define MY_PLUGIN_NAME			"CCAMS"
 #ifdef _DEBUG
-#define MY_PLUGIN_VERSION		"2.3.2 DEV"
+#define MY_PLUGIN_VERSION		"2.3.3 DEV"
 #else
-#define MY_PLUGIN_VERSION		"2.3.2"
+#define MY_PLUGIN_VERSION		"2.3.3"
 #endif
-#define MY_PLUGIN_VERSIONCODE	13
+#define MY_PLUGIN_VERSIONCODE	14
 #define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/master/config2.txt"
 //#define MY_PLUGIN_UPDATE_URL	"https://raw.githubusercontent.com/kusterjs/CCAMS/1.8/config.txt"
 #define MY_PLUGIN_DEVELOPER		"Jonas Kuster, Pierre Ferran, Oliver Grützmann"
@@ -81,8 +81,9 @@ public:
 					  COLORREF * pRGB,
 					  double * pFontSize);
 
-	void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
 	void OnFlightPlanDisconnect(CFlightPlan FlightPlan);
+	void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
+	void OnFlightPlanFlightStripPushed(CFlightPlan FlightPlan, const char* sSenderController, const char* sTargetController);
 
 	void OnRefreshFpListContent(CFlightPlanList AcList);
 	void OnFunctionCall(int FunctionId,
@@ -113,6 +114,7 @@ private:
 	int APTcodeMaxDist;
 
 	void AssignAutoSquawk(CFlightPlan& FlightPlan);
+	void AssignSquawk(CFlightPlan& FlightPlan);
 	void AssignPendingSquawks();
 	void DoInitialLoad(future<string> & message);
 	void ReadSettings();
