@@ -453,7 +453,7 @@ void CCAMS::OnTimer(int Counter)
 	{
 		AssignPendingSquawks();
 
-		if (!(Counter % 10) && autoAssign && pluginVersionCheck && ConnectionStatus > 10)
+		if (!(Counter % 3) && autoAssign && pluginVersionCheck && ConnectionStatus > 10)
 		{
 			for (CRadarTarget RadarTarget = RadarTargetSelectFirst(); RadarTarget.IsValid();
 				RadarTarget = RadarTargetSelectNext(RadarTarget))
