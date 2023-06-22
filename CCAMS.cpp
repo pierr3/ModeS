@@ -615,7 +615,8 @@ void CCAMS::AssignSquawk(CFlightPlan& FlightPlan)
 		string squawk = webSquawk.get();
 		if (!FlightPlanSelect(FlightPlan.GetCallsign()).GetControllerAssignedData().SetSquawk(squawk.c_str()))
 		{
-			PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), webSquawk));
+			PendingSquawks.insert(std::make_pair(FlightPlan.GetCallsign(), std::async(LoadWebSquawk,
+				FlightPlan, ControllerMyself(), collectUsedCodes(FlightPlan), IsADEPvicinity(FlightPlan), GetConnectionType())));
 		}
 	}
 }
