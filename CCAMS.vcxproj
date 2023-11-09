@@ -16,33 +16,30 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{26DEB76D-3967-4550-80CE-5C9DAAFAA1FC}</ProjectGuid>
-    <RootNamespace>ModeS</RootNamespace>
+    <RootNamespace>CCMAS</RootNamespace>
     <Keyword>MFCDLLProj</Keyword>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>CCAMS</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <UseOfMfc>false</UseOfMfc>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
+    <PreferredToolArchitecture>x86</PreferredToolArchitecture>
+    <UseDebugLibraries>true</UseDebugLibraries>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <UseOfMfc>false</UseOfMfc>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
+    <PreferredToolArchitecture>x86</PreferredToolArchitecture>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Static|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <UseOfMfc>false</UseOfMfc>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
+    <PreferredToolArchitecture>x86</PreferredToolArchitecture>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -74,7 +71,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_USRDLL;CURL_STATICLIB;CURL_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\Repos\ogruetzmann\ModeS\lib\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\lib</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -83,8 +80,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
-      <AdditionalDependencies>EuroScopePlugInDll.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:\Repos\ogruetzmann\ModeS\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>WinInet.lib;Version.lib;lib\EuroScopePlugInDll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -105,7 +102,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_USRDLL;CURL_STATICLIB;CURL_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
-      <AdditionalIncludeDirectories>C:\Users\Pierre\Documents\GitHub\ModeS\lib\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\lib</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -115,8 +112,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
-      <AdditionalDependencies>C:\Users\Pierre\Documents\GitHub\ModeS\lib\EuroScopePlugInDll.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:\Repos\ogruetzmann\ModeS\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>WinInet.lib;Version.lib;lib\EuroScopePlugInDll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <Profile>true</Profile>
     </Link>
     <Midl>
@@ -138,7 +135,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_USRDLL;CURL_STATICLIB;CURL_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
-      <AdditionalIncludeDirectories>D:\Repos\ogruetzmann\ModeS\lib\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\lib</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -149,7 +146,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
-      <AdditionalDependencies>EuroScopePlugInDll.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>WinInet.lib;Version.lib;lib\EuroScopePlugInDll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>D:\Repos\ogruetzmann\ModeS\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <Profile>true</Profile>
     </Link>
@@ -165,33 +162,29 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Helpers.cpp" />
-    <ClCompile Include="ModeS.cpp" />
-    <ClCompile Include="ModeS2.cpp" />
-    <ClCompile Include="ModeSCodes.cpp" />
-    <ClCompile Include="ModeSDisplay.cpp">
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release-Static|Win32'">C:\Users\Pierre\Documents\GitHub\ModeS\lib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Users\Pierre\Documents\GitHub\ModeS\lib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\Users\Pierre\Documents\GitHub\ModeS\lib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
+    <ClCompile Include="ESPlugin.cpp" />
+    <ClCompile Include="CCAMS.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release-Static|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Helpers.h" />
-    <ClInclude Include="ModeS.h" />
-    <ClInclude Include="ModeS2.h" />
-    <ClInclude Include="ModeSCodes.h" />
-    <ClInclude Include="ModeSDisplay.h" />
+    <ClInclude Include="ESPlugin.h" />
+    <ClInclude Include="CCAMS.h" />
+    <ClInclude Include="lib\EuroScopePlugIn.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ver.txt" />
+    <Text Include="CCAMS\ver.txt" />
+    <Text Include="config.txt" />
+    <Text Include="config2.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

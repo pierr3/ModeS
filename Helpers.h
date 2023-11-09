@@ -2,17 +2,22 @@
 #include <vector>
 #include <string>
 #include <sstream>
-#include <exception>
 #include <WinInet.h>
-#include <algorithm> 
+#include <algorithm>
 #include <cctype>
 #include <locale>
-#include "version.h"
+#include <EuroScopePlugIn.h>
+#include "CCAMS.h"
 
-std::string LoadUpdateString(PluginData p);
 
-std::string LoadWebSquawk(std::string origin, std::string callsign);
+using namespace std;
 
+
+string LoadUpdateString();
+
+string LoadWebSquawk(EuroScopePlugIn::CFlightPlan FP, EuroScopePlugIn::CController ATCO, vector<const char*> usedCodes, bool vicinityADEP, int ConnectionType);
+
+string ESversion();
 
 inline std::vector<std::string> split(const std::string & s, char delim)
 {
@@ -53,7 +58,7 @@ public:
 	virtual inline const long icon() const = 0;
 	inline void whatMessageBox()
 	{
-		MessageBox(NULL, what(), "Mode S", MB_OK | icon());
+		MessageBox(NULL, what(), "CCAMS", MB_OK | icon());
 	}
 };
 

@@ -15,30 +15,21 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ModeS.cpp">
+    <ClCompile Include="ESPlugin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ModeS2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ModeSDisplay.cpp">
+    <ClCompile Include="CCAMS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Helpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ModeSCodes.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="version.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ModeS.h">
+    <ClInclude Include="ESPlugin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
@@ -47,25 +38,30 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ModeS2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ModeSDisplay.h">
+    <ClInclude Include="CCAMS.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="version.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ModeSCodes.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="lib\EuroScopePlugIn.h">
+      <Filter>Resource Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ver.txt">
+    <Text Include="config.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="CCAMS\ver.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="config2.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
